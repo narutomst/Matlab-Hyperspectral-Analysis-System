@@ -1,6 +1,4 @@
-% 使用已有的可用于分类的数据集demo_dataset.mat，利用BP神经网络来做分类
-% 基本思路就是按照何同弟的来做
-% function [acc1, acc2] = f_GA_BP()
+
 function [racc, best_perf, best_vperf, best_tperf, tTest] = f_GA_BP(XTrain, TTrain, XTest, TTest, Var)
 
 warning off
@@ -50,8 +48,9 @@ acc2 = [];
 % 	net.trainParam.epochs = 2000;
 	net.trainParam.showWindow = str2num(Var.showWindow); %str2num('true')==1; str2num('false')==0
 	% 4.训练网络
-	[net, tr] = train(net, XTrain, TTrain);%这一步网络拓扑结构才算正式确定下来10-10-9
-												 %连接权值和偏置值总数是：10*10+9*10+10+9=209
+	[net, tr] = train(net, XTrain, TTrain);%这一步网络拓扑结构才算正式确定下来，
+                                                        %XTrain每一列向量是一个样本，对于分类问题，TTrain每一列是一个one-hot-vector
+												 
 %     view(net);  
     
     if str2num(Var.plotperform)          % str2num('true')==1
@@ -73,10 +72,10 @@ acc2 = [];
 % 如果测试集上的误差在与验证集误差明显不同的迭代次数处达到最小值，则这可能表示数据集划分不当。    
 %     
 	% 5.仿真网络
-	YTest = net(XTest); 
-	tTest = vec2ind(YTest);
+	y = net(XTest); 
+% 	tTest = vec2ind(YTest);
 	% 6. 性能评价
-    [c,cm,ind,per] = confusion(TTest,YTest);
+    [c,cm,ind,per] = confusion(TTest, y);
     racc1 = c;
     best_perf1 = tr.best_perf;
     best_vperf1 = tr.best_vperf;
@@ -116,7 +115,7 @@ acc2 = [];
     acc1 = [acc1, 1-racc1]; 
     
 %% VI. GA-BP神经网络
-	sumNet = [inputNum,hiddenSizes,outputNum];
+	sumNet = [inputNum, hiddenSizes, outputNum];
     k = numel(sumNet);
     S = 0;          % S = inputNum*S1+ S1*S2+S2*outputNum+ S1 + S2+outputNum;  %编码长度
     for i = 1:k-1
