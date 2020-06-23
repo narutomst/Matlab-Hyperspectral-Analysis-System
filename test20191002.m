@@ -230,6 +230,7 @@ data = struct();
 data.imgMat = [];
 data.ind = [];
 data.imgGT = [];
+
 data.cmap = [];
 data.M = [];
 hmenu2_3.UserData = data;
@@ -408,7 +409,8 @@ colorBase = [ [1,0,0]; [0,1,0]; [0,0,1]; [1,1,0]; [1,0,1]; [0,1,1]; ...
                     [0.5,0,0]; [0,0.5,0];[0,0,0.5]; [0.25,0.75,0]; [0.85,0.5,0]; [0.5,0.5,0]; ... 
                     [0.5,0,1]; [1,0,0.5]; [0.5,0,0.5]; [0.35,0.65,0.75]; [0,1,0.5]; [0,0.5,0.5]; ...
                     [0.5,0.5,0.5]; [0.1,0.1,0.1]];
-data.cmap = [[0 0 0];colorBase]; %添加背景像素的颜色，此处定义背景像素的颜色为黑色
+data.bkcGT = [1,1,1];                
+data.cmap = [data.bkcGT;colorBase]; %添加背景像素的颜色，此处定义背景像素的颜色为黑色
 data.imgMat = []; %存储Mat伪彩色图像
 data.imgGT = [];   %存储GT图像
 data.imgStack = [];%存储Mat和GT的堆叠图像
@@ -426,6 +428,7 @@ data.selectedPath = selectedPath;
 data.matdata = listbox1.UserData.matdata;
 data.gtdata = listbox1.UserData.gtdata;
 data.ind = listbox1.UserData.ind;
+data.bkcGT = listbox1.UserData.data.bkcGT;
 data.cmap = listbox1.UserData.cmap;
 data.imgMat = listbox1.UserData.imgMat;
 data.imgGT = listbox1.UserData.imgGT;
