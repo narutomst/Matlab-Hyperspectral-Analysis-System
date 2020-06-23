@@ -679,7 +679,8 @@ function Recolor_Callback(hObject, eventdata, handles)
         handles.UserData.cmap = c;
 %             hObject.UserData.cmap = handles.UserData.cmap;
         [hbox, himage] = newPlotGT(double(x), handles);
-        handles.UserData.cmap = temp;
+        %恢复cmap到原来的值。%但是，为了实现颜色能滚动，就不能恢复
+%         handles.UserData.cmap = temp;
     else
         ms = 'Open a *_gt.mat file first!';
         errordlg(ms);
