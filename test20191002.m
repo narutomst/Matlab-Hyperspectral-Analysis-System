@@ -668,17 +668,18 @@ end
 
 function Recolor_Callback(hObject, eventdata, handles)
     
-    if ~isempty(handles.UserData.imgGT)
-        hObject.UserData.imgGT = handles.UserData.imgGT;
+    if ~isempty(handles.UserData.gtdata)
+        x = handles.UserData.gtdata;
         % ¸Ä±äcolormap
         temp = handles.UserData.cmap;
         cmap = temp;
         cmap(2:end-1, :) = temp(3:end, :);
         cmap(end, :) = temp(2, :);
         c = colormap(cmap);
-        hObject.UserData.cmap = c;
+        handles.UserData.cmap = c;
 %             hObject.UserData.cmap = handles.UserData.cmap;
-        [hbox, himage] = newPlotGT(hObject, handles);
+        [hbox, himage] = newPlotGT(double(x), handles);
+        handles.UserData.cmap = temp;
     else
         ms = 'Open a *_gt.mat file first!';
         errordlg(ms);
