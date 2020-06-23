@@ -752,6 +752,7 @@ function FitWindow_Callback(hObject, eventdata, handles)
     if ~isempty(findobj(handles,'Tag','imscrollpanel'))&&~isempty(findobj(handles,'Type','image'))
         %必须知道当前窗口显示的是什么内容！
         himage = findobj(handles,'Type','image');  %这里的img就是himage，其属性CData可以使用
+       
         if ndims(himage.CData) == 2 &&  ~isempty(findobj(handles,'Type','colorbar'))
             %在这里还是无法知道当前窗口中显示的是GT图还是某个灰度图。
             %探查当前窗口中是否存在colorbar
@@ -763,9 +764,10 @@ function FitWindow_Callback(hObject, eventdata, handles)
             M = handles.UserData.M;
             hfig2 = figure();
 %             figure(hfig2);
-            set(hfig2,'Visible', 'off');
-%             axes1 = axes('Parent',hfig2,'Visible', 'on');           
+            set(hfig2,'Visible', 'on'); %调试的时候可以设置为'on'
+            axes1 = axes('Parent',hfig2,'Visible', 'on');           
 %             imshow(img,'Parent',axes1,'InitialMagnification','fit');
+            
             %
             himage2 = imshow(img,cmap,'InitialMagnification','fit');
             c = colorbar;
@@ -776,44 +778,15 @@ function FitWindow_Callback(hObject, eventdata, handles)
             c.TicksMode = 'Manual';
             c.TickLabels = num2str([-1:M-1]'); %刻度线值
             c.Limits = [1,M+1];
-            
-    hbox = findobj(handles, 'Tag','hbox');
-    
-    if ~isempty(findobj(hbox,'Tag','imscrollpanel'))
-        delete(findobj(hbox,'Tag','imscrollpanel'));
-        panel = uix.Panel('Parent',hbox); 
-        axes1 = axes('Parent',panel,'Tag','axes1');
-    elseif ~isempty(findobj(hbox,'Type','axes'))
-        axes1 = findobj(hbox,'Type','axes');
-    else
-        axes1 = axes('Parent',hbox,'Tag','axes1');
-    end
-    himage = imshow(himage2.CData,cmap,'Parent',axes1,'InitialMagnification','fit');
-    
-   
-    c = colorbar;
-    c.Parent = panel;
-    c.Label.String = '地物类别对应颜色';
-    c.Label.FontWeight = 'bold'; 
-
-    c.Ticks = 0.5:1:M+0.5;       %刻度线位置
-    c.TicksMode = 'Manual';
-    c.TickLabels = num2str([-1:M-1]'); %刻度线值
-    c.Limits = [1,M+1];
-
-    pwidthmax = -1;
-    set( hbox, 'Widths', [pwidthmax,-5] ); 
-    
-    
-%为什么要采取截屏的方式，因为在
-%             f=getframe(hfig2);
-%             close(hfig2);        
-%             [hbox, himage] = newPlotFit(f.cdata, handles);
-        else
+% 为什么要采取截屏的方式？因为在其他方式下颜色条colorBar无法正常显示，
+% 尤其是拉动测边框的条件下
+            f=getframe(hfig2);
+            close(hfig2);        
+            himage.CData = f.cdata;
+        end
             %普通的2维图片，例如灰度图
             [hbox, himage] = newPlotFit(himage.CData, handles);
-        end
-
+        
     end
 end
 
