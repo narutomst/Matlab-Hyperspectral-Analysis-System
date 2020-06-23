@@ -1,7 +1,6 @@
 function [hbox, himage] = newPlotGT(img, handles)
     
-    bkcGT = handles.UserData.bkcGT; %GT图上的背景颜色
-
+   
     if ndims(img)==2
         M = numel(unique(img(:)));
     end
@@ -25,6 +24,7 @@ function [hbox, himage] = newPlotGT(img, handles)
                             [0.5,0,0]; [0,0.5,0];[0,0,0.5]; [0.25,0.75,0]; [0.85,0.5,0]; [0.5,0.5,0]; ... 
                             [0.5,0,1]; [1,0,0.5]; [0.5,0,0.5]; [0.35,0.65,0.75]; [0,1,0.5]; [0,0.5,0.5]; ...
                             [0.5,0.5,0.5];[0.1,0.1,0.1]];
+        bkcGT = handles.UserData.bkcGT; %GT图上的背景颜色        
         colorMap = [bkcGT;colorBase];   %添加背景像素的颜色
         cmap = colormap(colorMap);
         handles.UserData.cmap = cmap;
