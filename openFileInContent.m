@@ -4,23 +4,23 @@ if isfile(hObject.UserData.currentPath)
     [filepath,name,ext] = fileparts(fPath);
 
     hbox = findobj(handles,'Tag','hbox');
-    axes1 = findobj(hbox,'Type','axes');
+%     axes1 = findobj(hbox,'Type','axes');
     
-%     if ~isempty(findobj(hbox,'Tag','imscrollpanel'))
-%         delete(findobj(hbox,'Tag','imscrollpanel'));
-%         axes1 = axes('Parent',hbox,'Tag','axes1');
-%     elseif ~isempty(findobj(hbox,'Type','axes'))
-%         axes1 = findobj(hbox,'Type','axes');
-%     else
-%         axes1 = axes('Parent',hbox,'Tag','axes1');
-%     end
+    if ~isempty(findobj(hbox,'Tag','imscrollpanel'))
+        delete(findobj(hbox,'Tag','imscrollpanel'));
+        axes1 = axes('Parent',hbox,'Tag','axes1');
+    elseif ~isempty(findobj(hbox,'Type','axes'))
+        axes1 = findobj(hbox,'Type','axes');
+    else
+        axes1 = axes('Parent',hbox,'Tag','axes1');
+    end
     
     
     if strcmp(ext,'.bmp') || strcmp(ext,'.png') || ...
             strcmp(ext,'.jpg') || strcmp(ext,'.gif')
         disp(['打开*',ext]);
         himage = imshow(fPath,'Parent',axes1); 
-%         hscrollpanel = imscrollpanel(hbox, himage); 
+        hscrollpanel = imscrollpanel(hbox, himage); 
 
     elseif strcmp(ext,'.mat')
         disp(['打开*',ext]);
