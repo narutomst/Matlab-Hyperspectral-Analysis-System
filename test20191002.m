@@ -633,7 +633,7 @@ end
 function Synth_Callback(hObject, eventdata, handles)
 % 只有当界面当中有图的时候才会执行。
 %1 用户点击【编辑】【重新合成】，则显示对话框，让用户输入3个通道编号
-    if ~isempty(findobj(handles,'Type','image'))&&~isempty(hObject.UserData.imgMat)...
+    if ~isempty(findobj(handles,'Type','image'))&&~isempty(handles.UserData.imgMat)...
             &&~isempty(handles.UserData.matdata) && size(handles.UserData.matdata,3) >3
         
         %当前窗口中有图像且相应的按钮中的UserData.imgMat不为空，则说明当前窗口中显示的图像是Mat图像。
