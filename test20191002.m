@@ -646,10 +646,9 @@ function Synth_Callback(hObject, eventdata, handles)
         try
             ind = str2num(an{:}); 
             img = synthesize_image(x2,ind);
-            hObject.UserData.img = img;
-            hObject.UserData.ind = ind;        %保存用户设置的通道编号
+            
         % 如果是有ScrollBar的，删除重绘制
-            [hbox, himage] = newPlot(hObject,handles);
+            [hbox, himage] = newPlot(img,handles);
         catch
 %             ind = hObject.UserData.ind;
         end
@@ -661,7 +660,9 @@ function Synth_Callback(hObject, eventdata, handles)
         errordlg(ms,'Invalid operation');
         return
     end
-    handles.UserData.img = hObject.UserData.imgMat;
+    hObject.UserData.imgMat = img;
+    hObject.UserData.ind = ind;        %保存用户设置的通道编号
+    handles.UserData.imgMat = hObject.UserData.imgMat;
     
 end
 
