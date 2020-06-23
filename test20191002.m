@@ -803,15 +803,15 @@ function OriginSize_Callback(hObject, eventdata, handles)
         himage = findobj(handles,'Type','image');
 %         hmenu3_1 = findobj(handles,'Label','适应窗口');
         hmenu3_1 = hObject.Parent.Children(4);%也是[适应窗口]
-        if hmenu3_1.UserData.imgGT     %查询【适应窗口】操作的对象是普通图还是GT图
+        if ~hmenu3_1.UserData.imgGT     %查询【适应窗口】操作的对象是普通图还是GT图
             
-            hObject.UserData.img = handles.UserData.img;
-            [hbox, himage] = newPlot(hObject, handles);
+%             显示普通图片
+            [hbox, himage] = newPlot(himage.CData, handles);
             
-        elseif ndims(img) == 2 && ~isempty(findobj(handles,'Type','colorbar'))
-            hObject.UserData.img = handles.UserData.img;
-            hObject.UserData.cmap = handles.UserData.cmap;
-            [hbox, himage] = newPlotGT(hObject, handles);
+        else %显示GT图片
+%             ndims(img) == 2 && ~isempty(findobj(handles,'Type','colorbar'))
+            x = handles.UserData.gtdata;
+            [hbox, himage] = newPlotGT(double(x), handles);
         end
     end
 end
