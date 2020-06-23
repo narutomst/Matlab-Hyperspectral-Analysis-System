@@ -4,11 +4,11 @@ clc
 opengl('save', 'software') 
 
 %----------------------------------------------主界面-------------------------------------------%
-global customPath mFilePath
+global customPath mFilePath bkcGT
+bkcGT = [0.9 0.9 0.9];%GT图背景颜色黑或者白
 
 global x3 lbs2 x2 lbs Inputs Targets Inputs1 Inputs2 Inputs3 t0 t1 t2 mA mA1 mA2
-% a = dir;
-% customPath = a.folder;  %isfolder isfile
+
 p = mfilename('fullpath'); %%确定当前正在执行的*.m文件的路径
 mFilePath = fileparts(p);   %确定*.m文件所在的文件夹路径(即截断最后一级的路径)
 p = fileparts(mFilePath);   %继续截断最后一级的路径，即得到C:\Matlab练习
@@ -314,7 +314,7 @@ text.String = hObject.UserData.currentPath;
 end
 
 function updatatree(selectedPath,handles)
-global customPath mFilePath
+global customPath mFilePath bkcGT
 
 %显示选中文件的地址
 text = findobj(handles,'Style','edit');
@@ -409,7 +409,7 @@ colorBase = [ [1,0,0]; [0,1,0]; [0,0,1]; [1,1,0]; [1,0,1]; [0,1,1]; ...
                     [0.5,0,0]; [0,0.5,0];[0,0,0.5]; [0.25,0.75,0]; [0.85,0.5,0]; [0.5,0.5,0]; ... 
                     [0.5,0,1]; [1,0,0.5]; [0.5,0,0.5]; [0.35,0.65,0.75]; [0,1,0.5]; [0,0.5,0.5]; ...
                     [0.5,0.5,0.5]; [0.1,0.1,0.1]];
-data.bkcGT = [1,1,1];                
+data.bkcGT = bkcGT;                
 data.cmap = [data.bkcGT;colorBase]; %添加背景像素的颜色，此处定义背景像素的颜色为黑色
 data.imgMat = []; %存储Mat伪彩色图像
 data.imgGT = [];   %存储GT图像
@@ -428,7 +428,7 @@ data.selectedPath = selectedPath;
 data.matdata = listbox1.UserData.matdata;
 data.gtdata = listbox1.UserData.gtdata;
 data.ind = listbox1.UserData.ind;
-data.bkcGT = listbox1.UserData.data.bkcGT;
+data.bkcGT = listbox1.UserData.bkcGT;
 data.cmap = listbox1.UserData.cmap;
 data.imgMat = listbox1.UserData.imgMat;
 data.imgGT = listbox1.UserData.imgGT;
