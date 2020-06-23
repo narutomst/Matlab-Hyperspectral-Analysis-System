@@ -1,18 +1,18 @@
 function [hbox, himage] = newPlot(img,handles)
 %删除scrollpanel，显示img，最后再添加scrollpanel，这是因为Matlab自带的imscrollpanel就是这么恶心
     hbox = findobj(handles, 'Tag','hbox');
-    axes1 = findobj(hbox, 'Type','axes');
+%     axes1 = findobj(hbox, 'Type','axes');
 %     scrollPanel = uix.ScrollingPanel( 'Parent', hbox ); %ScrollingPanel
 %     
-%     if ~isempty(findobj(hbox,'Tag','scrollPanel'))
-%         delete(findobj(hbox,'Tag','scrollPanel'));
-%         axes1 = axes('Parent',hbox,'Tag','axes1');
-%     elseif ~isempty(findobj(hbox,'Type','axes'))
-%         axes1 = findobj(hbox,'Type','axes');
+    if ~isempty(findobj(hbox,'Tag','imscrollpanel'))
+        delete(findobj(hbox,'Tag','imscrollpanel'));
+        axes1 = axes('Parent',hbox,'Tag','axes1');
+    elseif ~isempty(findobj(hbox,'Type','axes'))
+        axes1 = findobj(hbox,'Type','axes');
 %         axes1.Parent = scrollingPanel;
-%     else
-%         axes1 = axes('Parent',scrollingPanel,'Tag','axes1');
-%     end
+    else
+        axes1 = axes('Parent',hbox,'Tag','axes1');
+    end
     
     
 %         if strcmp(mark, 'reuse')773024689137994
@@ -44,7 +44,7 @@ function [hbox, himage] = newPlot(img,handles)
 %         %Outposition = [1.0000    1.0000  330.8333  373.0000];
 %         %Position = [44.0300   42.0300  256.3583  303.9950];
 %         %
-        himage = imshow(img,'Parent',axes1,'InitialMagnification',200);
+        himage = imshow(img,'Parent',axes1);%,'InitialMagnification',200
 %         himage = imshow(img);
 % 在显示大图像时，只有命令行窗口显示警告信息时，才说明imshow()首先尝试
 % 以原始方式显示图像了
@@ -65,7 +65,7 @@ function [hbox, himage] = newPlot(img,handles)
 % 注意：如果指定坐标区的位置（使用 subplot 或 axes），则 imshow 忽略您可能已指定的任何初始放
 % 大倍率并默认设置为 'fit' 行为。
 %-------------------------------------------------------------------------------------%
-% 		hscrollpanel = imscrollpanel(hbox, himage); 
+		hscrollpanel = imscrollpanel(hbox, himage); 
 %     默认的'Tag' 是 'imscrollpanel'
 
 
