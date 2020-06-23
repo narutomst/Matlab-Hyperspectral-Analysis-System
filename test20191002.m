@@ -112,9 +112,9 @@ hmenu3_1 = uimenu(hmenu3,'Label','适应窗口', 'HandleVisibility','on', ...
 hmenu3_2 = uimenu(hmenu3,'Label','原始大小', 'HandleVisibility','on', ...
     'Callback',{@OriginSize_Callback,gcf});
 hmenu3_3 = uimenu(hmenu3,'Label','单独绘图(自适应)', 'HandleVisibility','on', ...
-    'Callback',{@SeparatePlot1_Callback,gcf});
+    'Enable','off','Callback',{@SeparatePlot1_Callback,gcf});
 hmenu3_4 = uimenu(hmenu3,'Label','单独绘图(原始大小)', 'HandleVisibility','on', ...
-    'Callback',{@SeparatePlot2_Callback,gcf});
+    'Enable','off','Callback',{@SeparatePlot2_Callback,gcf});
 hmenu3_5 = uimenu(hmenu3,'Label','保留项', 'Visible','off', ...
     'Enable','off', 'HandleVisibility','off', 'Callback',{@New_Callback,gcf});
 
@@ -830,10 +830,10 @@ end
 %     end
 %     guidata(hObject, handles)
 % end
-%【查看】【单独绘图1】单独脚本函数
+%【查看】【单独绘图(自适应)】单独脚本函数
 % function SeparatePlot1_Callback(hObject, handles)
 % end
-%【查看】【单独绘图2】单独脚本函数
+%【查看】【单独绘图(原始大小)】单独脚本函数
 % function SeparatePlot2_Callback(hObject, handles)
 % end
 % --------------------------------------第4列菜单------------------------初始化在83行--------------------
