@@ -752,7 +752,7 @@ function FitWindow_Callback(hObject, eventdata, handles)
     if ~isempty(findobj(handles,'Tag','imscrollpanel'))&&~isempty(findobj(handles,'Type','image'))
         %必须知道当前窗口显示的是什么内容！
         himage = findobj(handles,'Type','image');  %这里的img就是himage，其属性CData可以使用
-       
+        hObject.UserData.imgGT=0;
         if ndims(himage.CData) == 2 &&  ~isempty(findobj(handles,'Type','colorbar'))
             %在这里还是无法知道当前窗口中显示的是GT图还是某个灰度图。
             %探查当前窗口中是否存在colorbar
@@ -783,10 +783,13 @@ function FitWindow_Callback(hObject, eventdata, handles)
             f=getframe(hfig2);
             close(hfig2);        
             himage.CData = f.cdata;
+            hObject.UserData.imgGT=1; 
+            %hObject就是hmenu3_1，置为1表示处理的是一张GT图，
+            %用于指导【原始大小】进行原图显示
         end
+            
             %普通的2维图片，例如灰度图
             [hbox, himage] = newPlotFit(himage.CData, handles);
-        
     end
 end
 
@@ -797,8 +800,11 @@ function OriginSize_Callback(hObject, eventdata, handles)
     % 显示方式从''适应窗口''状态转换为'原始大小'
     % 只有图像而没有ScrollBar，这种情况下才执行。否则不执行
     if isempty(findobj(handles,'Tag','imscrollpanel'))&&~isempty(findobj(handles,'Type','image'))
-        img = findobj(handles,'Type','image');
-        if ndims(img) == 3
+        himage = findobj(handles,'Type','image');
+%         hmenu3_1 = findobj(handles,'Label','适应窗口');
+        hmenu3_1 = hObject.Parent.Children(4);%也是[适应窗口]
+        if hmenu3_1.UserData.imgGT     %查询【适应窗口】操作的对象是普通图还是GT图
+            
             hObject.UserData.img = handles.UserData.img;
             [hbox, himage] = newPlot(hObject, handles);
             
