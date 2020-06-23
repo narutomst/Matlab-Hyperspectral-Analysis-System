@@ -5,7 +5,7 @@ opengl('save', 'software')
 
 %----------------------------------------------主界面-------------------------------------------%
 global customPath mFilePath bkcGT
-bkcGT = [0.9 0.9 0.9];%GT图背景颜色黑或者白
+bkcGT = [0.95 0.95 0.95];%GT图背景颜色黑或者白
 
 global x3 lbs2 x2 lbs Inputs Targets Inputs1 Inputs2 Inputs3 t0 t1 t2 mA mA1 mA2
 
