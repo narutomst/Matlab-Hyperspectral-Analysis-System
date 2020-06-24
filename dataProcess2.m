@@ -8,7 +8,7 @@ function [x3,x2,lbs2,lbs,matInfo,gtInfo] = dataProcess2(handles)
     S = whos('-file',matPath);
     matInfo = S;
     x3 = eval((S.name));
-
+    % 获取lbs2，2维的标签数据
     load(gtPath);
     S = whos('-file',gtPath);
     gtInfo = S;
@@ -33,9 +33,7 @@ function [x3,x2,lbs2,lbs,matInfo,gtInfo] = dataProcess2(handles)
         x2 = x3;    %所选择mat数据为二维mat
         x3 = [];
     end
-    x2 = x2(b,:);
-    % 获取lbs2，2维的标签数据
-
+    x2 = x2(b,:);  %去除背景像素
     
     % 二维标签转换为一维标签
     n_dims = ndims(lbs2);
@@ -46,7 +44,7 @@ function [x3,x2,lbs2,lbs,matInfo,gtInfo] = dataProcess2(handles)
     elseif n_dims == 2
         lbs = reshape(lbs2,m,1);%将标签按列取出来拼接成一个列向量
                                             %lbs表示一维标签
-        lbs = lbs(b,:);               
+        lbs = lbs(b,:);         %去除背景像素      
     elseif n_dims == 3
         lbs = [];
         str = {'所选择标签文件可能有问题，维度为3.';'可查看hmenu4_1.UserData.lbs2'};
