@@ -30,9 +30,9 @@ function Open2_Callback(hObject, eventdata, handles)
             handles.UserData.gtdata = double(x); % handles中保存最新的选定内容
 			[hbox, himage] = newPlotGT(double(x), handles);%打开*_gt.mat数据
         
-% 		elseif (numel(size(x))==3)&&(size(x,3)>1)&&(size(x,1)>1)&&(size(x,2)>1)
-% 			%判定输入数据为*.mat
-% 			openMat(hObject, eventdata, handles, x, matfilename);
+            %设置标志值
+            hmenu3_1 = findobj(handles,'Label','适应窗口');
+            hmenu3_1.UserData.imgGT=1;
 
 		    %显示选中文件的地址
             text = findobj(handles,'Style','edit');
