@@ -112,9 +112,9 @@ hmenu3_1 = uimenu(hmenu3,'Label','适应窗口', 'HandleVisibility','on', ...
 hmenu3_2 = uimenu(hmenu3,'Label','原始大小', 'HandleVisibility','on', ...
     'Callback',{@OriginSize_Callback,gcf});
 hmenu3_3 = uimenu(hmenu3,'Label','单独绘图(自适应)', 'HandleVisibility','on', ...
-    'Enable','off','Callback',{@SeparatePlot1_Callback,gcf});
+    'Enable','on','Callback',{@SeparatePlot1_Callback,gcf});
 hmenu3_4 = uimenu(hmenu3,'Label','单独绘图(原始大小)', 'HandleVisibility','on', ...
-    'Enable','off','Callback',{@SeparatePlot2_Callback,gcf});
+    'Enable','on','Callback',{@SeparatePlot2_Callback,gcf});
 hmenu3_5 = uimenu(hmenu3,'Label','保留项', 'Visible','off', ...
     'Enable','off', 'HandleVisibility','off', 'Callback',{@New_Callback,gcf});
 
@@ -764,7 +764,7 @@ function FitWindow_Callback(hObject, eventdata, handles)
             M = handles.UserData.M;
             hfig2 = figure();
 %             figure(hfig2);
-            set(hfig2,'Visible', 'on'); %调试的时候可以设置为'on'
+            set(hfig2,'Visible', 'off'); %调试的时候可以设置为'on'
             axes1 = axes('Parent',hfig2,'Visible', 'on');           
 %             imshow(img,'Parent',axes1,'InitialMagnification','fit');
             
@@ -815,21 +815,7 @@ function OriginSize_Callback(hObject, eventdata, handles)
         end
     end
 end
-%         %     himage = imshow(handles.UserData.imgoutput)
-%         hpanel = imscrollpanel(handles, handles.UserData.currentImageHanle);
-%     %     handles.UserData.currentImageHanle = himage;
-%         
-%         if (handles.UserData.dim==2)
-%             c = colorbar;
-%             c.Limits = handles.UserData.colorLimits;
-%             c.Ticks = 1:handles.UserData.Num;
-%             c.FontSize = round(c.Position(4)*300/handles.UserData.Num);
-%         end
-% 
-%         handles.UserData.scrollpanelH = hpanel;    
-%     end
-%     guidata(hObject, handles)
-% end
+
 %【查看】【单独绘图(自适应)】单独脚本函数
 % function SeparatePlot1_Callback(hObject, handles)
 % end
