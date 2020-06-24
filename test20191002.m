@@ -4,7 +4,7 @@ clc
 opengl('save', 'software') 
 
 %----------------------------------------------主界面-------------------------------------------%
-global customPath mFilePath bkcGT
+global customPath mFilePath bkcGT colorBase
 bkcGT = [0.95 0.95 0.95];%GT图背景颜色黑或者白
 
 global x3 lbs2 x2 lbs Inputs Targets Inputs1 Inputs2 Inputs3 t0 t1 t2 mA mA1 mA2
@@ -314,7 +314,7 @@ text.String = hObject.UserData.currentPath;
 end
 
 function updatatree(selectedPath,handles)
-global customPath mFilePath bkcGT
+global customPath mFilePath bkcGT colorBase
 
 %显示选中文件的地址
 text = findobj(handles,'Style','edit');
@@ -649,6 +649,9 @@ function Synth_Callback(hObject, eventdata, handles)
             
         % 如果是有ScrollBar的，删除重绘制
             [hbox, himage] = newPlot(img,handles);
+            %设置标志值
+            hmenu3_1 = findobj(handles,'Label','适应窗口');
+            hmenu3_1.UserData.imgGT=0;
         catch
 %             ind = hObject.UserData.ind;
         end
@@ -682,6 +685,10 @@ function Recolor_Callback(hObject, eventdata, handles)
         [hbox, himage] = newPlotGT(double(x), handles);
         %恢复cmap到原来的值。%但是，为了实现颜色能滚动，就不能恢复
 %         handles.UserData.cmap = temp;
+
+        %设置标志值
+        hmenu3_1 = findobj(handles,'Label','适应窗口');
+        hmenu3_1.UserData.imgGT=1;
     else
         ms = 'Open a *_gt.mat file first!';
         errordlg(ms);
