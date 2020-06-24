@@ -1,32 +1,15 @@
 % clear,close%绘制光谱反射率的曲线，即取同一像素点的所有通道绘制成一条曲线
 % clc
 
-function spectralReflectivity(hmenu4_1)
+function spectralReflectivity(hmenu4_1)  %即'加载数据'
     timerVal_1 = tic;
     disp('光谱分析启动.....................................................');
 try
     cmap = hmenu4_1.UserData.cmap;
-    if cmap(1,:)==[0 0 0];
-        cmap = cmap(2:end,:);
-    end
 catch
-%     colorBase = [ [1,0,0]; [0,1,0]; [0,0,1]; [1,1,0]; [1,0,1]; [0,1,1]; ...
-%                         [0.5,0,0]; [0,0.5,0];[0,0,0.5]; [0.25,0.75,0]; [0.85,0.5,0]; [0.5,0.5,0]; ... 
-%                         [0.5,0,1]; [1,0,0.5]; [0.5,0,0.5]; [0.35,0.65,0.75]; [0,1,0.5]; [0,0.5,0.5]; ...
-%                         [0.5,0.5,0.5]; [0.1,0.1,0.1]]; 
-%     handles.UserData.cmap = colorBase;                
-    try
         cmap = handles.UserData.cmap;   
-        if cmap(1,:)==[0 0 0];
-            cmap = cmap(2:end,:);
-        end
-    catch
-         colorBase = [[1,0,0]; [0,1,0]; [0,0,1]; [1,1,0]; [1,0,1]; [0,1,1]; ...  %来自newPlotGT
-                            [0.5,0,0]; [0,0.5,0];[0,0,0.5]; [0.25,0.75,0]; [0.85,0.5,0]; [0.5,0.5,0]; ... 
-                            [0.5,0,1]; [1,0,0.5]; [0.5,0,0.5]; [0.35,0.65,0.75]; [0,1,0.5]; [0,0.5,0.5]; ...
-                            [0.5,0.5,0.5];[0.1,0.1,0.1]];
-    end
 end
+
     N = hmenu4_1.UserData.M-1;
     x2 = hmenu4_1.UserData.x2;
     lbs = hmenu4_1.UserData.lbs;
@@ -41,7 +24,7 @@ end
             row = row(1:50);
         end
         figure
-        plot(1:chs, x2(row,:), 'color', cmap(i,:));
+        plot(1:chs, x2(row,:), 'color', cmap(i+1,:));
         xlabel('Channels');
         ylabel('Reflective coeff');
         xlim([1,chs]);
@@ -65,7 +48,7 @@ end
             row = row(1:50);
         end
         ax = subplot(d(1),d(2),i);
-        plot(ax, 1:chs, x2(row,:), 'color', cmap(i,:));
+        plot(ax, 1:chs, x2(row,:), 'color', cmap(i+1,:));
 %         xlabel('Channels');
 %         ylabel('Reflective coeff');
         xlim([1,chs]); 
