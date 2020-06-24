@@ -2,7 +2,7 @@
 % hObject = 1; handles = 1; customPath = 'D\';
 
 function feedData(hObject, handles)
-global x3 lbs2 x2 lbs
+global x3 lbs2 x2 lbs bkcGT colorBase
 hmenu4_1 = findobj(handles,'Text', '加载数据');
 
 f = figure('Name','选择数据与算法','NumberTitle','off', ...
@@ -468,10 +468,10 @@ function pushbutton6_Callback(hObject, eventdata, handles)
 end
 
 function reNew(hObject,handles)
-global x3 lbs2 x2 lbs
+global x2 lbs bkcGT colorBase
     timerVal_1 = tic;
     disp('数据预处理中...............');
-    [x3,x2,lbs2,lbs,matInfo,gtInfo] = dataProcess2(handles);
+    [~,x2,~,lbs,matInfo,gtInfo] = dataProcess2(handles);
 %     [~,x2,~,lbs] = dataProcess2(handles);    
 %     hObject.UserData.x3 = x3;  
     hObject.UserData.x2 = x2;
@@ -500,20 +500,29 @@ global x3 lbs2 x2 lbs
 l = findobj(handles,'Style', 'listbox');
 ind = l.UserData.ind;
 hObject.UserData.ind = ind;
-hObject.UserData.matdata = x3;
-hObject.UserData.gtdata = lbs2;
+handles.UserData.ind = ind;
+% handles.UserData.matdata = x3;% hObject.UserData.matdata = x3;
+% handles.UserData.gtdata = lbs2;% hObject.UserData.gtdata = lbs2;
+
 hObject.UserData.cmap = l.UserData.cmap;
+handles.UserData.cmap = [bkcGT;colorBase];
 % 首先绘制合成图像
-imgMat = synthesize_image(x3, ind);   
-hObject.UserData.imgMat = imgMat;
-handles.UserData.imgMat = hObject.UserData.imgMat;
-SeparatePlot3_Callback(imgMat, handles.UserData.cmap,0);
+imgMat = synthesize_image(handles.UserData.matdata, ind);   
+% hObject.UserData.imgMat = imgMat;
+% handles.UserData.imgMat = hObject.UserData.imgMat;
+% SeparatePlot3_Callback(imgMat, handles.UserData.cmap,0);
+p = figure();
+himage = imshow(imgMat);
+hscrollpanel = imscrollpanel(p, himage); 
 
-% 然后绘制标记图
+% 然后绘制GT图
+p = figure();
+himage = plot1(handles);
+hscrollpanel = imscrollpanel(p, himage); 
 
-imgGT = double(lbs2);   
-hObject.UserData.imgGT = imgGT;
-handles.UserData.imgGT = hObject.UserData.imgGT;
+imgGT = double(handles.UserData.gtdata);   
+% hObject.UserData.imgGT = imgGT;
+% handles.UserData.imgGT = hObject.UserData.imgGT;
 if ndims(imgGT)==2
     M = numel(unique(imgGT(:)));
 end
@@ -521,15 +530,11 @@ hObject.UserData.M = M;
 handles.UserData.M = hObject.UserData.M;   
     
 if isempty(hObject.UserData.cmap)
-    colorBase = [ [0.99,0.99,0.99]; [0.8,0,0]; [0,1,0]; [0,0,1]; [1,1,0]; [1,0,1]; [0,1,1]; ...
-                        [0.5,0,0]; [0,0.5,0];[0,0,0.5]; [0.25,0.75,0]; [0.85,0.5,0]; [0.5,0.5,0]; ... 
-                        [0.5,0,1]; [1,0,0.5]; [0.5,0,0.5]; [0.35,0.65,0.75]; [0,1,0.5]; [0,0.5,0.5]; ...
-                        [0.5,0.5,0.5];[0.1,0.1,0.1]];
-    hObject.UserData.cmap = colorBase;
+    hObject.UserData.cmap = [bkcGT;colorBase];
 end
-handles.UserData.cmap = hObject.UserData.cmap;
-
-SeparatePlot3_Callback(imgGT, handles.UserData.cmap,M);
+% handles.UserData.cmap = hObject.UserData.cmap;
+% 
+% SeparatePlot3_Callback(imgGT, handles.UserData.cmap,M);
 
 %最后绘制堆叠图。如果数据加载成功，则说明同时具备了Mat图和GT图，这种情况下才能绘制堆叠图。
 % id1 = imgGT~=0;    %512×614 logical
