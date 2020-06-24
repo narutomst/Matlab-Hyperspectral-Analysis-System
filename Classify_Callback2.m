@@ -50,7 +50,7 @@ val = hmenu4_1.UserData.cValue;
 dataLines = [val+1, val+1];%第val个算法对应于excel的第val+1行
 % dataLines = val+1;
 
-workbookFile = fullfile(handles.UserData.mFilePath,"降维参数统计.xlsx");
+workbookFile = fullfile(handles.UserData.mFilePath,"ParametersForDimReduceClassify.xlsx");
 try
     paraTable_c = importfile2(workbookFile, "Sheet2", dataLines);
 catch    
@@ -74,8 +74,8 @@ disp('数据准备..................................................................
 
 rate = paraTable_c.rate;
 
-while (min(lbs(:))==0)
-    lbs = lbs+1;
+if min(lbs(:))==0
+    lbs = lbs(lbs~=0);
 end
 % vector_lbs2 = ind2vec(lbs2); % 这个函数输入只能是一维
 
