@@ -32,6 +32,10 @@ function Open1_Callback(hObject, eventdata, handles)
             handles.UserData.currentPath = hObject.UserData.currentPath; % handles中保存最新的选定内容
             %打开mat
 			[hbox,himage] = openMat(double(x), handles);
+            
+            %设置标志值
+            hmenu3_1 = findobj(handles,'Label','适应窗口');
+            hmenu3_1.UserData.imgGT=0;
             %显示选中文件的地址
             text = findobj(handles,'Style','edit');
             text.String = handles.UserData.currentPath;            
