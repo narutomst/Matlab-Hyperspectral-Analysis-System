@@ -880,7 +880,7 @@ function SpectrumPlot_Callback(hObject, eventdata, handles)
 % 绘制出各个类别的光谱反射率曲线
     timerVal_1 = tic;
     disp('光谱分析启动.....................................................');
-    handles.UserData
+    %handles.UserData
     hmenu4_1 = findobj(handles,'Label','加载数据');
    
     spectralReflectivity(hmenu4_1);%handles仅用于传递cmap
@@ -913,7 +913,7 @@ val = hmenu4_1.UserData.drValue;
 dataLines = [val+1, val+1];%第val个算法对应于excel的第val+1行
 % dataLines = val+1;
 
-workbookFile = fullfile(handles.UserData.mFilePath,"降维参数统计.xlsx");
+workbookFile = fullfile(handles.UserData.mFilePath,"ParametersForDimReduceClassify.xlsx");
 try
     paraTable_dr = importfile1(workbookFile, "Sheet1", dataLines);
 catch
@@ -955,8 +955,8 @@ end
 % mappedA = compute_mapping(A, type, no_dims, parameters);
 % mappedA = compute_mapping(A, type, no_dims, parameters, eig_impl);
 %% 绘制降维后的结果
-ldaPlot(mappedA,lbs,handles); %所有点都显示
-ldaPlot1(mappedA,lbs,handles); %去除背景点（因为背景点覆盖住了其他点）
+ldaPlot(mappedA,lbs,handles); %普通散点图的方式显示降维后的效果
+% ldaPlot1(mappedA,lbs,handles); %去除背景点（因为背景点覆盖住了其他点）
 %% 保存降维后的结果
 % mapping;
 % mapping = 
@@ -999,7 +999,8 @@ end
 
 function Frobenius_Callback(hObject, eventdata, handles)
 
-% 绘制出F范数平方的曲线
+% 计算出每个光谱通道上的F范数，并绘制出F范数平方的曲线
+% 从而根据F范数大小来选择通道，通常舍弃F范数小的通道。
     hObject.UserData.thresholdDefault = 0.1;
     hObject.UserData.thresholdCustom = 0;
 %1 用户点击【分析】【Frobenius分析】，则显示对话框，让用户输入阈值threshold，范围为[0,1]
@@ -1018,15 +1019,16 @@ function Frobenius_Callback(hObject, eventdata, handles)
 
     timerVal_1 = tic;
     disp('F范数分析启动.....................................................');
-    hObject.UserData
+    hObject.UserData;
     hmenu4_1 = findobj(handles,'Label','加载数据');
     x2 = hmenu4_1.UserData.x2;
     
 %     F = sqrt(sum(x2.^2)); % F范数
-%     F2 = sum(x2.^2);           % F范数的平方
+    F2 = sum(x2.^2);           % 计算每个通道上的(即x2的每一列的)F范数的平方
 %     F2 = norm(x2,'fro');       % F范数
-    F2 = norm(x2,'fro')^2;   % F范数的平方
+%    F2 = norm(x2,'fro')^2;   % F范数的平方
     hObject.UserData.F2 = F2;
+    
     figure
     plot(F2,'LineWidth',1.5);
     xlabel('Channels');
@@ -1051,6 +1053,8 @@ function Frobenius_Callback(hObject, eventdata, handles)
 %     hObject.UserData.F2_new = F2_new;
 % 保留的通道编号保存于channelSelected
     hObject.UserData.channelSelected = find(F2>=threshold);
+    % 按照较优通道从x2中选择出来的数据x2Selected。
+    hObject.UserData.x2Selected = x2(:, hObject.UserData.channelSelected);
     hObject.UserData
     threshold
     time1 = toc(timerVal_1);
