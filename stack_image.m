@@ -32,6 +32,6 @@ end
 
 p = figure();
 % axes1 = axes('Parent',p,'Tag','axes1');
-himage = imshow(imgMat)%,'Parent',axes1);
+himage = imshow(imgMat);%,'Parent',axes1);
 hscrollpanel = imscrollpanel(p, himage); 
 end
