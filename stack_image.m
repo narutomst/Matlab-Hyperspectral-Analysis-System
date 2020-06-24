@@ -1,5 +1,5 @@
 %本函数实现在伪彩色图上显示标记区域，即将Mat图和GT图重叠在一起
-function img = stack_image(imgMat,imgGT,cmap,M)
+function img = stack_image(imgMat, imgGT, cmap, M)
 % id1 = imgGT~=0;    %512×614 logical
 % id2 = imgGT~=[0,0,0];  %会报错！矩阵维度必须一致。
 % id3 = imgGT(:)~=0; %314368×1 logical
@@ -30,11 +30,8 @@ for i = 2:M
     imgMat(:,:,3) = imgMat3;
 end
 
-
-
-
 p = figure();
-axes1 = axes('Parent',p,'Tag','axes1');
-himage = imshow(imgMat,'Parent',axes1);
+% axes1 = axes('Parent',p,'Tag','axes1');
+himage = imshow(imgMat)%,'Parent',axes1);
 hscrollpanel = imscrollpanel(p, himage); 
 end
