@@ -1,25 +1,20 @@
 function SeparatePlot2_Callback(hObject, eventdata, handles)
-% newPlotGT(hObject, handles);
+% 【单独绘制(原始大小)】
 %只有当前图窗口显示有图片，我们才执行。否则啥也不干。
-if ~isempty(findobj(handles,'Type','image'))   
-    img = handles.UserData.img;
+if ~isempty(findobj(handles,'Type','image')) 
+    himage = findobj(handles,'Type','image');
+    hmenu3_1 = hObject.Parent.Children(4);
     p = figure();
-    axes1 = axes('Parent',p,'Tag','axes1');
-    if ndims(img) == 3
-        himage = imshow(img,'Parent',axes1);
-    elseif ndims(img) == 2
-        himage = imshow(img,handles.UserData.cmap,'Parent',axes1);
-        c = colorbar;
-        c.Label.String = '地物类别对应颜色';
-        c.Label.FontWeight = 'bold'; 
-        
-        M = handles.UserData.M;
-        
-        c.Ticks = 0.5:1:M+0.5;       %刻度线位置
-        c.TicksMode = 'Manual';
-        c.TickLabels = num2str([-1:M-1]'); %刻度线值
-        c.Limits = [1,M+1];
-    end  
-    hscrollpanel = imscrollpanel(p, himage); 
-end
+    if isempty(findobj(handles,'Type','colorbar')) && ~hmenu3_1.UserData.imgGT
+    %既不存在colorbar，imgGT又不等于1，则说明当前窗口中为普通图片
+    %在新的figure中以原始大小显示普通图片
+        himage = imshow(himage.CData,'Parent',gca);     
+    else
+    %在新的figure中以原始大小显示GT图片
+        himage = plot1(handles);
+    end
+    hscrollpanel = imscrollpanel(p, himage);  
+end    
+  
+
 end
