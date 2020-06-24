@@ -437,6 +437,7 @@ data.cmap = listbox1.UserData.cmap;
 data.imgMat = listbox1.UserData.imgMat;
 data.imgGT = listbox1.UserData.imgGT;
 data.imgStack = listbox1.UserData.imgStack;
+data.imgNew = []; %保存分类算法预测的GT图像
 data.img = listbox1.UserData.img; %存储普通2维图像
 data.M = listbox1.UserData.M;
 data.himage = listbox1.UserData.himage;
@@ -1010,7 +1011,7 @@ function Frobenius_Callback(hObject, eventdata, handles)
         'you have known the finally analysis result'];
     % 1.相对值阈值，最常用；2.绝对值的阈值，只用于验证别人已知的结论
     dlg_title = 'Enter the threshold';
-    an = inputdlg(prompt,dlg_title,1);%resize属性设置为on
+    an = inputdlg(prompt, dlg_title, 1);%resize属性设置为on
     try
         hObject.UserData.thresholdCustom = str2double(an{:}); 
     catch
