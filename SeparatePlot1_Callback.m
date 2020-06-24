@@ -1,7 +1,7 @@
 function SeparatePlot1_Callback(hObject, eventdata, handles)
 % 【单独绘制(自适应)】
 %只有当前图窗口显示有图片，我们才执行。否则啥也不干。
-if 0&&~isempty(findobj(handles,'Type','image')) 
+if 1&&~isempty(findobj(handles,'Type','image')) 
     himage = findobj(handles,'Type','image');
     hmenu3_1 = hObject.Parent.Children(4);
     p = figure();
@@ -15,7 +15,7 @@ if 0&&~isempty(findobj(handles,'Type','image'))
     end
 end
 
-if 1&&~isempty(findobj(handles,'Type','image'))       
+if 0&&~isempty(findobj(handles,'Type','image'))       
     himage = findobj(handles,'Type','image');
     
     figure()
