@@ -128,7 +128,12 @@ switch p.Results.type
         % 调用函数
         % 现有参数为4个array外加一个struct
         [racc, best_perf, best_vperf, best_tperf, tTest] = f_BP(XTrain, TTrain, XTest, TTest, Var);
-        %tTest为预测的类别标签
+        %racc 误分率，错误率
+        %best_perf 训练集最佳性能（蓝色曲线）
+        %best_vperf 验证集最佳性能（绿色曲线）
+        %best_tperf 测试集最佳性能（红色曲线）
+        %tTest 为预测的类别标签列向量
+        
     case 'RBF'
         [racc, best_perf, best_vperf, best_tperf, tTest] = f_RBF(XTrain, TTrain, XTest, TTest, Var);        
     case 'GA-BP'
