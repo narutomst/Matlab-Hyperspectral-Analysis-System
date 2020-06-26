@@ -11,7 +11,7 @@ colorBase = [ [1,0,0]; [0,1,0]; [0,0,1]; [1,1,0]; [1,0,1]; [0,1,1]; ...
                     [0.5,0,1]; [1,0,0.5]; [0.5,0,0.5]; [0.35,0.65,0.75]; [0,1,0.5]; [0,0.5,0.5]; ...
                     [0.5,0.5,0.5]; [0.1,0.1,0.1]];
                 
-global x3 lbs2 x2 lbs Inputs Targets Inputs1 Inputs2 Inputs3 t0 t1 t2 mA mA1 mA2
+global x3 lbs2 x2 lbs Inputs Targets Inputs1 Targets1 Inputs2 Targets2 Inputs3 Targets3 t0 t1 t2 mA mA1 mA2 Inputs_1 Targets_1 Inputs_2 Targets_2
 
 p = mfilename('fullpath'); %%确定当前正在执行的*.m文件的路径
 mFilePath = fileparts(p);   %确定*.m文件所在的文件夹路径(即截断最后一级的路径)
