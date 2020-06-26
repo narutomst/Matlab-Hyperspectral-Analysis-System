@@ -1,41 +1,9 @@
 %当用户选择【智能分类】命令后，程序将依据用户在Excel中设置的参数“app”的值
 %以及数据是否已经经过降维处理来决定采用何种方式（ClassDemo\Classification Learner\nprtool）进行分类。
 function Classify_Callback1(hObject, eventdata, handles) %第113行
-global x3 lbs2 x2 lbs mappedA Inputs Targets Inputs1 Targets1 Inputs2 Targets2 Inputs3 Targets3 t0 t1 t2 mA mA1 mA2 Inputs_1 Targets_1 Inputs_2 Targets_2
 
-disp('分类：数据有效性检查............');
-% if isfield(hmenu4_1.UserData, 'x2') || ~isempty(hmenu4_1.UserData.x2)
-try
-    x2 = hmenu4_1.UserData.x2;
-catch
-    feedData(hmenu4_1,handles);%若数据载入未成功
-    return;
-end
-
-try
-    lbs = hmenu4_1.UserData.lbs; 
-catch
-    feedData(hmenu4_1,handles);%若标签数据载入未成功
-    return;
-end
-
-try
-    type = hmenu4_1.UserData.cAlgorithm;%若未选择分类算法
-catch
-    feedData(hmenu4_1,handles);
-    return;
-end
-
-%请输入训练集和测试集的样本数比例
-%     prompt = ['请输入训练集和测试集的样本数比例。当前比例为',num2str(hObject.UserData.rate)];
-%     dlg_title = '指定训练集与测试集的样本数比例';
-%     an = inputdlg(prompt,dlg_title,1);%resize属性设置为on
-%     if ~isempty(an{:})
-%         rate = str2double(an{:}); 
-%     end
-
+hmenu4_1 = findobj(handles,'Label','加载数据');
 % 所选择的算法名称及序号
-type = hmenu4_1.UserData.cAlgorithm;
 val = hmenu4_1.UserData.cValue;
 % 根据序号读取默认参数
 dataLines = [val+1, val+1];%第val个算法对应于excel的第val+1行
@@ -49,34 +17,7 @@ try
 catch    
     paraTable_c = importfile2(workbookFile, "Sheet2", [2,2]);
 end
-t = table2cell(paraTable_c);
-ss = table2struct(paraTable_c);
-n = numel(t); 
-para = cell(1,2*n);
-for i = 1:n
-	para{2*i} = t{i};
-	para{2*i-1} = paraTable_c.Properties.VariableNames{i};
-end
 
-% 得到最终分类准确率acc
-% hyperDemo_1(hmenu4_1.UserData.x3);
-% hyperDemo_detectors_1(hmenu4_1.UserData.x3);
-% 一维分类方法
-timerVal_1 = tic;
-disp('数据准备.......................................................................');
-
-rate = paraTable_c.rate;
-
-
-
-%% 准备好数据之后，以下有好几种思路
-
-Inputs = x2';
-if min(lbs(:))==0
-    lbs = lbs(lbs~=0);
-end
-% vector_lbs2 = ind2vec(lbs2); % 这个函数输入只能是一维
-Targets = ind2vec(lbs');
 
 % 1. nnstart >> nprtool（Pattern Recognition and Classification）
 % 请为每种App准备合适的"数据结构"，否则GUI界面中将可能看不到待选的变量
@@ -105,8 +46,7 @@ elseif paraTable_c.app==2
         'hmenu4_4.UserData.mA,hmenu4_4.UserData.mA1和hmenu4_4.UserData.mA2';
         '若要重新拆分数据，请在命令行执行：[mA1,mA2] = createTwoTable(mappedA,lbs,rate); [t1,t2] = createTwoTable(x2,lbs,rate);或'};
     disp(str);
-    classificationLearner
-    end
+
 % 不建议使用未降维数据直接分类，因为有时候计算时间太长了。超过4小时
 elseif paraTable_c.app==3
 % 3. ClassDemo
