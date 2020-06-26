@@ -1,6 +1,6 @@
 %当用户选择【Classification Learner】命令后，本程序运行
 function Classify_Callback3(hObject, eventdata, handles) %第113行
-global x3 lbs2 x2 lbs mappedA Inputs Targets Inputs1 Inputs2 Inputs3 t0 t1 t2 mA mA1 mA2 hmenu4_1
+global x3 lbs2 x2 lbs mappedA Inputs Targets Inputs1 Inputs2 Inputs3 t0 t1 t2 mA mA1 mA2
 %% 数据处理（三维mat转二维，二维gt转一维）
 % hmenu4 = findobj(handles,'Tag','Analysis');
 hmenu4_1 = findobj(handles,'Label','加载数据');
