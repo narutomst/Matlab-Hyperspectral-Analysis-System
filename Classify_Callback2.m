@@ -97,10 +97,10 @@ end
         % 因为目前的数据在pca降维后存在严重的数据倾斜，即第1主成分所占的比重太大了
         % 这样的话真的有利于分类吗？
         n = paraTable_c.executionTimes;
-        racc = zeros(n,1);
-        best_perf =  zeros(n,1); 
-        best_vperf =zeros(n,1); 
-        best_tperf = zeros(n,1);
+%         racc = zeros(n,1);
+%         best_perf =  zeros(n,1); 
+%         best_vperf =zeros(n,1); 
+%         best_tperf = zeros(n,1);
         
         try
             MyPar = parpool; %如果并行池未开启，则打开并行处理池
@@ -218,12 +218,142 @@ end
         disp({[hmenu4_1.UserData.matPath, ' 分类完毕! 历时',num2str(time2-time1),'秒.']});
 
     else  % 如果加载数据完毕，未选择[执行降维]而直接选择[执行分类]，则启动classificationLearner
-        if ~exist('t0','var') || isempty(t0) || size(x2,1)~=size(t0,1)
-            t0 = createTable(x2, lbs);
-            [t1,t2] = createTwoTable(x2,lbs,rate);
-            mA = createTable(mappedA, lbs);
-            [mA1,mA2] = createTwoTable(mappedA,lbs,rate);
-        end
-        classificationLearner
+            answer = questdlg('数据未执行降维，想采用以下哪种方式执行分类?', ...
+            '分类方式选择', ...
+            'Clssification Learner','ClassDemo','exit','exit');
+            % Handle response
+            switch answer
+                case 'Clssification Learner'
+                    disp([answer ' 开启.'])
+                    %dessert = 1;
+                    if ~exist('t0','var') || isempty(t0) || size(x2,1)~=size(t0,1)
+                        t0 = createTable(x2, lbs);
+                        [t1,t2] = createTwoTable(x2,lbs,rate);
+                        mA = createTable(mappedA, lbs);
+                        [mA1,mA2] = createTwoTable(mappedA,lbs,rate);
+                    end
+                    classificationLearner
+                    
+                    
+                case 'ClassDemo'
+                    disp([answer ' 分类将继续执行.'])
+                    %dessert = 2;
+                    n = paraTable_c.executionTimes;
+                    try
+                        MyPar = parpool; %如果并行池未开启，则打开并行处理池
+                    catch
+                        MyPar = gcp; %如果并行池已经开启，则将当前并行池赋值给MyPar
+                    end
+
+                    racc = [];
+                    best_perf = []; 
+                    best_vperf = []; 
+                    best_tperf = [];    						
+                    for k = 1 : n
+                        [mA1,mA2, ind1, ind2] = createTwoTable(mappedA,lbs,rate);
+                        XTrain = table2array(mA1(:, 1:end-1))';           %XTrain每一列为一个样本
+                        TTrain = ind2vec(double(mA1.Class)');            %XTrain每一列为一个类别标签
+                        XTest = table2array(mA2(:, 1:end-1))';             %XTest每一列为一个样本                
+                        TTest = ind2vec(double(mA2.Class)');            %TTest每一列为一个类别标签
+                        disp(['第',num2str(k),'次计算']);
+                        [err1, err2, err3, err4, tTest] = classDemo(XTrain, TTrain, XTest, TTest, type, var);%前3个为必需参数，后面为可选参数
+                        %racc 误分率，错误率
+                        %best_perf 训练集最佳性能（蓝色曲线）
+                        %best_vperf 验证集最佳性能（绿色曲线）
+                        %best_tperf 测试集最佳性能（红色曲线）
+                        %tTest 为预测的类别标签列向量 
+
+                        racc = [racc; err1];%racc 误分率，错误率
+                        best_perf = [best_perf; err2]; %best_perf 训练集最佳性能（蓝色曲线）
+                        best_vperf = [best_vperf; err3]; %best_vperf 验证集最佳性能（绿色曲线）
+                        best_tperf = [best_tperf; err4];%best_tperf 测试集最佳性能（红色曲线）
+
+                    end
+
+                    hObject.UserData.racc = racc;
+                    hObject.UserData.best_perf = best_perf;
+                    hObject.UserData.best_vperf = best_vperf;
+                    hObject.UserData.best_tperf = best_tperf;
+ 
+                    lbsTest = lbs;
+                    lbsTest(ind2) = tTest;      %tTest 为预测的类别标签列向量%用预测值代替lbs中的真实值
+                    hObject.UserData.lbsTest = lbsTest; %保存包含有预测值的标签向量
+
+                    gtdata = handles.UserData.gtdata;
+                    gtdata(gtdata~=0)=lbsTest;    %将标签向量排列成GT图
+
+                    hObject.UserData.imgNew = double(gtdata);%保存预测出来的GT图
+                    handles.UserData.imgNew = hObject.UserData.imgNew;
+                    %绘制预测的GT图和真实的GT图
+                    SeparatePlot3_Callback(handles.UserData.imgNew, handles.UserData.cmap, handles.UserData.M);
+                    SeparatePlot3_Callback(handles.UserData.gtdata,    handles.UserData.cmap, handles.UserData.M);
+                    delete(MyPar) %计算完成后关闭并行处理池
+
+                    % 绘制性能曲线>>>错误率
+                    figure()
+                    plot((1:n)',[best_perf, best_vperf, best_tperf, racc],'LineWidth',1.5);
+                        %racc 误分率，错误率
+                        %best_perf 训练集最佳性能（蓝色曲线）
+                        %best_vperf 验证集最佳性能（绿色曲线）
+                        %best_tperf 测试集最佳性能（红色曲线）
+                        %tTest 为预测的类别标签列向量        
+                    title('训练性能（best_perf,best_vperf,best_tperf）与泛化性能（racc)','Interpreter','none');
+                    xlabel('次数');
+                    ylabel('错误率');
+
+                    hold on
+                    %mean()函数按列求平均，所以将行形式转换成列形式
+                    plot([1, n],[mean(racc(:,1)), mean(racc(:,1))],'--','LineWidth',1.5);
+
+                    text(1.05,mean(racc(:,1))*1.030,['racc1:',num2str(mean(racc(:,1)))]);
+                    try %若racc有两列，即优化前后的数据各占一列，则下面的语句会继续处理第2列数据
+                        plot([1, n],[mean(racc(:,2)), mean(racc(:,2))],'--','LineWidth',1.5);
+                        text(1.05,mean(racc(:,2))*1.030,['racc2:',num2str(mean(racc(:,2)))]);
+                        legend('best_perf1','best_perf2','best_vperf1','best_vperf2','best_tperf1','best_tperf2','racc1','racc2','Interpreter','none','Location','best');  
+                        %1表示优化前的数据，2表示优化后的数据
+                    catch%若racc仅含有一列数据，则按照一列的情形设置图例
+                        legend('best_perf','best_vperf','best_tperf','racc','Interpreter','none','Location','best');  
+                    end 
+                    hold off
+                    %显示最终分类结果：racc表示分类的错误率，1-racc表示分类准确率。
+
+                    % 绘制性能曲线>>>>准确率
+                    figure()
+                    plot((1:n)',1-[best_perf, best_vperf, best_tperf, racc],'LineWidth',1.5);
+                        %racc 误分率，错误率
+                        %best_perf 训练集最佳性能（蓝色曲线）
+                        %best_vperf 验证集最佳性能（绿色曲线）
+                        %best_tperf 测试集最佳性能（红色曲线）
+                        %tTest 为预测的类别标签列向量        
+                    title('训练性能（acc_perf,acc_vperf,acc_tperf）与泛化性能（acc)','Interpreter','none');
+                    xlabel('次数');
+                    ylabel('准确率');
+
+                    hold on
+                    acc = 1-racc; %mean()函数按列求平均，所以将行形式转换成列形式
+                    plot([1, n],[mean(acc(:,1)), mean(acc(:,1))],'--','LineWidth',1.5);
+                    text(1.05,mean(acc(:,1))*1.005,['acc1:',num2str(mean(acc(:,1)))]);
+                    try %若acc有两列，即优化前后的数据各占一列，则下面的语句会继续处理第2列数据
+                        plot([1, n],[mean(acc(:,2)), mean(acc(:,2))],'--','LineWidth',1.5);
+                        text(1.05,mean(acc(:,2))*1.005,['acc2:',num2str(mean(acc(:,2)))]);
+                        legend('acc_perf1','acc_perf2','acc_vperf1','acc_vperf2','acc_tperf1','acc_tperf2','acc1','acc2','Interpreter','none','Location','best');  
+                        %1表示优化前的数据，2表示优化后的数据
+                    catch%若acc仅含有一列数据，则按照一列的情形设置图例
+                        legend('acc_perf','acc_vperf','acc_tperf','acc','Interpreter','none','Location','best');  
+                    end 
+                    hold off
+                    hmenu4_4 = findobj(handles,'Label','执行分类');    
+                    hmenu4_4.UserData
+
+                    % 显示分类用时
+                    time2 = toc(timerVal_1);
+                    disp({[hmenu4_1.UserData.matPath, ' 分类完毕! 历时',num2str(time2-time1),'秒.']});
+                    
+                case 'exit'
+                    disp('ClassDemo已经退出.')
+                    %dessert = 0;
+            end    
+        
+
     end
 end
