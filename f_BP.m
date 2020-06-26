@@ -106,28 +106,32 @@ warning off
 % 但是，当网络开始过拟合数据时，验证集上的误差通常会开始上升。
 % 当验证集上的误差连续增加达到指定迭代次数（net.trainParam.max_fail）时，训练停止。
 % 而验证集误差的最小值对应的网络权值和偏差将会被保存。
-% 这种为了提高浅层神经网络的泛化能力，避免过度拟合所采用的技术叫Early Stop技术。
+% 这种为了提高浅层神经网络的泛化能力，避免过度拟合所采用的技术叫Early Stop（早期停止）技术。
 % 
 % 测试集误差不用于训练，但用于比较不同的模型。在训练过程中绘制测试集错误也很有用。
 % 如果测试集上的误差在与验证集误差明显不同的迭代次数处达到最小值，则这可能表示数据集划分不当。    
 %     
 	% 5.仿真网络
 	YTest = net(XTest,'useParallel','yes','showResources','yes'); 
-	tTest = vec2ind(YTest);
+	tTest = vec2ind(YTest)';
 	% 6. 性能评价
     [c,cm,ind,per] = confusion(TTest,YTest);
     racc = c;
-    best_perf = tr.best_perf;
-    best_vperf = tr.best_vperf;
-    best_tperf = tr.best_tperf;
-
-
-
+    best_perf = tr.best_perf;       %训练集最佳性能（蓝色曲线）
+    best_vperf = tr.best_vperf;   %验证集最佳性能（绿色曲线）
+    best_tperf = tr.best_tperf;     %测试集最佳性能（红色曲线）
+%performance图上的三色曲线（红(Test)>绿(Validation)>蓝(Train)）
+%而当前值best_tperf>best_vperf>best_perf，上下相对应，我们确定出了
+%best_tperf：红(Test)
+%best_vperf： 绿(Validation)
+%best_perf：蓝(Train)
 
 % 绘制性能便变化曲线
 % time1 = toc(timerVal_1);
 % disp({['分类完毕，历时',num2str(time1),'秒.']});
-
+    if str2num(Var.plotperform)          
+        plotperform(tr);
+    end
     if str2num(Var.plottrainstate)          % str2num('false')==0
         figure()
         plottrainstate(tr);
@@ -152,8 +156,5 @@ warning off
         plotroc(TTest, YTest);
     end
     
-    if str2num(Var.plotperform)          
-        plotperform(tr);
-    end
 
 end
