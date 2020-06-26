@@ -29,6 +29,7 @@ if nargin <= 2
 end
 
 %% 设置导入选项并导入数据
+%opts1 = detectImportOptions(workbookFile,'sheet',sheetName);
 opts = spreadsheetImportOptions("NumVariables", 22);
 
 % 指定工作表和范围
@@ -56,11 +57,5 @@ opts.MissingRule = 'omitvar';
 % 导入数据
 
 paraTable_dr = readtable(workbookFile, opts, 'ReadRowNames',true, "UseExcel", false);
-
-% for idx = 2:size(dataLines, 1)
-%     opts.DataRange = "B" + dataLines(idx, 1) + ":O" + dataLines(idx, 2);
-%     tb = readtable(workbookFile, opts, "UseExcel", false);
-%     paraTable_dr = [paraTable_dr; tb]; %#ok<AGROW>
-% end
 
 end
