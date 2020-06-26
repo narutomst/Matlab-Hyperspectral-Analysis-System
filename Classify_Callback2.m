@@ -7,10 +7,10 @@ hmenu4_1 = findobj(handles,'Label','加载数据');
 hmenu4_3 = findobj(handles,'Label','执行降维');
 
 if isempty(hmenu4_3.UserData) || ~isfield(hmenu4_3.UserData, 'drData') || isempty(hmenu4_3.UserData.drData)
-    mappedA = hmenu4_1.UserData.x2;         %若数据未做降维
+    mappedA = hmenu4_1.UserData.x2;         %若数据未做降维，从【加载数据】对象取数据
     disp('注意：数据未做降维处理，直接分类可能需要消耗更多时间！');
 else
-    mappedA = hmenu4_3.UserData.drData;  %若数据已经做了降维
+    mappedA = hmenu4_3.UserData.drData;  %若数据已经做了降维，从【执行降维】对象取数据
 end
 disp('分类：数据有效性检查............');
 % if isfield(hmenu4_1.UserData, 'x2') || ~isempty(hmenu4_1.UserData.x2)
@@ -97,10 +97,10 @@ end
         % 因为目前的数据在pca降维后存在严重的数据倾斜，即第1主成分所占的比重太大了
         % 这样的话真的有利于分类吗？
         n = paraTable_c.executionTimes;
-        racc = zeros(1,n);
-        best_perf =  zeros(1,n); 
-        best_vperf =zeros(1,n); 
-        best_tperf = zeros(1,n);
+        racc = zeros(n,1);
+        best_perf =  zeros(n,1); 
+        best_vperf =zeros(n,1); 
+        best_tperf = zeros(n,1);
         
         try
             MyPar = parpool; %如果并行池未开启，则打开并行处理池
@@ -122,11 +122,17 @@ end
             TTest = ind2vec(double(mA2.Class)');
             disp(['第',num2str(k),'次计算']);
             [err1, err2, err3, err4, tTest] = classDemo(XTrain, TTrain, XTest, TTest, type, var);%前3个为必需参数，后面为可选参数
-        %  [racc, best_perf, best_vperf, best_tperf]     
-            racc = [racc,err1];
-            best_perf = [best_perf, err2]; 
-            best_vperf = [best_vperf, err3]; 
-            best_tperf = [best_tperf, err4];
+            %racc 误分率，错误率
+            %best_perf 训练集最佳性能（蓝色曲线）
+            %best_vperf 验证集最佳性能（绿色曲线）
+            %best_tperf 测试集最佳性能（红色曲线）
+            %tTest 为预测的类别标签列向量 
+        
+            racc = [racc; err1];%racc 误分率，错误率
+            best_perf = [best_perf; err2]; %best_perf 训练集最佳性能（蓝色曲线）
+            best_vperf = [best_vperf; err3]; %best_vperf 验证集最佳性能（绿色曲线）
+            best_tperf = [best_tperf; err4];%best_tperf 测试集最佳性能（红色曲线）
+      
         end
         %acc1返回类型为结构体是否合适？
     %         time1 = toc(timerVal_1);
@@ -138,33 +144,39 @@ end
         hObject.UserData.best_tperf = best_tperf;
 %         hObject.UserData.lbsOrigin = lbs;
         lbsTest = lbs;
-        lbsTest(ind2) = tTest;
-        hObject.UserData.lbsTest = lbsTest;
-        lbsNew = reshape(lbsTest, size(lbs2,1), size(lbs2,2));
-        hObject.UserData.lbsNew = lbsNew;
-        % 最后绘制预测的标签图
-        if ~isa(lbsNew,'double')
-            img = double(lbsNew);  
-        else
-            img = lbsNew;
-        end
-        hObject.UserData.imgNew = img;
-        handles.UserData.imgNew = hObject.UserData.imgNew;
+        lbsTest(ind2) = tTest;      %tTest 为预测的类别标签列向量%用预测值代替lbs中的真实值
+        hObject.UserData.lbsTest = lbsTest; %保存包含有预测值的标签向量
+        
+        gtdata = handles.UserData.gtdata;
+        gtdata(gtdata~=0)=lbsTest;    %将标签向量排列成GT图
 
-        SeparatePlot3_Callback(img, handles.UserData.cmap, handles.UserData.M);
-        SeparatePlot3_Callback(handles.UserData.img, handles.UserData.cmap, handles.UserData.M);
+        hObject.UserData.imgNew = double(gtdata);%保存预测出来的GT图
+        handles.UserData.imgNew = hObject.UserData.imgNew;
+        %绘制预测的GT图和真实的GT图
+        SeparatePlot3_Callback(handles.UserData.imgNew, handles.UserData.cmap, handles.UserData.M);
+        SeparatePlot3_Callback(handles.UserData.gtdata,    handles.UserData.cmap, handles.UserData.M);
         delete(MyPar) %计算完成后关闭并行处理池
         
-        figure
-        plot(1:n,[best_perf; best_vperf; best_tperf; racc],'LineWidth',1.5);
+        % 绘制性能曲线>>>错误率
+        figure()
+        plot((1:n)',[best_perf, best_vperf, best_tperf, racc],'LineWidth',1.5);
+            %racc 误分率，错误率
+            %best_perf 训练集最佳性能（蓝色曲线）
+            %best_vperf 验证集最佳性能（绿色曲线）
+            %best_tperf 测试集最佳性能（红色曲线）
+            %tTest 为预测的类别标签列向量        
         title('训练性能（best_perf,best_vperf,best_tperf）与泛化性能（racc)','Interpreter','none');
+        xlabel('次数');
+        ylabel('错误率');
+        
         hold on
-        racc = racc'; %mean()函数按列求平均，所以将行形式转换成列形式
+        %mean()函数按列求平均，所以将行形式转换成列形式
         plot([1, n],[mean(racc(:,1)), mean(racc(:,1))],'--','LineWidth',1.5);
-        text(0,mean(racc(:,1))*1.025,['racc1:',num2str(mean(racc(:,1)))]);
+
+        text(1,mean(racc(:,1))*1.030,['racc1:',num2str(mean(racc(:,1)))]);
         try %若racc有两列，即优化前后的数据各占一列，则下面的语句会继续处理第2列数据
             plot([1, n],[mean(racc(:,2)), mean(racc(:,2))],'--','LineWidth',1.5);
-            text(0,mean(racc(:,2))*1.025,['racc2:',num2str(mean(racc(:,2)))]);
+            text(1,mean(racc(:,2))*1.030,['racc2:',num2str(mean(racc(:,2)))]);
             legend('best_perf1','best_perf2','best_vperf1','best_vperf2','best_tperf1','best_tperf2','racc1','racc2','Interpreter','none','Location','best');  
             %1表示优化前的数据，2表示优化后的数据
         catch%若racc仅含有一列数据，则按照一列的情形设置图例
@@ -172,6 +184,32 @@ end
         end 
         hold off
         %显示最终分类结果：racc表示分类的错误率，1-racc表示分类准确率。
+        
+        % 绘制性能曲线>>>>准确率
+        figure()
+        plot((1:n)',1-[best_perf, best_vperf, best_tperf, racc],'LineWidth',1.5);
+            %racc 误分率，错误率
+            %best_perf 训练集最佳性能（蓝色曲线）
+            %best_vperf 验证集最佳性能（绿色曲线）
+            %best_tperf 测试集最佳性能（红色曲线）
+            %tTest 为预测的类别标签列向量        
+        title('训练性能（acc_perf,acc_vperf,acc_tperf）与泛化性能（acc)','Interpreter','none');
+        xlabel('次数');
+        ylabel('准确率');
+        
+        hold on
+        acc = 1-racc; %mean()函数按列求平均，所以将行形式转换成列形式
+        plot([1, n],[mean(acc(:,1)), mean(acc(:,1))],'--','LineWidth',1.5);
+        text(1,mean(acc(:,1))*1.005,['acc1:',num2str(mean(acc(:,1)))]);
+        try %若acc有两列，即优化前后的数据各占一列，则下面的语句会继续处理第2列数据
+            plot([1, n],[mean(acc(:,2)), mean(acc(:,2))],'--','LineWidth',1.5);
+            text(1,mean(acc(:,2))*1.005,['acc2:',num2str(mean(acc(:,2)))]);
+            legend('acc_perf1','acc_perf2','acc_vperf1','acc_vperf2','acc_tperf1','acc_tperf2','acc1','acc2','Interpreter','none','Location','best');  
+            %1表示优化前的数据，2表示优化后的数据
+        catch%若acc仅含有一列数据，则按照一列的情形设置图例
+            legend('acc_perf','acc_vperf','acc_tperf','acc','Interpreter','none','Location','best');  
+        end 
+        hold off
         hmenu4_4 = findobj(handles,'Label','执行分类');    
         hmenu4_4.UserData
         
