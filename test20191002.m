@@ -416,7 +416,7 @@ data.M = [];
 data.bkcGT = bkcGT;                
 data.cmap = [data.bkcGT;colorBase]; %添加背景像素的颜色，此处定义背景像素的颜色为黑色
 data.imgMat = []; %存储Mat伪彩色图像
-data.imgGT = [];   %存储GT图像
+data.imgGT = [];   %存储GT图像标志
 data.imgStack = [];%存储Mat和GT的堆叠图像
 data.img = []; %存储普通2维图像
 data.himage = [];
@@ -849,14 +849,30 @@ function FeedData_Callback(hObject, eventdata, handles)
         
         hmenu4_2 = findobj(handles,'Label','光谱分析');
         hmenu4_2.Enable = 'on';
+        
         hmenu4_3 = findobj(handles,'Label','执行降维');
         hmenu4_3.Enable = 'on';
+        % 将前一次在【执行降维】各个子项下保存的数据清除掉。
+        hmenu4_3.UserData.drData = []; % hmenu4_3
+        
         hmenu4_4 = findobj(handles,'Label','执行分类');
         hmenu4_4.Enable = 'on';
         hmenu4_4_1 = findobj(handles,'Label','智能分类');
         hmenu4_4_1.Enable = 'on';
+        % 将前一次在【智能分类】各个子项下保存的数据清除掉。
+        
         hmenu4_4_2 = findobj(handles,'Label','ClassDemo');
         hmenu4_4_2.Enable = 'on';
+        % 将前一次在【ClassDemo】各个子项下保存的数据清除掉。
+        hmenu4_4_2.UserData.racc = [];
+        hmenu4_4_2.UserData.best_perf = [];
+        hmenu4_4_2.UserData.best_vperf = [];
+        hmenu4_4_2.UserData.best_tperf = [];
+        hmenu4_4_2.UserData.lbsTest = [];
+        hmenu4_4_2.UserData.imgNew = [];
+        handles.UserData.imgNew = [];
+        
+        
         hmenu4_4_3 = findobj(handles,'Label','Classification Learner');
         hmenu4_4_3.Enable = 'on';
         hmenu4_4_4 = findobj(handles,'Label','nprtool');
@@ -866,7 +882,14 @@ function FeedData_Callback(hObject, eventdata, handles)
         hmenu4_5 = findobj(handles,'Label','重新选择算法');
         hmenu4_5.Enable = 'on';
         hmenu4_6 = findobj(handles,'Label','Frobenius分析');
+        % 将前一次在【Frobenius分析】各个子项下保存的数据清除掉。
+        hObject.UserData.F2=[];
+        hObject.UserData.channelSelected = [];
+        hObject.UserData.x2Selected = [];
         hmenu4_6.Enable = 'on';
+        
+        
+        
         hmenu4_7 = findobj(handles,'Label','目标检测1');
         hmenu4_7.Enable = 'on';  
         hmenu4_8 = findobj(handles,'Label','目标检测2');
