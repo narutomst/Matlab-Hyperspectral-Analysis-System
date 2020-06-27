@@ -1,6 +1,6 @@
 %使用pso优化BP神经网络算法
 %% 该代码为基于PSO和BP网络的预测
-function [racc, best_perf, best_vperf, best_tperf, tTest] = f_PSO_BP(XTrain, TTrain, XTest, TTest, Var)
+function [racc, best_perf, best_vperf, best_tperf, tTest] = f_PSO_TANSIG(XTrain, TTrain, XTest, TTest, Var)
 
 warning off
 %% II. 声明全局变量
@@ -72,7 +72,7 @@ acc2 = [];
 %     
 	% 5.仿真网络
 	YTest = net(XTest); 
-	tTest = vec2ind(YTest);
+	tTest = vec2ind(YTest)';
 	% 6. 性能评价
     [c,cm,ind,per] = confusion(TTest,YTest);
     racc1 = c;
@@ -242,7 +242,7 @@ acc2 = [];
 	%% PSO_BP网络预测
 	% 5.仿真网络
 	YTest = net(XTest); 
-	tTest = vec2ind(YTest);
+	tTest = vec2ind(YTest)';
 	% 6. 性能评价
     [c,cm,ind,per] = confusion(TTest,YTest);
     racc2 = c;
