@@ -74,7 +74,7 @@ acc2 = [];
 %     
 	% 5.仿真网络
 	YTest = net(XTest); 
-	tTest = vec2ind(YTest);
+	tTest = vec2ind(YTest)';
 	% 6. 性能评价
     [c,cm,ind,per] = confusion(TTest,YTest);
     racc1 = c;
@@ -179,7 +179,7 @@ acc2 = [];
 
 %% X. 仿真测试
 	YTest = net(XTest); 
-	tTest = vec2ind(YTest);
+	tTest = vec2ind(YTest)';
 % t_sim_ga = sim(net,p_test);    %遗传优化后的仿真结果
 
 % T_sim_ga = vec2ind(t_sim_ga);
