@@ -72,7 +72,7 @@ acc2 = [];
 %     
 	% 5.仿真网络
 	YTest = net(XTest); 
-	tTest = vec2ind(YTest);
+	tTest = vec2ind(YTest)';
 	% 6. 性能评价
     [c,cm,ind,per] = confusion(TTest,YTest);
     racc1 = c;
@@ -243,7 +243,7 @@ acc2 = [];
 	%% PSO_BP网络预测
 	% 5.仿真网络
 	YTest = net(XTest); 
-	tTest = vec2ind(YTest);
+	tTest = vec2ind(YTest)';
 	% 6. 性能评价
     [c2,cm2,ind2,per2] = confusion(TTest,YTest);
     racc2 = c2;
