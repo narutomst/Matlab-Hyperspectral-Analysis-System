@@ -35,13 +35,13 @@ function SeparatePlot4_Callback(img1, img2, cmap, M)
     end 
     
     % 合成双图1：img1和img2先合成一张图，然后再显示出来
-    p = figure();
+    p1 = figure();
     if ndims(img1) == 2 && ndims(img2) == 2
         gap = min(img1(:))*ones(size(img1,1), 5);
         %将多个矩阵水平串联起来
 %         img = cat(2,img1, gap, img2);
         img = [img1, gap, img2];
-        himage = imshow(img+1,cmap); 
+        himage3 = imshow(img+1,cmap); 
         c = colorbar;
         c.Label.String = '地物类别对应颜色';
         c.Label.FontWeight = 'bold'; 
@@ -50,14 +50,14 @@ function SeparatePlot4_Callback(img1, img2, cmap, M)
         c.TicksMode = 'Manual';
         c.TickLabels = num2str([-1:M-1]'); %刻度线值
         c.Limits = [1,M+1];  
-        hscrollpanel = imscrollpanel(p, himage); 
+        hscrollpanel = imscrollpanel(p1, himage3); 
     end
     
     %合成双图2：还可以合成镜像双图 flip(A,2)，将矩阵A的每一行翻转
     if 1
-        p = figure();
+        p2 = figure();
         img = [img1, gap, flip(img2,2)];
-        himage = imshow(img+1,cmap); 
+        himage4 = imshow(img+1,cmap); 
         c = colorbar;
         c.Label.String = '地物类别对应颜色';
         c.Label.FontWeight = 'bold'; 
@@ -66,6 +66,6 @@ function SeparatePlot4_Callback(img1, img2, cmap, M)
         c.TicksMode = 'Manual';
         c.TickLabels = num2str([-1:M-1]'); %刻度线值
         c.Limits = [1,M+1];  
-        hscrollpanel = imscrollpanel(p, himage); 
+        hscrollpanel = imscrollpanel(p2, himage4); 
     end
 end
