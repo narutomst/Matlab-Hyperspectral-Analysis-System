@@ -155,7 +155,12 @@ end
         %绘制预测的GT图和真实的GT图
         SeparatePlot3_Callback(handles.UserData.imgNew, handles.UserData.cmap, handles.UserData.M);
         SeparatePlot3_Callback(handles.UserData.gtdata,    handles.UserData.cmap, handles.UserData.M);
-        delete(MyPar) %计算完成后关闭并行处理池
+        SeparatePlot4_Callback(handles.UserData.gtdata, handles.UserData.imgNew, handles.UserData.cmap, handles.UserData.M);
+        % plotconfusion()，输入数据可以是categorical列向量
+        % 也可以是由若干个one-hot vector列向量组成的矩阵
+        % 其他类型的数据会导致死循环。
+        pf = plotconfusion(mA2.Class, categorical(tTest));
+        
         
         % 绘制性能曲线>>>错误率
         figure()
@@ -216,7 +221,7 @@ end
         % 显示分类用时
         time2 = toc(timerVal_1);
         disp({[hmenu4_1.UserData.matPath, ' 分类完毕! 历时',num2str(time2-time1),'秒.']});
-
+        delete(MyPar) %计算完成后关闭并行处理池
     else  % 如果加载数据完毕，未选择[执行降维]而直接选择[执行分类]，则启动classificationLearner
             answer = questdlg('数据未执行降维，想采用以下哪种方式执行分类?', ...
             '分类方式选择', ...
