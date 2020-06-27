@@ -136,13 +136,13 @@ switch p.Results.type
         
     case 'RBF'
         [racc, best_perf, best_vperf, best_tperf, tTest] = f_RBF(XTrain, TTrain, XTest, TTest, Var);        
-    case 'GA-TANSIG'
+    case 'GA_TANSIG'
         [racc, best_perf, best_vperf, best_tperf, tTest] = f_GA_TANSIG(XTrain, TTrain, XTest, TTest, Var);
-    case 'GA-RBF'
+    case 'GA_RBF'
         [racc, best_perf, best_vperf, best_tperf, tTest] = f_GA_RBF(XTrain, TTrain, XTest, TTest, Var);
-    case 'PSO-TANSIG'
+    case 'PSO_TANSIG'
         [racc, best_perf, best_vperf, best_tperf, tTest] = f_PSO_TANSIG(XTrain, TTrain, XTest, TTest, Var);
-    case 'PSO-RBF'
+    case 'PSO_RBF'
         [racc, best_perf, best_vperf, best_tperf, tTest] = f_PSO_RBF(XTrain, TTrain, XTest, TTest, Var);
     otherwise
 end
