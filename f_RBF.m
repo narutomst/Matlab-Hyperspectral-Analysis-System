@@ -113,7 +113,7 @@ warning off
 %     
 	% 5.仿真网络
 	YTest = net(XTest); 
-	tTest = vec2ind(YTest);
+	tTest = vec2ind(YTest)';
 	% 6. 性能评价
     [c,cm,ind,per] = confusion(TTest,YTest);
     racc = c;
