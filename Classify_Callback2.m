@@ -159,6 +159,7 @@ end
         % plotconfusion()，输入数据可以是categorical列向量
         % 也可以是由若干个one-hot vector列向量组成的矩阵
         % 其他类型的数据会导致死循环。
+        figure()
         pf = plotconfusion(mA2.Class, categorical(tTest));
         
         
@@ -296,6 +297,7 @@ end
                     % plotconfusion()，输入数据可以是categorical列向量
                     % 也可以是由若干个one-hot vector列向量组成的矩阵
                     % 其他类型的数据会导致死循环。
+                    figure()
                     pf = plotconfusion(mA2.Class, categorical(tTest));
                     % 绘制性能曲线>>>错误率
                     figure()
