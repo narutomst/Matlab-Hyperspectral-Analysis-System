@@ -1,5 +1,5 @@
 
-function [racc, best_perf, best_vperf, best_tperf, tTest] = f_GA_BP(XTrain, TTrain, XTest, TTest, Var)
+function [racc, best_perf, best_vperf, best_tperf, tTest] = f_GA_TANSIG(XTrain, TTrain, XTest, TTest, Var)
 
 warning off
 
@@ -72,10 +72,10 @@ acc2 = [];
 % 如果测试集上的误差在与验证集误差明显不同的迭代次数处达到最小值，则这可能表示数据集划分不当。    
 %     
 	% 5.仿真网络
-	y = net(XTest); 
-% 	tTest = vec2ind(YTest);
+	YTest = net(XTest); 
+	tTest = vec2ind(YTest)';
 	% 6. 性能评价
-    [c,cm,ind,per] = confusion(TTest, y);
+    [c,cm,ind,per] = confusion(TTest, YTest);
     racc1 = c;
     best_perf1 = tr.best_perf;
     best_vperf1 = tr.best_vperf;
@@ -177,11 +177,12 @@ acc2 = [];
 	end
 
 %% X. 仿真测试
-	y = net(XTest); 
+	YTest = net(XTest); 
+	tTest = vec2ind(YTest)';
 
 %% V. 性能评价
 
-    [c2,cm2,ind2,per2] = confusion(TTest,y);
+    [c2,cm2,ind2,per2] = confusion(TTest,YTest);
     racc2 = c2;
     best_perf2 = tr.best_perf;
     best_vperf2 = tr.best_vperf;
