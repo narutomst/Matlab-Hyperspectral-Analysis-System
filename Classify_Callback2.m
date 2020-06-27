@@ -191,9 +191,15 @@ end
         hold off
         %显示最终分类结果：racc表示分类的错误率，1-racc表示分类准确率。
         
+        
         % 绘制性能曲线>>>>准确率
+        acc = 1-racc; %racc 误分率，错误率
+        acc_perf = 1-best_perf; %best_perf 训练集最佳性能（蓝色曲线）
+        acc_vperf = 1-best_vperf; %best_vperf 验证集最佳性能（绿色曲线）
+        acc_tperf = 1-best_tperf; %best_tperf 测试集最佳性能（红色曲线）
+        
         figure()
-        plot((1:n)',1-[best_perf, best_vperf, best_tperf, racc],'LineWidth',1.5);
+        plot((1:n)', [acc_perf, acc_vperf, acc_tperf, acc],'LineWidth',1.5);
             %racc 误分率，错误率
             %best_perf 训练集最佳性能（蓝色曲线）
             %best_vperf 验证集最佳性能（绿色曲线）
@@ -204,7 +210,7 @@ end
         ylabel('准确率');
         
         hold on
-        acc = 1-racc; %mean()函数按列求平均，所以将行形式转换成列形式
+%         acc = 1-racc; %mean()函数按列求平均，所以将行形式转换成列形式
         plot([1, n],[mean(acc(:,1)), mean(acc(:,1))],'--','LineWidth',1.5);
         text(1.05,mean(acc(:,1))*1.005,['acc1:',num2str(mean(acc(:,1)))]);
         try %若acc有两列，即优化前后的数据各占一列，则下面的语句会继续处理第2列数据
@@ -217,7 +223,28 @@ end
         end 
         hold off
         hmenu4_4 = findobj(handles,'Label','执行分类');    
-        hmenu4_4.UserData
+        hmenu4_4_2.UserData
+        
+        % 将分类结果写入Excel表格
+        % 首先创建一个表，可以参考table_example20190310.mlx
+       
+        T = table(best_perf, best_vperf, best_tperf, racc, 'RowNames',arrayfun(@string, [1:numel(racc)]'))
+        % 设置保存路径
+        path = 'C:\Matlab练习\20200627';
+        try
+            path = fullfile(path, hmenu4_1.UserData.matName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
+        catch
+        end
+            filename = [hmenu4_1.UserData.matName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
+        try
+            filename = fullfile(path,filename);%拼接路径
+        catch
+        end
+        writetable(T,filename,'Sheet',1,'Range','A1', 'WriteRowNames',true);
+        
+        T1 = table(acc_perf, acc_vperf, acc_tperf, acc, 'RowNames',arrayfun(@string, [1:numel(acc)]'))
+%         filename = [hmenu4_1.UserData.matName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
+        writetable(T1,filename,'Sheet',1,'Range','H1', 'WriteRowNames',true);        
         
         % 显示分类用时
         time2 = toc(timerVal_1);
@@ -328,8 +355,13 @@ end
                     %显示最终分类结果：racc表示分类的错误率，1-racc表示分类准确率。
 
                     % 绘制性能曲线>>>>准确率
+                    acc = 1-racc; %racc 误分率，错误率
+                    acc_perf = 1-best_perf; %best_perf 训练集最佳性能（蓝色曲线）
+                    acc_vperf = 1-best_vperf; %best_vperf 验证集最佳性能（绿色曲线）
+                    acc_tperf = 1-best_tperf; %best_tperf 测试集最佳性能（红色曲线）
+                    
                     figure()
-                    plot((1:n)',1-[best_perf, best_vperf, best_tperf, racc],'LineWidth',1.5);
+                    plot((1:n)', [acc_perf, acc_vperf, acc_tperf, acc],'LineWidth',1.5);
                         %racc 误分率，错误率
                         %best_perf 训练集最佳性能（蓝色曲线）
                         %best_vperf 验证集最佳性能（绿色曲线）
@@ -346,7 +378,7 @@ end
                     try %若acc有两列，即优化前后的数据各占一列，则下面的语句会继续处理第2列数据
                         plot([1, n],[mean(acc(:,2)), mean(acc(:,2))],'--','LineWidth',1.5);
                         text(1.05,mean(acc(:,2))*1.005,['acc2:',num2str(mean(acc(:,2)))]);
-                        legend('acc_perf1','acc_perf2','acc_vperf1','acc_vperf2','acc_tperf1','acc_tperf2','acc1','acc2','Interpreter','none','Location','best');  
+                        legend('acc_perf1','acc_perf2','acc_vperf1','acc_vperf2','acc_tperf1','acc_tperf2','acc1','acc2','Interpreter','none','Location','acc');  
                         %1表示优化前的数据，2表示优化后的数据
                     catch%若acc仅含有一列数据，则按照一列的情形设置图例
                         legend('acc_perf','acc_vperf','acc_tperf','acc','Interpreter','none','Location','best');  
