@@ -20,8 +20,8 @@ p.addRequired( 'TTrain', validationFcn);
 p.addRequired( 'XTest', validationFcn);
 p.addRequired( 'TTest', validationFcn);
 
-validStrings = {'BP','RBF','GA-BP','GA-RBF','PSO-BP','PSO-RBF'};
-% validStrings = ["BP","RBF","GA-BP","GA-RBF","PSO-BP","PSO-RBF"];
+validStrings = {'TANSIG','RBF','GA-TANSIG','GA-RBF','PSO-TANSIG','PSO-RBF'};
+% validStrings = ["TANSIG","RBF","GA-TANSIG","GA-RBF","PSO-TANSIG","PSO-RBF"];
 % 报错：'type' 的值无效。数据类型无效。第一个参数必须为数值或逻辑值。
 validationFcn = @(x) any(validatestring(x, validStrings, 'classDemo','type',3)); 
 
@@ -124,10 +124,10 @@ Var.hiddenNum4 = str2double(p.Results.hiddenNum4);
 %     [hmenu4_1.UserData.matPath,' 开始执行分类']});
 %     
 switch p.Results.type
-    case 'BP'
+    case 'TANSIG'
         % 调用函数
         % 现有参数为4个array外加一个struct
-        [racc, best_perf, best_vperf, best_tperf, tTest] = f_BP(XTrain, TTrain, XTest, TTest, Var);
+        [racc, best_perf, best_vperf, best_tperf, tTest] = f_TANSIG(XTrain, TTrain, XTest, TTest, Var);
         %racc 误分率，错误率
         %best_perf 训练集最佳性能（蓝色曲线）
         %best_vperf 验证集最佳性能（绿色曲线）
@@ -136,12 +136,12 @@ switch p.Results.type
         
     case 'RBF'
         [racc, best_perf, best_vperf, best_tperf, tTest] = f_RBF(XTrain, TTrain, XTest, TTest, Var);        
-    case 'GA-BP'
-        [racc, best_perf, best_vperf, best_tperf, tTest] = f_GA_BP(XTrain, TTrain, XTest, TTest, Var);
+    case 'GA-TANSIG'
+        [racc, best_perf, best_vperf, best_tperf, tTest] = f_GA_TANSIG(XTrain, TTrain, XTest, TTest, Var);
     case 'GA-RBF'
         [racc, best_perf, best_vperf, best_tperf, tTest] = f_GA_RBF(XTrain, TTrain, XTest, TTest, Var);
-    case 'PSO-BP'
-        [racc, best_perf, best_vperf, best_tperf, tTest] = f_PSO_BP(XTrain, TTrain, XTest, TTest, Var);
+    case 'PSO-TANSIG'
+        [racc, best_perf, best_vperf, best_tperf, tTest] = f_PSO_TANSIG(XTrain, TTrain, XTest, TTest, Var);
     case 'PSO-RBF'
         [racc, best_perf, best_vperf, best_tperf, tTest] = f_PSO_RBF(XTrain, TTrain, XTest, TTest, Var);
     otherwise
