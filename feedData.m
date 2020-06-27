@@ -542,4 +542,9 @@ end
 % id3 = imgGT(:)~=0; %314368¡Á1 logical
 % id4 = imgGT(:)~=[0,0,0]; %314368¡Á3 logical
 stack_image(imgMat,imgGT,handles.UserData.cmap,M);
+
+if 0
+saveAllFigure('20200627', handles, '.fig');                     
+end
+
 end
