@@ -176,7 +176,7 @@ f.UserData.mFilePath = handles.UserData.mFilePath;
                            'FontSize',fSize+0.5,'Tag','popupmenu2','HorizontalAlignment','Left', ...
                            'Callback',{@popupmenu2_Callback, hmenu4_1, handles, f});
                 % 设置popupmenu2
-                popupmenu2.String = {'BP','RBF','GA-BP','GA-RBF','PSO-BP','PSO-RBF','Customarized Algorithm','none'};
+                popupmenu2.String = {'TANSIG','RBF','GA-TANSIG','GA-RBF','PSO-TANSIG','PSO-RBF','Customarized Algorithm','none'};
                 popupmenu2.Value = numel(popupmenu2.String);%指定初始选中项，1表示选中popupmenu第一行
 %                         uix.Empty('Parent',mainLayout,'HandleVisibility','off');
             uix.Empty('Parent',mainLayout,'HandleVisibility','off');
