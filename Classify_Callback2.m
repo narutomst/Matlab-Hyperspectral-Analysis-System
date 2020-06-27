@@ -285,10 +285,11 @@ end
                     hObject.UserData.imgNew = double(gtdata);%保存预测出来的GT图
                     handles.UserData.imgNew = hObject.UserData.imgNew;
                     %绘制预测的GT图和真实的GT图
+                    SeparatePlot3_Callback(handles.UserData.gtdata,   handles.UserData.cmap, handles.UserData.M);
                     SeparatePlot3_Callback(handles.UserData.imgNew, handles.UserData.cmap, handles.UserData.M);
-                    SeparatePlot3_Callback(handles.UserData.gtdata,    handles.UserData.cmap, handles.UserData.M);
                     delete(MyPar) %计算完成后关闭并行处理池
-
+                    
+                    SeparatePlot4_Callback(handles.UserData.gtdata, handles.UserData.imgNew, handles.UserData.cmap, handles.UserData.M);
                     % 绘制性能曲线>>>错误率
                     figure()
                     plot((1:n)',[best_perf, best_vperf, best_tperf, racc],'LineWidth',1.5);
