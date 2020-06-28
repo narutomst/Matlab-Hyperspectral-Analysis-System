@@ -58,9 +58,9 @@ catch
 end
 t = table2cell(paraTable_c);
 ss = table2struct(paraTable_c);
-n = numel(t); 
-para = cell(1,2*n);
-for i = 1:n
+k = numel(t); 
+para = cell(1,2*k);
+for i = 1:k
 	para{2*i} = t{i};
 	para{2*i-1} = paraTable_c.Properties.VariableNames{i};
 end
@@ -111,7 +111,9 @@ end
         racc = [];
         best_perf = []; 
         best_vperf = []; 
-        best_tperf = [];    						
+        best_tperf = [];  
+        tTestBest = [];
+        raccBest = 1;
         for k = 1 : n
             [mA1,mA2, ind1, ind2] = createTwoTable(mappedA,lbs,rate);
             XTrain = table2array(mA1(:, 1:end-1))';
@@ -132,7 +134,15 @@ end
             best_perf = [best_perf; err2]; %best_perf 训练集最佳性能（蓝色曲线）
             best_vperf = [best_vperf; err3]; %best_vperf 验证集最佳性能（绿色曲线）
             best_tperf = [best_tperf; err4];%best_tperf 测试集最佳性能（红色曲线）
-      
+            
+            % 挑选出最优泛化性能下的tTest;
+            [m,i] = min(err1); %返回最小值及其索引
+            if m<raccBest
+                raccBest = m;
+                tTestBest = tTest(:, i);
+                ind2Best = ind2;
+            end
+ 
         end
         %acc1返回类型为结构体是否合适？
     %         time1 = toc(timerVal_1);
@@ -144,7 +154,8 @@ end
         hObject.UserData.best_tperf = best_tperf;
 %         hObject.UserData.lbsOrigin = lbs;
         lbsTest = lbs;
-        lbsTest(ind2) = tTest;      %tTest 为预测的类别标签列向量%用预测值代替lbs中的真实值
+        lbsTest(ind2Best) = tTestBest;         %tTest 为预测的类别标签列向量%用预测值代替lbs中的真实值
+                                                              %tTestBest为n个预测的类别标签列向量中最优的那个
         hObject.UserData.lbsTest = lbsTest; %保存包含有预测值的标签向量
         
         gtdata = handles.UserData.gtdata;
@@ -156,12 +167,18 @@ end
         SeparatePlot3_Callback(handles.UserData.imgNew, handles.UserData.cmap, handles.UserData.M);
         SeparatePlot3_Callback(handles.UserData.gtdata,    handles.UserData.cmap, handles.UserData.M);
         SeparatePlot4_Callback(handles.UserData.gtdata, handles.UserData.imgNew, handles.UserData.cmap, handles.UserData.M);
+        
+
         % plotconfusion()，输入数据可以是categorical列向量
         % 也可以是由若干个one-hot vector列向量组成的矩阵
         % 其他类型的数据会导致死循环。
         figure()
         pf = plotconfusion(mA2.Class, categorical(tTest));
+        %保存当前图窗中的图片
+        %filename = generateFilename(path, handles, fmt);
         
+%         filename = generateFilename('20200627', handles, ['_',num2str(pf.Number),'.fig']);
+%         saveas(pf, filename);        
         
         % 绘制性能曲线>>>错误率
         figure()
@@ -190,7 +207,8 @@ end
         end 
         hold off
         %显示最终分类结果：racc表示分类的错误率，1-racc表示分类准确率。
-        
+
+
         
         % 绘制性能曲线>>>>准确率
         acc = 1-racc; %racc 误分率，错误率
@@ -222,8 +240,8 @@ end
             legend('acc_perf','acc_vperf','acc_tperf','acc','Interpreter','none','Location','best');  
         end 
         hold off
-        hmenu4_4 = findobj(handles,'Label','执行分类');    
-        hmenu4_4_2.UserData
+
+%         hmenu4_4_2.UserData
         
         % 将分类结果写入Excel表格
         % 首先创建一个表，可以参考table_example20190310.mlx
@@ -249,7 +267,8 @@ end
         % 显示分类用时
         time2 = toc(timerVal_1);
         disp({[hmenu4_1.UserData.matPath, ' 分类完毕! 历时',num2str(time2-time1),'秒.']});
-        delete(MyPar) %计算完成后关闭并行处理池
+        
+        %delete(MyPar) %计算完成后关闭并行处理池
     else  % 如果加载数据完毕，未选择[执行降维]而直接选择[执行分类]，则启动classificationLearner
             answer = questdlg('数据未执行降维，想采用以下哪种方式执行分类?', ...
             '分类方式选择', ...
@@ -326,6 +345,7 @@ end
                     % 其他类型的数据会导致死循环。
                     figure()
                     pf = plotconfusion(mA2.Class, categorical(tTest));
+                    
                     % 绘制性能曲线>>>错误率
                     figure()
                     plot((1:n)',[best_perf, best_vperf, best_tperf, racc],'LineWidth',1.5);
@@ -396,7 +416,10 @@ end
                     disp('ClassDemo已经退出.')
                     %dessert = 0;
             end    
-        
-
+       
     end
+    saveAllFigure('20200627',handles,'.fig');
+    gc = gcf; 
+    closeFigure([2:gc.Number]);
+%     closeFigure([2:13]);
 end
