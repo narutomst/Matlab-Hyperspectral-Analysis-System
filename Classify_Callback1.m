@@ -53,7 +53,8 @@ elseif paraTable_c.app==3
 % 根据 '降维参数统计.xlsx' sheet2 中的参数设计前向型浅层神经网络来分类
 % 优点：可以设置多个隐含层，可以设置各层的传递函数及神经元个数
 % 缺点：灵活性不够，需要自己开发，工作量大
-Classify_Callback2(hObject, eventdata, handles);
+hmenu4_4_2 = findobj(handles,'Label','ClassDemo'); 
+Classify_Callback2(hmenu4_4_2, eventdata, handles); %将分类结果保存在hmenu4_4_2
 else
     disp(['ParametersForDimReduceClassify.xlsx中第3个参数app设置错误！']);
 end
