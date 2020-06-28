@@ -4,7 +4,7 @@ function saveAllFigure(varargin)
 if nargin==3
     gc = gcf;
     ik = gc.Number;
-    for i = ik:-1:2
+    for i = 2:ik
         figure(i)
 %         filename = generateFilename('20200627', handles, ['_',num2str(i),'.fig']);
         filename = generateFilename(varargin{1}, varargin{2}, ['_',num2str(i),varargin{3}]);
