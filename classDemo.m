@@ -20,7 +20,7 @@ p.addRequired( 'TTrain', validationFcn);
 p.addRequired( 'XTest', validationFcn);
 p.addRequired( 'TTest', validationFcn);
 
-validStrings = {'TANSIG','RBF','GA-TANSIG','GA-RBF','PSO-TANSIG','PSO-RBF'};
+validStrings = {'TANSIG','RBF','GA_TANSIG','GA_RBF','PSO_TANSIG','PSO_RBF'};
 % validStrings = ["TANSIG","RBF","GA-TANSIG","GA-RBF","PSO-TANSIG","PSO-RBF"];
 % 报错：'type' 的值无效。数据类型无效。第一个参数必须为数值或逻辑值。
 validationFcn = @(x) any(validatestring(x, validStrings, 'classDemo','type',3)); 
