@@ -1020,6 +1020,20 @@ function ReChoose_Callback(hObject, eventdata, handles)
 
 feedData(hObject,handles);
 
+% 将前一次在【执行降维】各个子项下保存的数据清除掉。
+hmenu4_3 = findobj(handles,'Label','执行降维');
+hmenu4_3.UserData.drData = []; % hmenu4_3
+
+% 将前一次在【ClassDemo】各个子项下保存的数据清除掉。
+hmenu4_4_2 = findobj(handles,'Label','ClassDemo');
+
+hmenu4_4_2.UserData.racc = [];
+hmenu4_4_2.UserData.best_perf = [];
+hmenu4_4_2.UserData.best_vperf = [];
+hmenu4_4_2.UserData.best_tperf = [];
+hmenu4_4_2.UserData.lbsTest = [];
+hmenu4_4_2.UserData.imgNew = [];
+handles.UserData.imgNew = [];
 end
 
 function Frobenius_Callback(hObject, eventdata, handles)
