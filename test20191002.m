@@ -704,15 +704,23 @@ end
 
 function Delete_Callback(hObject, eventdata, handles)
     % 有ScrollBar，就删除handles.UserData.scrollpanelH
-    if ~isempty(findobj(handles,'Type','uipanel'))
-        delete(findobj(handles,'Type','uipanel'));
-    %     delete(handles.UserData.scrollpanelH);
-
-    % 没有ScrollBar,但是有坐标轴，直接删除坐标轴
-    elseif ~isempty(findobj(handles,'Type','axes'))
-    %     delete(findobj(handles,'Type','axes').Children);
-        delete(findobj(handles,'Type','axes'));
+    ims = findobj(handles,'Tag','imscrollpanel');
+    clb = findobj(handles,'Type','colorBar');
+    himage = findobj(handles,'Type','image');
+    
+    hbox = findobj(handles, 'Tag','hbox');
+    %get( hbox, 'Widths', [pwidthmax,-5] );
+    hw = hbox.Widths;
+    if ~isempty(ims)
+        delete(ims);     
+    elseif ~isempty(clb)
+        delete(clb);
+        delete(himage);
+    elseif ~isempty(himage)
+        delete(himage.Parent);
     end
+    axes1 = axes('Parent',hbox,'Tag','axes1');
+    set( hbox, 'Widths', hw );
 end
 % --------------------------------------------------------------------
 function SelectAll_Callback(hObject, eventdata, handles)
