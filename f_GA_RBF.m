@@ -74,7 +74,7 @@ acc2 = [];
 %     
 	% 5.仿真网络
 	YTest = net(XTest); 
-	tTest = vec2ind(YTest)';
+	tTest1 = vec2ind(YTest)';
 	% 6. 性能评价
     [c,cm,ind,per] = confusion(TTest,YTest);
     racc1 = c;
@@ -179,13 +179,9 @@ acc2 = [];
 
 %% X. 仿真测试
 	YTest = net(XTest); 
-	tTest = vec2ind(YTest)';
-% t_sim_ga = sim(net,p_test);    %遗传优化后的仿真结果
+	tTest2 = vec2ind(YTest)';
 
-% T_sim_ga = vec2ind(t_sim_ga);
 %% V. 性能评价
-% Confusion Matrix 
-% [confm2, accuracy2, TPR2, FPR2] = confusion_matrix(T_sim_ga, CTest);
 
     [c2,cm2,ind2,per2] = confusion(TTest,YTest);
     racc2 = c2;
@@ -193,15 +189,12 @@ acc2 = [];
     best_vperf2 = tr.best_vperf;
     best_tperf2 = tr.best_tperf;
     
-% disp(['LFDA-GMM classification: ' num2str(accuracy)])
-% acc2 = [acc2,accuracy2];
-    acc2 = [acc2, 1-racc2]; 
-% net = feedforwardnet(10,'traingda'); LFDA-GMM classification: 0.80298
 
-racc = [racc1; racc2];
-best_perf = [best_perf1; best_perf2];
-best_vperf = [best_vperf1; best_vperf2];
-best_tperf = [best_tperf1; best_tperf2];
+racc = [racc1, racc2];
+best_perf = [best_perf1, best_perf2];
+best_vperf = [best_vperf1, best_vperf2];
+best_tperf = [best_tperf1, best_tperf2];
+tTest = [tTest1, tTest2];
 %%两种算法的结果对比
 % average1 = mean(acc1);
 % average2 = mean(acc2);
