@@ -140,19 +140,47 @@ end
             if m<raccBest
                 raccBest = m;
                 tTestBest = tTest(:, i);
-                ind2Best = ind2;
-            end
- 
+                ind2Best = ind2';
+                ma2Class = mA2.Class;
+            end 
         end
-        %acc1返回类型为结构体是否合适？
-    %         time1 = toc(timerVal_1);
-    %         disp({['数据准备完毕，历时',num2str(time1),'秒.'];...
-    %         [hmenu4_1.UserData.matPath,' 开始执行分类']});
+  
+    %% 将分类结果保存到hObject.UserData中
         hObject.UserData.racc = racc;
         hObject.UserData.best_perf = best_perf;
         hObject.UserData.best_vperf = best_vperf;
         hObject.UserData.best_tperf = best_tperf;
-%         hObject.UserData.lbsOrigin = lbs;
+        %hObject.UserData.lbsOrigin = lbs;
+        acc = 1-racc;                   %acc准确率；racc 误分率，错误率
+        acc_perf = 1-best_perf;    %best_perf 训练集最佳性能（蓝色曲线）
+        acc_vperf = 1-best_vperf; %best_vperf 验证集最佳性能（绿色曲线）
+        acc_tperf = 1-best_tperf;  %best_tperf 测试集最佳性能（红色曲线）
+        
+    %% 将分类结果写入Excel表格
+    T = createTableForWrite(best_perf, best_vperf, best_tperf, racc)
+    
+        %T = table(best_perf, best_vperf, best_tperf, racc, 'RowNames',arrayfun(@string, [1:nn]'),...
+        %    'VariableNames',VN);
+        %
+        % 设置保存路径
+        path = 'C:\Matlab练习\20200627';
+        try
+            path = fullfile(path, hmenu4_1.UserData.matName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
+        catch
+        end
+            filename = [hmenu4_1.UserData.matName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
+        try
+            filename = fullfile(path,filename);%拼接路径
+        catch
+        end
+        writetable(T,filename,'Sheet',1,'Range','A1', 'WriteRowNames',true);
+        
+        %T1 = table(acc_perf, acc_vperf, acc_tperf, acc, 'RowNames',arrayfun(@string, [1:numel(acc)]'))
+        %filename = [hmenu4_1.UserData.matName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
+        T1 = createTableForWrite(acc_perf, acc_vperf, acc_tperf, acc)
+        writetable(T1,filename,'Sheet',2,'Range','A1', 'WriteRowNames',true);  
+        
+        %% 绘制预测的GT图和真实的GT图
         lbsTest = lbs;
         lbsTest(ind2Best) = tTestBest;         %tTest 为预测的类别标签列向量%用预测值代替lbs中的真实值
                                                               %tTestBest为n个预测的类别标签列向量中最优的那个
@@ -168,108 +196,40 @@ end
         SeparatePlot3_Callback(handles.UserData.gtdata,    handles.UserData.cmap, handles.UserData.M);
         SeparatePlot4_Callback(handles.UserData.gtdata, handles.UserData.imgNew, handles.UserData.cmap, handles.UserData.M);
         
-
+        %% 绘制confusion matrix
         % plotconfusion()，输入数据可以是categorical列向量
         % 也可以是由若干个one-hot vector列向量组成的矩阵
         % 其他类型的数据会导致死循环。
         figure()
-        pf = plotconfusion(mA2.Class, categorical(tTest));
+        pf = plotconfusion(ma2Class, categorical(tTestBest));
         %保存当前图窗中的图片
         %filename = generateFilename(path, handles, fmt);
+        %filename = generateFilename('20200627', handles, ['_',num2str(pf.Number),'.fig']);
+        %saveas(pf, filename);        
         
-%         filename = generateFilename('20200627', handles, ['_',num2str(pf.Number),'.fig']);
-%         saveas(pf, filename);        
+        %% 绘制性能曲线>>>错误率
         
-        % 绘制性能曲线>>>错误率
         figure()
-        plot((1:n)',[best_perf, best_vperf, best_tperf, racc],'LineWidth',1.5);
+        plotErr(best_perf, best_vperf, best_tperf, racc, 4);
             %racc 误分率，错误率
             %best_perf 训练集最佳性能（蓝色曲线）
             %best_vperf 验证集最佳性能（绿色曲线）
             %best_tperf 测试集最佳性能（红色曲线）
             %tTest 为预测的类别标签列向量        
-        title('训练性能（best_perf,best_vperf,best_tperf）与泛化性能（racc)','Interpreter','none');
-        xlabel('次数');
-        ylabel('错误率');
-        
-        hold on
-        %mean()函数按列求平均，所以将行形式转换成列形式
-        plot([1, n],[mean(racc(:,1)), mean(racc(:,1))],'--','LineWidth',1.5);
-
-        text(1.05,mean(racc(:,1))*1.030,['racc1:',num2str(mean(racc(:,1)))]);
-        try %若racc有两列，即优化前后的数据各占一列，则下面的语句会继续处理第2列数据
-            plot([1, n],[mean(racc(:,2)), mean(racc(:,2))],'--','LineWidth',1.5);
-            text(1.05,mean(racc(:,2))*1.030,['racc2:',num2str(mean(racc(:,2)))]);
-            legend('best_perf1','best_perf2','best_vperf1','best_vperf2','best_tperf1','best_tperf2','racc1','racc2','Interpreter','none','Location','best');  
-            %1表示优化前的数据，2表示优化后的数据
-        catch%若racc仅含有一列数据，则按照一列的情形设置图例
-            legend('best_perf','best_vperf','best_tperf','racc','Interpreter','none','Location','best');  
-        end 
-        hold off
-        %显示最终分类结果：racc表示分类的错误率，1-racc表示分类准确率。
-
 
         
-        % 绘制性能曲线>>>>准确率
-        acc = 1-racc; %racc 误分率，错误率
-        acc_perf = 1-best_perf; %best_perf 训练集最佳性能（蓝色曲线）
-        acc_vperf = 1-best_vperf; %best_vperf 验证集最佳性能（绿色曲线）
-        acc_tperf = 1-best_tperf; %best_tperf 测试集最佳性能（红色曲线）
-        
+        %% 绘制性能曲线>>>>准确率       
         figure()
-        plot((1:n)', [acc_perf, acc_vperf, acc_tperf, acc],'LineWidth',1.5);
-            %racc 误分率，错误率
-            %best_perf 训练集最佳性能（蓝色曲线）
-            %best_vperf 验证集最佳性能（绿色曲线）
-            %best_tperf 测试集最佳性能（红色曲线）
-            %tTest 为预测的类别标签列向量        
-        title('训练性能（acc_perf,acc_vperf,acc_tperf）与泛化性能（acc)','Interpreter','none');
-        xlabel('次数');
-        ylabel('准确率');
-        
-        hold on
-%         acc = 1-racc; %mean()函数按列求平均，所以将行形式转换成列形式
-        plot([1, n],[mean(acc(:,1)), mean(acc(:,1))],'--','LineWidth',1.5);
-        text(1.05,mean(acc(:,1))*1.005,['acc1:',num2str(mean(acc(:,1)))]);
-        try %若acc有两列，即优化前后的数据各占一列，则下面的语句会继续处理第2列数据
-            plot([1, n],[mean(acc(:,2)), mean(acc(:,2))],'--','LineWidth',1.5);
-            text(1.05,mean(acc(:,2))*1.005,['acc2:',num2str(mean(acc(:,2)))]);
-            legend('acc_perf1','acc_perf2','acc_vperf1','acc_vperf2','acc_tperf1','acc_tperf2','acc1','acc2','Interpreter','none','Location','best');  
-            %1表示优化前的数据，2表示优化后的数据
-        catch%若acc仅含有一列数据，则按照一列的情形设置图例
-            legend('acc_perf','acc_vperf','acc_tperf','acc','Interpreter','none','Location','best');  
-        end 
-        hold off
+        plotErr1(acc_perf, acc_vperf, acc_tperf, acc, 4);
 
-%         hmenu4_4_2.UserData
-        
-        % 将分类结果写入Excel表格
-        % 首先创建一个表，可以参考table_example20190310.mlx
-       
-        T = table(best_perf, best_vperf, best_tperf, racc, 'RowNames',arrayfun(@string, [1:numel(racc)]'))
-        % 设置保存路径
-        path = 'C:\Matlab练习\20200627';
-        try
-            path = fullfile(path, hmenu4_1.UserData.matName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
-        catch
-        end
-            filename = [hmenu4_1.UserData.matName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
-        try
-            filename = fullfile(path,filename);%拼接路径
-        catch
-        end
-        writetable(T,filename,'Sheet',1,'Range','A1', 'WriteRowNames',true);
-        
-        T1 = table(acc_perf, acc_vperf, acc_tperf, acc, 'RowNames',arrayfun(@string, [1:numel(acc)]'))
-%         filename = [hmenu4_1.UserData.matName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
-        writetable(T1,filename,'Sheet',1,'Range','H1', 'WriteRowNames',true);        
-        
-        % 显示分类用时
+        %% 显示分类用时
         time2 = toc(timerVal_1);
         disp({[hmenu4_1.UserData.matPath, ' 分类完毕! 历时',num2str(time2-time1),'秒.']});
         
         %delete(MyPar) %计算完成后关闭并行处理池
-    else  % 如果加载数据完毕，未选择[执行降维]而直接选择[执行分类]，则启动classificationLearner
+        
+    % 如果加载数据完毕，未选择[执行降维]而直接选择[执行分类]，则询问是否启动classificationLearner    
+    else  
             answer = questdlg('数据未执行降维，想采用以下哪种方式执行分类?', ...
             '分类方式选择', ...
             'Clssification Learner','ClassDemo','exit','exit');
@@ -300,7 +260,9 @@ end
                     racc = [];
                     best_perf = []; 
                     best_vperf = []; 
-                    best_tperf = [];    						
+                    best_tperf = [];  
+                    tTestBest = [];
+                    raccBest = 1;  						
                     for k = 1 : n
                         [mA1,mA2, ind1, ind2] = createTwoTable(mappedA,lbs,rate);
                         XTrain = table2array(mA1(:, 1:end-1))';           %XTrain每一列为一个样本
@@ -320,15 +282,52 @@ end
                         best_vperf = [best_vperf; err3]; %best_vperf 验证集最佳性能（绿色曲线）
                         best_tperf = [best_tperf; err4];%best_tperf 测试集最佳性能（红色曲线）
 
+                        % 挑选出最优泛化性能下的tTest;
+                        [m,i] = min(err1); %返回最小值及其索引
+                        if m<raccBest
+                            raccBest = m;
+                            tTestBest = tTest(:, i);
+                            ind2Best = ind2;
+                            ma2Class = mA2.Class;
+                        end 
                     end
 
+                %% 将分类结果保存到hObject.UserData中
                     hObject.UserData.racc = racc;
                     hObject.UserData.best_perf = best_perf;
                     hObject.UserData.best_vperf = best_vperf;
                     hObject.UserData.best_tperf = best_tperf;
- 
+                    %hObject.UserData.lbsOrigin = lbs;
+                    acc = 1-racc;                   %acc准确率；racc 误分率，错误率
+                    acc_perf = 1-best_perf;    %best_perf 训练集最佳性能（蓝色曲线）
+                    acc_vperf = 1-best_vperf; %best_vperf 验证集最佳性能（绿色曲线）
+                    acc_tperf = 1-best_tperf;  %best_tperf 测试集最佳性能（红色曲线）
+
+                %% 将分类结果写入Excel表格
+                    % 首先创建一个表，可以参考table_example20190310.mlx
+                    T = createTableForWrite(best_perf, best_vperf, best_tperf, racc)
+                    %T = table(best_perf, best_vperf, best_tperf, racc, 'RowNames',arrayfun(@string, [1:numel(racc)]'))
+                    % 设置保存路径
+                    path = 'C:\Matlab练习\20200627';
+                    try
+                        path = fullfile(path, hmenu4_1.UserData.matName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
+                    catch
+                    end
+                        filename = [hmenu4_1.UserData.matName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
+                    try
+                        filename = fullfile(path,filename);%拼接路径
+                    catch
+                    end
+                    writetable(T,filename,'Sheet',1,'Range','A1', 'WriteRowNames',true);
+                    T1 = createTableForWrite(acc_perf, acc_vperf, acc_tperf, acc)
+                    %T1 = table(acc_perf, acc_vperf, acc_tperf, acc, 'RowNames',arrayfun(@string, [1:numel(acc)]'))
+                    %filename = [hmenu4_1.UserData.matName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
+                    writetable(T1,filename,'Sheet',2,'Range','A1', 'WriteRowNames',true);  
+
+                    %% 绘制预测的GT图和真实的GT图
                     lbsTest = lbs;
-                    lbsTest(ind2) = tTest;      %tTest 为预测的类别标签列向量%用预测值代替lbs中的真实值
+                    lbsTest(ind2Best) = tTestBest;         %tTest 为预测的类别标签列向量%用预测值代替lbs中的真实值
+                                                                          %tTestBest为n个预测的类别标签列向量中最优的那个
                     hObject.UserData.lbsTest = lbsTest; %保存包含有预测值的标签向量
 
                     gtdata = handles.UserData.gtdata;
@@ -337,77 +336,37 @@ end
                     hObject.UserData.imgNew = double(gtdata);%保存预测出来的GT图
                     handles.UserData.imgNew = hObject.UserData.imgNew;
                     %绘制预测的GT图和真实的GT图
-                    SeparatePlot3_Callback(handles.UserData.gtdata,   handles.UserData.cmap, handles.UserData.M);
                     SeparatePlot3_Callback(handles.UserData.imgNew, handles.UserData.cmap, handles.UserData.M);
+                    SeparatePlot3_Callback(handles.UserData.gtdata,    handles.UserData.cmap, handles.UserData.M);
                     SeparatePlot4_Callback(handles.UserData.gtdata, handles.UserData.imgNew, handles.UserData.cmap, handles.UserData.M);
+
+                    %% 绘制confusion matrix
                     % plotconfusion()，输入数据可以是categorical列向量
                     % 也可以是由若干个one-hot vector列向量组成的矩阵
                     % 其他类型的数据会导致死循环。
                     figure()
-                    pf = plotconfusion(mA2.Class, categorical(tTest));
-                    
-                    % 绘制性能曲线>>>错误率
+                    pf = plotconfusion(ma2Class, categorical(tTestBest));
+                    %保存当前图窗中的图片
+                    %filename = generateFilename(path, handles, fmt);
+                    %filename = generateFilename('20200627', handles, ['_',num2str(pf.Number),'.fig']);
+                    %saveas(pf, filename);        
+
+                    %% 绘制性能曲线>>>错误率
+
                     figure()
-                    plot((1:n)',[best_perf, best_vperf, best_tperf, racc],'LineWidth',1.5);
+                    plotErr(best_perf, best_vperf, best_tperf, racc, 4);
                         %racc 误分率，错误率
                         %best_perf 训练集最佳性能（蓝色曲线）
                         %best_vperf 验证集最佳性能（绿色曲线）
                         %best_tperf 测试集最佳性能（红色曲线）
                         %tTest 为预测的类别标签列向量        
-                    title('训练性能（best_perf,best_vperf,best_tperf）与泛化性能（racc)','Interpreter','none');
-                    xlabel('次数');
-                    ylabel('错误率');
 
-                    hold on
-                    %mean()函数按列求平均，所以将行形式转换成列形式
-                    plot([1, n],[mean(racc(:,1)), mean(racc(:,1))],'--','LineWidth',1.5);
 
-                    text(1.05,mean(racc(:,1))*1.030,['racc1:',num2str(mean(racc(:,1)))]);
-                    try %若racc有两列，即优化前后的数据各占一列，则下面的语句会继续处理第2列数据
-                        plot([1, n],[mean(racc(:,2)), mean(racc(:,2))],'--','LineWidth',1.5);
-                        text(1.05,mean(racc(:,2))*1.030,['racc2:',num2str(mean(racc(:,2)))]);
-                        legend('best_perf1','best_perf2','best_vperf1','best_vperf2','best_tperf1','best_tperf2','racc1','racc2','Interpreter','none','Location','best');  
-                        %1表示优化前的数据，2表示优化后的数据
-                    catch%若racc仅含有一列数据，则按照一列的情形设置图例
-                        legend('best_perf','best_vperf','best_tperf','racc','Interpreter','none','Location','best');  
-                    end 
-                    hold off
-                    %显示最终分类结果：racc表示分类的错误率，1-racc表示分类准确率。
-
-                    % 绘制性能曲线>>>>准确率
-                    acc = 1-racc; %racc 误分率，错误率
-                    acc_perf = 1-best_perf; %best_perf 训练集最佳性能（蓝色曲线）
-                    acc_vperf = 1-best_vperf; %best_vperf 验证集最佳性能（绿色曲线）
-                    acc_tperf = 1-best_tperf; %best_tperf 测试集最佳性能（红色曲线）
-                    
+                    %% 绘制性能曲线>>>>准确率       
                     figure()
-                    plot((1:n)', [acc_perf, acc_vperf, acc_tperf, acc],'LineWidth',1.5);
-                        %racc 误分率，错误率
-                        %best_perf 训练集最佳性能（蓝色曲线）
-                        %best_vperf 验证集最佳性能（绿色曲线）
-                        %best_tperf 测试集最佳性能（红色曲线）
-                        %tTest 为预测的类别标签列向量        
-                    title('训练性能（acc_perf,acc_vperf,acc_tperf）与泛化性能（acc)','Interpreter','none');
-                    xlabel('次数');
-                    ylabel('准确率');
+                    plotErr1(acc_perf, acc_vperf, acc_tperf, acc, 4);
 
-                    hold on
-                    acc = 1-racc; %mean()函数按列求平均，所以将行形式转换成列形式
-                    plot([1, n],[mean(acc(:,1)), mean(acc(:,1))],'--','LineWidth',1.5);
-                    text(1.05,mean(acc(:,1))*1.005,['acc1:',num2str(mean(acc(:,1)))]);
-                    try %若acc有两列，即优化前后的数据各占一列，则下面的语句会继续处理第2列数据
-                        plot([1, n],[mean(acc(:,2)), mean(acc(:,2))],'--','LineWidth',1.5);
-                        text(1.05,mean(acc(:,2))*1.005,['acc2:',num2str(mean(acc(:,2)))]);
-                        legend('acc_perf1','acc_perf2','acc_vperf1','acc_vperf2','acc_tperf1','acc_tperf2','acc1','acc2','Interpreter','none','Location','acc');  
-                        %1表示优化前的数据，2表示优化后的数据
-                    catch%若acc仅含有一列数据，则按照一列的情形设置图例
-                        legend('acc_perf','acc_vperf','acc_tperf','acc','Interpreter','none','Location','best');  
-                    end 
-                    hold off
-                    hmenu4_4 = findobj(handles,'Label','执行分类');    
-                    hmenu4_4.UserData
-
-                    % 显示分类用时
+                    %% 显示分类用时
                     time2 = toc(timerVal_1);
                     disp({[hmenu4_1.UserData.matPath, ' 分类完毕! 历时',num2str(time2-time1),'秒.']});
                     
