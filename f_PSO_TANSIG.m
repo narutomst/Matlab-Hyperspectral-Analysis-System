@@ -72,7 +72,7 @@ acc2 = [];
 %     
 	% 5.仿真网络
 	YTest = net(XTest); 
-	tTest = vec2ind(YTest)';
+	tTest1 = vec2ind(YTest)';
 	% 6. 性能评价
     [c,cm,ind,per] = confusion(TTest,YTest);
     racc1 = c;
@@ -111,7 +111,7 @@ acc2 = [];
     if str2num(Var.plotperform)          
         plotperform(tr);
     end
-   acc1 = [acc1, 1-racc1]; 
+   %acc1 = [acc1, 1-racc1]; 
 
 	%% VI. PSO_BP神经网络
 	%%新添加
@@ -242,7 +242,7 @@ acc2 = [];
 	%% PSO_BP网络预测
 	% 5.仿真网络
 	YTest = net(XTest); 
-	tTest = vec2ind(YTest)';
+	tTest2 = vec2ind(YTest)';
 	% 6. 性能评价
     [c,cm,ind,per] = confusion(TTest,YTest);
     racc2 = c;
@@ -273,11 +273,11 @@ acc2 = [];
     end
    acc2 = [acc2, 1-racc2]; 
    
-racc = [racc1; racc2];
-best_perf = [best_perf1; best_perf2];
-best_vperf = [best_vperf1; best_vperf2];
-best_tperf = [best_tperf1; best_tperf2];      
-    
+racc = [racc1, racc2];
+best_perf = [best_perf1, best_perf2];
+best_vperf = [best_vperf1, best_vperf2];
+best_tperf = [best_tperf1, best_tperf2];      
+tTest = [tTest1, tTest2];    
 % %%两种算法的结果对比
 % average1 = mean(acc1);
 % average2 = mean(acc2);
