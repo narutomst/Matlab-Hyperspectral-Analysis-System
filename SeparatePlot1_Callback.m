@@ -7,10 +7,10 @@ if 1&&~isempty(findobj(handles,'Type','image'))
     p = figure();
     if isempty(findobj(handles,'Type','colorbar')) && ~hmenu3_1.UserData.imgGT
     %既不存在colorbar，imgGT又不等于1，则说明当前窗口中为普通图片
-    %在新的figure中以原始大小显示普通图片
+    %在新的figure中以自适应大小显示普通图片
         himage = imshow(himage.CData,'Parent',gca);     
     else
-    %在新的figure中以原始大小显示GT图片
+    %在新的figure中以自适应大小显示GT图片
         himage = plot1(handles);
     end
 end
