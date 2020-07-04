@@ -168,11 +168,15 @@ end
             path = fullfile(path, hmenu4_1.UserData.matName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
         catch
         end
+        if ~exist(path, 'dir')
+            [status,msg,msgID] = mkdir(path);
+        end
             filename = [hmenu4_1.UserData.matName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
         try
             filename = fullfile(path,filename);%Æ´½ÓÂ·¾¶
         catch
         end
+        
         writetable(T,filename,'Sheet',1,'Range','A1', 'WriteRowNames',true);
         
         %T1 = table(acc_perf, acc_vperf, acc_tperf, acc, 'RowNames',arrayfun(@string, [1:numel(acc)]'))
@@ -312,6 +316,9 @@ end
                     try
                         path = fullfile(path, hmenu4_1.UserData.matName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
                     catch
+                    end
+                    if ~exist(path, 'dir')
+                        [status,msg,msgID] = mkdir(path);
                     end
                         filename = [hmenu4_1.UserData.matName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
                     try
