@@ -233,10 +233,22 @@ end
         %delete(MyPar) %计算完成后关闭并行处理池
         
     % 如果加载数据完毕，未选择[执行降维]而直接选择[执行分类]，则询问是否启动classificationLearner    
-    else  
-            answer = questdlg('数据未执行降维，想采用以下哪种方式执行分类?', ...
-            '分类方式选择', ...
-            'Clssification Learner','ClassDemo','exit','exit');
+    else
+            quest = {'\fontsize{10} 数据未执行降维，直接分类需要耗费较长时间。若想使用未降维的数据直接分类，请选择下面一种分类方式；',...
+                         '若想使用经过降维的数据进行分类，请先点击‘exit’退出，随后在菜单栏选择[\bf分析\rm]>>[\bf执行降维\rm]'};
+                     % \fontsize{10}：字体大小修饰符，作用是使其后面的字符大小都为10磅；
+                     % \bf：字体加粗修饰符，作用是使其后面的字符都变为加粗字体，该修饰符会一直作用到文本结尾，直到遇到另外一种字体格式修饰符（例如\rm）时截止。
+                     % \rm：常规字体修饰符，作用是使其后面的字符都变为常规字体，该修饰符会一直作用到文本结尾，直到遇到另外一种字体格式修饰符时截止。
+            dlgtitle = '分类方式选择';
+            btn1 = 'Clssification Learner';
+            btn2 = 'ClassDemo';
+            btn3 = 'exit';
+%             defbtn = btn3;
+            opts.Default = btn3;
+            opts.Interpreter = 'tex';
+%             answer = questdlg(quest, dlgtitle, btn1, btn2, btn3, defbtn);
+            answer = questdlg(quest, dlgtitle, btn1, btn2, btn3, opts);
+                                        
             % Handle response
             switch answer
                 case 'Clssification Learner'
