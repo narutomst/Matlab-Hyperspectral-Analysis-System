@@ -932,12 +932,18 @@ hmenu4_1 = findobj(handles,'Label','加载数据');
 x2 = hmenu4_1.UserData.x2;
 lbs = hmenu4_1.UserData.lbs; 
 
-A = [lbs,x2];
+A = x2;
 % 所选择的算法名称及序号
 type = hmenu4_1.UserData.drAlgorithm;
 val = hmenu4_1.UserData.drValue;
 % type = 'PCA';
 
+% For the supervised techniques ('LDA', 'GDA', 'NCA','MCML', and 'LMNN'),  
+% the labels of the instances should be specified in the first column of A (using numeric labels).
+%  
+if ismember(type, {'LDA', 'GDA', 'NCA', 'MCML', 'LMNN'})
+    A = [lbs,x2];
+end
 % 根据序号分配默认参数
 % paraTable_dr = importfile1(workbookFile, sheetName, dataLines)
 %  示例:
@@ -965,12 +971,22 @@ end
 %     mappedA = compute_mapping(A, type, para{2}, para{3:end-2}, para{end});
 % catch
     timerVal_1 = tic;
-    disp('执行降维............................................................');
+    disp('---------------执行降维---------------');
+    disp(paraTable_dr);
+%     disp([type, para,'执行降维..........']);
     
     try
-    [mappedA, mapping] = compute_mapping(A, type, para{2}, para{3:end});
+%     [mappedA, mapping] = compute_mapping(A, type, para{2}, para(3:end));
+%     以这种Name-Value参数输入方式的是不行的，因为在查看tsne.m文件时，发现其参数要求是：仅限值输入
+% ydata = tsne(X, labels, no_dims, initial_dims, perplexity)
+% 错误示例
+% [mappedA, mapping] = compute_mapping(A, type, para{2}, 'perplexity',[10], 'initial_dims',[30], 'eig_impl', "JDQR")
+% 正确示例
+% [mappedA, mapping] = compute_mapping(A, type, para{2}, 10, 30, "JDQR");
+
+        [mappedA, mapping] = compute_mapping(A, type, para{2}, t{2:end});
     catch
-    [mappedA, mapping] = compute_mapping(A, type, para{2});
+        [mappedA, mapping] = compute_mapping(A, type, para{2});
     end
 
 % % 使用Matlab的pca()函数进行降维
