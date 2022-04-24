@@ -5,9 +5,9 @@ function paraTable_dr = importfile1(workbookFile, sheetName, dataLines)
 %
 %  UNTITLED = IMPORTFILE1(FILE, SHEET) 从指定的工作表中读取。
 %
-%  UNTITLED = IMPORTFILE1(FILE, SHEET,
-%  DATALINES)按指定的行间隔读取指定工作表中的数据。对于不连续的行间隔，请将 DATALINES 指定为正整数标量或 N×2
-%  正整数标量数组。
+%  UNTITLED = IMPORTFILE1(FILE, SHEET,DATALINES)按指定的行间隔读取指定工作表中的数据。
+%  对于不连续的行间隔，请将 DATALINES 指定为正整数标量或 N×2正整数标量数组。
+%  
 %
 %  示例:
 %  Untitled = importfile1("D:\MA毕业论文\ATrain_Record\20191002\降维参数统计.xlsx", "Sheet1", [2, 35]);
@@ -34,7 +34,7 @@ opts = spreadsheetImportOptions("NumVariables", 14);
 % 指定工作表和范围
 opts.Sheet = sheetName;
 %opts.RowNamesRange = "A" + dataLines(1, 1) + ":A" + dataLines(1, 2);
-opts.RowNamesRange = "A2";
+opts.RowNamesRange = "A" + dataLines(1, 1);
 opts.DataRange = "B" + dataLines(1, 1) + ":O" + dataLines(1, 2);
 
 
