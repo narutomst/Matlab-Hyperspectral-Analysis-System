@@ -1,5 +1,7 @@
 function paraTable_dr = importfile1(workbookFile, sheetName, dataLines)
-%IMPORTFILE1 导入电子表格中的数据
+
+%IMPORTFILE1 导入电子表格ParametersForDimReduceClassify.xlsx中的降维参数
+
 %  UNTITLED = IMPORTFILE1(FILE) 读取名为 FILE 的 Microsoft Excel
 %  电子表格文件的第一张工作表中的数据。  以表形式返回数据。
 %
@@ -9,8 +11,8 @@ function paraTable_dr = importfile1(workbookFile, sheetName, dataLines)
 %  对于不连续的行间隔，请将 DATALINES 指定为正整数标量或 N×2正整数标量数组。
 %  
 %
-%  示例:
-%  Untitled = importfile1("D:\MA毕业论文\ATrain_Record\20191002\降维参数统计.xlsx", "Sheet1", [2, 35]);
+%  示例: 导入降维参数
+%  Untitled = importfile1("C:\Matlab练习\Project20191002\ParametersForDimReduceClassify.xlsx", "Sheet1", [2, 35]);
 %
 %  另请参阅 READTABLE。
 %
