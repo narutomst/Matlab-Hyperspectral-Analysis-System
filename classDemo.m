@@ -52,6 +52,11 @@ defaultHiddenNum3 = 10;
 p.addParameter( 'hiddenNum3',defaultHiddenNum3,@(x) validateattributes(str2num(x),{'numeric'},{'integer','positive'}));
 defaultHiddenNum4 = 10;
 p.addParameter( 'hiddenNum4',defaultHiddenNum4,@(x) validateattributes(str2num(x),{'numeric'},{'integer','positive'}));
+defaultstartNum = 1;
+p.addParameter( 'startNum',defaultstartNum,@(x) validateattributes(str2num(x),{'numeric'},{'integer','positive'}));
+defaultstopNum = 100;
+p.addParameter( 'stopNum',defaultstopNum,@(x) validateattributes(str2num(x),{'numeric'},{'integer','positive'}));
+
 
 p.addParameter('transferFcn',@(x) any(validatestring(x,{'tansig','radbas','purelin'})));
 p.addParameter('transferFcn1',@(x) any(validatestring(x,{'tansig','radbas','purelin'})));
@@ -65,6 +70,7 @@ p.addParameter('plottrainstate',@(x) validateattributes(x,{'logical'}));
 p.addParameter('ploterrhist',@(x) validateattributes(x,{'logical'}));
 p.addParameter('plotconfusion',@(x) validateattributes(x,{'logical'}));
 p.addParameter('plotroc',@(x) validateattributes(x,{'logical'}));
+p.addParameter('hiddenNumOptimization',@(x) validateattributes(x,{'logical'}));
 
 p.parse(XTrain, TTrain, XTest, TTest, type, varargin{:});
 % %报错：因为varargin是cell类型的，而合法的类型只能是字符串标量或者字符向量
