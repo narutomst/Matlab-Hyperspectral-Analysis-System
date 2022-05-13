@@ -48,7 +48,7 @@ acc2 = [];
 % 	net.trainParam.epochs = 2000;
 	net.trainParam.showWindow = str2num(Var.showWindow); %str2num('true')==1; str2num('false')==0
 	% 4.训练网络
-	[net, tr] = train(net, XTrain, TTrain);%这一步网络拓扑结构才算正式确定下来，
+	[net, tr] = train(net, XTrain, TTrain,'useParallel','yes','showResources','yes');%这一步网络拓扑结构才算正式确定下来，
                                                         %XTrain每一列向量是一个样本，对于分类问题，TTrain每一列是一个one-hot-vector
 												 
 %     view(net);  
@@ -169,7 +169,7 @@ acc2 = [];
 %     [W,B,val] = gadecod(x);
 %% IX. 利用新的权值和阈值进行训练
 	net.trainParam.showWindow = str2num(Var.showWindow); %str2num('true')==1; str2num('false')==0
-	[net,tr]=train(net,XTrain,TTrain);
+	[net,tr]=train(net,XTrain,TTrain,'useParallel','yes','showResources','yes');
 
 	if str2num(Var.plotperform)          % str2num('true')==1
 		figure
