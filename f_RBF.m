@@ -81,15 +81,15 @@ warning off
 %     tansig - Symmetric sigmoid transfer function.
 %     tribas - Triangular basis transfer function.
     % 2. 设置性能参数 
-% 	net.performParam.regularization = 0.1;           
-% 	net.performParam.normalization = 'none';
+	net.performParam.regularization = 0.1;           
+	net.performParam.normalization = 'none';
 	% 3. 设置训练参数
-% 	net.trainParam.goal = 1e-6;      % 
-% 	net.trainParam.show = 25;
-% 	net.trainParam.epochs = 2000;
+	net.trainParam.goal = 1e-6;      % 
+	net.trainParam.show = 25;
+	net.trainParam.epochs = 2000;
 	net.trainParam.showWindow = str2num(Var.showWindow); %str2num('true')==1; str2num('false')==0
 	% 4.训练网络
-	[net, tr] = train(net,XTrain,TTrain);%这一步网络拓扑结构才算正式确定下来10-10-9
+	[net, tr] = train(net,XTrain,TTrain, 'useParallel','yes','showResources','yes');%这一步网络拓扑结构才算正式确定下来10-10-9
 												 %连接权值和偏置值总数是：10*10+9*10+10+9=209
 %     view(net);  
     

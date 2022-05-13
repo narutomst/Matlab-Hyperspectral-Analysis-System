@@ -80,16 +80,16 @@ warning off
 %     softmax - Soft max transfer function.
 %     tansig - Symmetric sigmoid transfer function.
 %     tribas - Triangular basis transfer function.
-    % 2. 设置性能参数 
-% 	net.performParam.regularization = 0.1;           
-% 	net.performParam.normalization = 'none';
-	% 3. 设置训练参数
-% 	net.trainParam.goal = 1e-6;      % 
-% 	net.trainParam.show = 25;
-% 	net.trainParam.epochs = 2000;
+%   2. 设置性能参数 
+	net.performParam.regularization = 0.1;           
+	net.performParam.normalization = 'none';
+% 	3. 设置训练参数
+	net.trainParam.goal = 1e-6;      % 
+	net.trainParam.show = 25;
+	net.trainParam.epochs = 2000;
 	net.trainParam.showWindow = str2num(Var.showWindow); %str2num('true')==1; str2num('false')==0
 	% 4.训练网络
-	[net, tr] = train(net,XTrain,TTrain, 'useParallel','yes','showResources','yes');%这一步网络拓扑结构才算正式确定下来10-10-9
+	[net, tr] = train(net,XTrain,TTrain, ,'useParallel','yes','showResources','yes');%这一步网络拓扑结构才算正式确定下来10-10-9
 												 %连接权值和偏置值总数是：10*10+9*10+10+9=209
 %     view(net);  
     
@@ -120,6 +120,8 @@ warning off
     best_perf = tr.best_perf;       %训练集最佳性能（蓝色曲线）
     best_vperf = tr.best_vperf;   %验证集最佳性能（绿色曲线）
     best_tperf = tr.best_tperf;     %测试集最佳性能（红色曲线）
+    
+    
 %performance图上的三色曲线（红(Test)>绿(Validation)>蓝(Train)）
 %而当前值best_tperf>best_vperf>best_perf，上下相对应，我们确定出了
 %best_tperf：红(Test)
