@@ -3,6 +3,11 @@
 % function [acc1, acc2] = f_GA_RBF()
 function [net, tr, tTest, c, cm] = f_GA_RBF(XTrain, TTrain, XTest, TTest, Var)
 %这个函数能给出的有价值的计算结果是： net tr tTest c cm 
+        % net，训练好的网络
+        % tr，训练记录结构体，包含了best_perf 训练集最佳性能（蓝色曲线），best_vperf 验证集最佳性能（绿色曲线），best_tperf 测试集最佳性能（红色曲线）
+        %tTest 为预测的类别标签列向量
+        % c, 误分率，错误率；1-c，即准确率OA
+        % cm, 混淆矩阵  
 warning off
 
 %'softmax'; %最后一层即输出层的传递函数是 net.layers{Var.hiddenLayerNum+1}.transferFcn
