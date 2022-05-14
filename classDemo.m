@@ -1,6 +1,11 @@
-function [racc, best_perf, best_vperf, best_tperf, tTest] = classDemo(XTrain, TTrain, XTest, TTest,  type, varargin)
+function [net, tr, tTest, c, cm] = classDemo(XTrain, TTrain, XTest, TTest,  type, varargin)
 global hmenu4_1
-
+%这个函数能给出的有价值的计算结果是： net tr tTest c cm 
+        % net，训练好的网络
+        % tr，训练记录结构体，包含了best_perf 训练集最佳性能（蓝色曲线），best_vperf 验证集最佳性能（绿色曲线），best_tperf 测试集最佳性能（红色曲线）
+        %tTest 为预测的类别标签列向量
+        % c, 误分率，错误率；1-c，即准确率OA
+        % cm, 混淆矩阵  
 timerVal_1 = tic;
 varargin = varargin{1}; %将cell转换为string数组
 p = inputParser;
@@ -133,23 +138,22 @@ switch p.Results.type
     case 'TANSIG'
         % 调用函数
         % 现有参数为4个array外加一个struct
-        [racc, best_perf, best_vperf, best_tperf, tTest] = f_TANSIG(XTrain, TTrain, XTest, TTest, Var);
-        %racc 误分率，错误率
-        %best_perf 训练集最佳性能（蓝色曲线）
-        %best_vperf 验证集最佳性能（绿色曲线）
-        %best_tperf 测试集最佳性能（红色曲线）
+        [net, tr, tTest, c, cm] = f_TANSIG(XTrain, TTrain, XTest, TTest, Var);
+        % net，训练好的网络
+        % tr，训练记录结构体，包含了best_perf 训练集最佳性能（蓝色曲线），best_vperf 验证集最佳性能（绿色曲线），best_tperf 测试集最佳性能（红色曲线）
         %tTest 为预测的类别标签列向量
-        
+        % c, 误分率，错误率；1-c，即准确率OA
+        % cm, 混淆矩阵        
     case 'RBF'
-        [racc, best_perf, best_vperf, best_tperf, tTest] = f_RBF(XTrain, TTrain, XTest, TTest, Var);        
+        [net, tr, tTest, c, cm] = f_RBF(XTrain, TTrain, XTest, TTest, Var);        
     case 'GA_TANSIG'
-        [racc, best_perf, best_vperf, best_tperf, tTest] = f_GA_TANSIG(XTrain, TTrain, XTest, TTest, Var);
+        [net, tr, tTest, c, cm] = f_GA_TANSIG(XTrain, TTrain, XTest, TTest, Var);
     case 'GA_RBF'
-        [racc, best_perf, best_vperf, best_tperf, tTest] = f_GA_RBF(XTrain, TTrain, XTest, TTest, Var);
+        [net, tr, tTest, c, cm] = f_GA_RBF(XTrain, TTrain, XTest, TTest, Var);
     case 'PSO_TANSIG'
-        [racc, best_perf, best_vperf, best_tperf, tTest] = f_PSO_TANSIG(XTrain, TTrain, XTest, TTest, Var);
+        [net, tr, tTest, c, cm] = f_PSO_TANSIG(XTrain, TTrain, XTest, TTest, Var);
     case 'PSO_RBF'
-        [racc, best_perf, best_vperf, best_tperf, tTest] = f_PSO_RBF(XTrain, TTrain, XTest, TTest, Var);
+        [net, tr, tTest, c, cm] = f_PSO_RBF(XTrain, TTrain, XTest, TTest, Var);
     otherwise
 end
 % acc = struct();
