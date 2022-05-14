@@ -13,6 +13,7 @@ else
     mappedA = hmenu4_3.UserData.drData;  %若数据已经做了降维，从【执行降维】对象取数据
 end
 disp('分类：数据有效性检查............');
+
 % if isfield(hmenu4_1.UserData, 'x2') || ~isempty(hmenu4_1.UserData.x2)
 try
     x2 = hmenu4_1.UserData.x2;
@@ -56,14 +57,36 @@ try
 catch    
     paraTable_c = importfile2(workbookFile, "Sheet2", [2,2]);
 end
-t = table2cell(paraTable_c);
-ss = table2struct(paraTable_c);
-k = numel(t); 
-para = cell(1,2*k);
-for i = 1:k
-	para{2*i} = t{i};
-	para{2*i-1} = paraTable_c.Properties.VariableNames{i};
-end
+% paraTable_c =
+% 
+%   1×25 table
+% 
+%             dimReduce rate app  executionTimes  trainFcn  hiddenNum  transferFcn showWindow plotperform plottrainstate ploterrhist plotconfusion plotroc hiddenLayerNum hiddenNum1 transferFcn1 hiddenNum2 transferFcn2 hiddenNum3 transferFcn3 hiddenNum4 transferFcn4 hiddenNumOptimization startNum stopNum
+%             _________     ____ ___    ______________    __________  _________      ___________   __________      ___________    ______________ ___________ _____________   _______  ______________       __________      ____________    __________      ____________    __________    ____________    __________      ____________    _____________________        ________    _______
+% 
+% TANSIG      true       0.2   3             20            "trainscg"       10            "tansig"         false               false             false             false           false           false           2                      20              "tansig"            20               "tansig"          20             "tansig"          20                "tansig"                   true                       1           100  
+% 
+% paraTable_c.Properties
+% 
+% ans = 
+%   TableProperties - 属性:
+% 
+%              Description: ''
+%                 UserData: []
+%           DimensionNames: {'Row'  'Variables'}
+%            VariableNames: {1×25 cell}
+%     VariableDescriptions: {}
+%            VariableUnits: {}
+%       VariableContinuity: []
+%                 RowNames: {'TANSIG'}
+%         CustomProperties: 未设置自定义属性。
+% 请使用 addprop 和 rmprop 修改 CustomProperties。
+% 
+% paraTable_c.Properties.RowNames
+% ans =
+%   1×1 cell 数组
+
+
 
 % 得到最终分类准确率acc
 % hyperDemo_1(hmenu4_1.UserData.x3);
@@ -72,7 +95,7 @@ end
 timerVal_1 = tic;
 disp('数据准备.......................................................................');
 
-rate = paraTable_c.rate;
+rate = paraTable_c.rate;   % 所使用的训练集占比
 
 if min(lbs(:))==0
     lbs = lbs(lbs~=0);
@@ -80,16 +103,21 @@ end
 % vector_lbs2 = ind2vec(lbs2); % 这个函数输入只能是一维
 
 % 3. ClassDemo
-% 根据 '降维参数统计.xlsx' sheet2 中的参数设计前向型浅层神经网络来分类
+% 根据 'ParametersForDimReduceClassify.xlsx' sheet2 中的参数设计前向型浅层神经网络来分类
 % 优点：可以设置多个隐含层，可以设置各层的传递函数及神经元个数
 % 缺点：灵活性不够，需要自己开发，工作量大
-    validateattributes(paraTable_c.hiddenLayerNum,{'numeric'},{'integer','positive','>=',1,'<=',5},'','hiddenLayerNum',12)
+    validateattributes(paraTable_c.dimReduce,{'logical'},{'integer'},'','dimReduce',1);
+    validateattributes(paraTable_c.executionTimes,{'numeric'},{'integer','positive','>=',1,'<=',500},'','executionTimes',4);
+    validateattributes(paraTable_c.hiddenLayerNum,{'numeric'},{'integer','positive','>=',1,'<=',5},'','hiddenLayerNum',14);
+    validateattributes(paraTable_c.hiddenNumOptimization,{'logical'},{'integer'},'','hiddenNumOptimization',23);
+    if paraTable_c.hiddenNumOptimization
+        validateattributes(paraTable_c.startNum,{'numeric'},{'integer','positive','>=',1,'<=',500},'','startNum',24);
+        validateattributes(paraTable_c.stopNum,{'numeric'},{'integer','positive','>=',1,'<=',500},'','stopNum',25);
+    end
 
     time1 = toc(timerVal_1);
     disp({['数据准备完毕，历时',num2str(time1),'秒.',...
     hmenu4_1.UserData.matPath,' 开始执行分类']});
-
-    var = cellfun(@string, para(9:end)); %对cell array中的所有cell应用string
 
     if paraTable_c.dimReduce && ~isempty(hmenu4_3.UserData) && isfield(hmenu4_3.UserData, 'drData') && ~isempty(hmenu4_3.UserData.drData)
 
@@ -97,16 +125,12 @@ end
         % 因为目前的数据在pca降维后存在严重的数据倾斜，即第1主成分所占的比重太大了
         % 这样的话真的有利于分类吗？
         n = paraTable_c.executionTimes;
-%         racc = zeros(n,1);
-%         best_perf =  zeros(n,1); 
-%         best_vperf =zeros(n,1); 
-%         best_tperf = zeros(n,1);
         
-        try
-            MyPar = parpool; %如果并行池未开启，则打开并行处理池
-        catch
-            MyPar = gcp; %如果并行池已经开启，则将当前并行池赋值给MyPar
-        end
+%         try
+%             MyPar = parpool; %如果并行池未开启，则打开并行处理池
+%         catch
+%             MyPar = gcp; %如果并行池已经开启，则将当前并行池赋值给MyPar
+%         end
         
         racc = [];
         best_perf = []; 
@@ -114,8 +138,193 @@ end
         best_tperf = [];  
         tTestBest = [];
         raccBest = 1;
+        
+        acc_best = 0; % 记录n次迭代下的最高准确率OA的值
+        net_best = []; % 记录最高准确率下训练好的网络（用于绘制GT图）
+        
+        N = hmenu4_1.UserData.M-1; %类别总数
+        cmNormalizedValues1 = zeros(N, N, n); %保存正常顺序的混淆矩阵
+        cmNormalizedValues2 = zeros(N, N, n); %保存调整顺序后的混淆矩阵
+        cmClassLabels2 = zeros(n, N);
+        acc = zeros(n, 1);
+        
+%         % 记录每次得到的分类准确率，每一列的准确率对应一次迭代
+%         acc_full =   zeros(iterationPerLearningRate, iterationonSize , 'single');  
+%         idx_best = zeros(iterationonSize, 1); % 在每一个输入尺寸下记录一个最佳的学习进度曲线图    
+%         accTable = table();  % 记录每一次的OA值，iterationPerLearningRate次重复计算的OA保存为一列，共有iterationonSize列
+%         avgTable = table(); % 将iterationPerLearningRate次重复计算的各类TPR求平均保存为一列，每一列对应一个输入尺寸，共有iterationonSize列
+%         % TPR = single(classNumber, iterationPerLearningRate, iterationonSize);
+%         TPR = zeros(9, iterationPerLearningRate, iterationonSize, 'single');        
+
+
+%% 利用黄金分割搜索法来寻找各个隐藏层神经元的最佳个数
+% 这里仅针对单个隐层进行寻优，以说明寻找最佳隐含层节点数的过程，但是对于多个隐含层的情况，
+% 这种方法并不见得就有好的效果，例如单隐层huston.mat数据集上0.2的训练集，1~100的寻优结果为85
+% 这个效果会好于双隐层，每层只有40个节点的网络吗？不一定。因为通常而言，窄而深的网络分类效果更好。
+% 而在单层优化时，节点越多效果越好。
+% 所以单层的结论和可能不适用于多层。
+        if paraTable_c.hiddenNumOptimization
+            % 询问是否要进行黄金分割法来寻找隐含层节点数的最优值
+            quest = {'\fontsize{10} 是否要使用黄金分割法来寻找隐含层节点数的最优值？'};
+                     % \fontsize{10}：字体大小修饰符，作用是使其后面的字符大小都为10磅；
+            btn1 = '是';
+            btn2 = '否';
+            opts.Default = btn2;
+            opts.Interpreter = 'tex';
+            % answer = questdlg(quest,dlgtitle,btn1,btn2,defbtn);
+            answer = questdlg(quest, dlgtitle, btn1, btn2, btn2, opts);
+                                        
+            % Handle response
+            switch answer
+                case '是'
+                       
+                    Ni = size(hmenu4_3.UserData.drData, 2); %输入层节点数记为Ni，10249x5 double
+                    No = N; %输出层节点数记为No
+                    Nh = []; %隐含层节点数记为Nh
+                    a = paraTable_c.startNum; % 区间下界；向零取整，以免遗漏任何一个可能的节点数
+                    b = paraTable_c.stopNum; %区间上界；         
+                    gold_point = cell(1,paraTable_c.hiddenLayerNum);%记录黄金分割点
+                    avg_acc = cell(1,paraTable_c.hiddenLayerNum);%记录分割点对应的准确率
+
+                    for LayerNum=1 : paraTable_c.hiddenLayerNum  % 每个隐藏层一个大循环
+                        N_1 = 20; %每个黄金分割点上的计算次数。
+                        flag=1;
+
+                        while(flag)
+                            x_1 = a + 0.382*(b-a); %x_1和x_2总是位于区间中间
+                            x_2 = a + 0.618*(b-a); %所以为了不漏掉可能的点，x_1的整数值应该尽量向左端点约值，x_2的整数值应该尽量向右端点约值
+                            x = [floor(x_1), ceil(x_2)];              %每次取两个黄金分割点
+
+                            [Lia, Locb] = ismember(x, gold_point{LayerNum}); %
+                            % Lia = 1x2 logical array, 可能的值：[0,0] [1,0] [0,1] [1,1]
+                            % Locb = 1xnumel(gold_point{LayerNum})，可能的值（假定numel(gold_point{LayerNum})=5）为：
+                            % [0 0 0 0 0], [0 0 1 0 0], [0 0 0 0 1], [0 1 0 1 0]
+                            % 
+                            % Lia=[0,0]，表示x中的两个值在gold_point{LayerNum}中没有查询到重复的情况,
+                            % 这时的Locb = [0 0 0 0 0]
+                            % Lia=[1,0],
+                            % 表示x中第一个值与gold_point{LayerNum}中的某个值重复，假设此时Locb=[0 0 1 0 0]
+                            % 则说明重复在gold_point{LayerNum}中的第三个数，这个数在gold_point{LayerNum}中只有一个
+                            % 其最小索引为1.
+                            % Lia=[1,1] 表示x中的两个值与gold_point{LayerNum}中的值重复，假设此时Locb=[0 1 0 1 0]
+                            % 则说明重复在gold_point{LayerNum}中的第二个数和第四个数，这两个数在gold_point{LayerNum}中只出现了一次
+                            % 因此最小最小索引都为1.
+
+                            switch Lia(1)*2+Lia(2)
+
+                                case 0 % 若x中两个数字都和gold_point中没有重复，则两个黄金分割点都计算，保存
+                                    acc = {[],[]}; %记录两个黄金分割点各20次的准确率
+                                    acc_average = [0,0];%记录两个黄金分割点的平均准确率
+                                    for i = 1 : 2
+                                        for j = 1 : N_1
+                                            c = fcn1(mappedA, lbs, rate, x(i), 'trainscg');
+                                            acc{i} = [acc{i}, 1-c];
+                                        end
+                                        acc_average(i) = mean(acc{i});
+                                    end
+
+                                    if acc_average(1) >= acc_average(2)
+                                        b = ceil(x_2);
+                                    else
+                                        a = floor(x_1);
+                                    end
+                                    gold_point{LayerNum} = [gold_point{LayerNum}, x]
+                                    avg_acc{LayerNum} = [avg_acc{LayerNum}, acc_average]
+
+                                case 1 % 若x中第二个数与gold_point中的点重复，则只计算第一个，保存第一个
+                                    acc = []; %记录x中第一个黄金分割点各20次的准确率
+                                    acc_average = [0];%记录x中第一个黄金分割点的平均准确率		
+                                    for j = 1 : N_1
+                                        [c, net] = fcn1(mappedA, lbs, rate, x(1), 'trainscg');
+                                        acc = [acc, 1-c];
+                                    end
+                                    acc_average = mean(acc);
+
+                                    if acc_average >= avg_acc{LayerNum}(nonzeros(Locb))
+                                        b = ceil(x_2);
+                                    else
+                                        a = floor(x_1);
+                                    end
+
+                                    gold_point{LayerNum} = [gold_point{LayerNum}, x(1)]
+                                    avg_acc{LayerNum} = [avg_acc{LayerNum}, acc_average]
+
+                                case 2 % 若x中第一个数与gold_point中的点重复，则只计算第二个，保存第二个
+                                    acc = []; %记录x中第二个黄金分割点各20次的准确率
+                                    acc_average = [0];%记录x中第二个黄金分割点的平均准确率		
+                                    for j = 1 : N_1
+                                        [c, net] = fcn1(mappedA, lbs, rate, x(2), 'trainscg');
+                                        acc = [acc, 1-c];
+                                    end
+                                    acc_average = mean(acc);
+
+                                    if avg_acc{LayerNum}(nonzeros(Locb)) >= acc_average%第2个点的准确率与avg_acc(Locb)做比较
+                                        b = ceil(x_2);
+                                    else
+                                        a = floor(x_1);
+                                    end
+
+                                    gold_point{LayerNum} = [gold_point{LayerNum}, x(2)]
+                                    avg_acc{LayerNum} = [avg_acc{LayerNum}, acc_average]		 	 		
+                                % 若x中两个数字都和gold_point重复，则结束switch
+                            end
+
+                            % 当round(x_1) == round(x_2)时，以round(x_1)为隐含层节点数建立网络
+                            % 计算完成后再停止while()循环
+                            if round(x_1) == round(x_2)
+                                flag = 0;
+                            end
+
+                        end
+                        Nh = [Nh, x(1)];
+                    end
+            end
+% 黄金分割法寻优结束，保存结果
+        end
+        
+hiddenNumInfor = struct();
+hiddenNumInfor.dataset = hmenu4_1.UserData.matPath;    % 所使用的数据集名称
+hiddenNumInfor.rate = paraTable_c.rate;                             % 所使用的训练集占比
+hiddenNumInfor.drAlgorithmName = hmenu4_1.UserData.drAlgorithm;  % 降维算法名称
+hiddenNumInfor.drDimesion = size(hmenu4_3.UserData.drData, 2);          % 降维维数
+hiddenNumInfor.cAlgorithmName = hmenu4_1.UserData.cAlgorithm;      % 分类算法名称
+hiddenNumInfor.hiddenLayerNum = paraTable_c.hiddenLayerNum;         % 隐含层的层数
+% 各个隐含层的所使用的传递函数名称
+hiddenLayerName = [paraTable_c.transferFcn]; %transferFcn, transferFcn1, transferFcn2, transferFcn3, transferFcn4
+for i =1:paraTable_c.hiddenLayerNum-1
+    estr = ['hiddenLayerName = [hiddenLayerName, paraTable_c.transferFcn', num2str(i),'];'];
+    eval(estr);
+end
+hiddenNumInfor.hiddenLayerName = hiddenLayerName; 
+
+hiddenNumInfor.startNum = paraTable_c.startNum;
+hiddenNumInfor.stopNum = paraTable_c.startNum;
+% 将寻找到的最优网络net与gold_point, avg_acc,寻优信息hiddenNumInfo一起保存为mat数据。
+filename = fullfile('C:\Matlab练习\Project20191002\工程测试\', ['net_optim ', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS'), '.mat']); %将时间信息加入到文件名中
+save(filename, 'hiddenNumInfor', 'net', 'gold_point', 'avg_acc');
+
+% 将找到的各个隐层节点数的最优值赋值给paraTable_c中的相应变量(这里只考虑单隐层的情况)
+if paraTable_c.hiddenLayerNum==1
+    paraTable_c.hiddenNum=Nh(1);
+    for i = 1:paraTable_c.hiddenLayerNum-1
+        estr = ['paraTable_c.hiddenNum', num2str(i), '=Nh(',num2str(i+1),');' ];
+        eval(estr);
+    end
+end
+% 黄金分割法数据保存完毕
+
+    t = table2cell(paraTable_c);
+    ss = table2struct(paraTable_c);
+    k = numel(t); 
+    para = cell(1,2*k);
+    for i = 1:k
+        para{2*i} = t{i};
+        para{2*i-1} = paraTable_c.Properties.VariableNames{i};
+    end
+    var = cellfun(@string, para(9:end)); %对cell array中的所有cell应用string
+
         for k = 1 : n
-            [mA1,mA2, ind1, ind2] = createTwoTable(mappedA,lbs,rate);
+            [mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
             XTrain = table2array(mA1(:, 1:end-1))';
         %     TTrain = dummyvar(double(mA1.Class))';
             TTrain = ind2vec(double(mA1.Class)');
@@ -123,23 +332,25 @@ end
         %     TTest = dummyvar(double(mA2.Class))';
             TTest = ind2vec(double(mA2.Class)');
             disp(['第',num2str(k),'次计算']);
-            [err1, err2, err3, err4, tTest] = classDemo(XTrain, TTrain, XTest, TTest, type, var);%前3个为必需参数，后面为可选参数
-            %racc 误分率，错误率
-            %best_perf 训练集最佳性能（蓝色曲线）
-            %best_vperf 验证集最佳性能（绿色曲线）
-            %best_tperf 测试集最佳性能（红色曲线）
-            %tTest 为预测的类别标签列向量 
-        
-            racc = [racc; err1];%racc 误分率，错误率
-            best_perf = [best_perf; err2]; %best_perf 训练集最佳性能（蓝色曲线）
-            best_vperf = [best_vperf; err3]; %best_vperf 验证集最佳性能（绿色曲线）
-            best_tperf = [best_tperf; err4];%best_tperf 测试集最佳性能（红色曲线）
+            [net, tr, tTest, c, cm] = classDemo(XTrain, TTrain, XTest, TTest, type, var);%前3个为必需参数，后面为可选参数
+            %这个函数能给出的有价值的计算结果是： net tr tTest c cm 
+            % net，训练好的网络
+            % tr，训练记录结构体，包含了best_perf 训练集最佳性能（蓝色曲线），best_vperf 验证集最佳性能（绿色曲线），best_tperf 测试集最佳性能（红色曲线）
+            %tTest 为预测的类别标签列向量
+            % c, 误分率，错误率；1-c，即准确率OA
+            % cm, 混淆矩阵
+            添加OA AA Kappa 最优网络net等结果，
+
+            racc = [racc; err1];                % racc 误分率，错误率
+            best_perf = [best_perf; err2];  % best_perf 训练集最佳性能（蓝色曲线）
+            best_vperf = [best_vperf; err3]; % best_vperf 验证集最佳性能（绿色曲线）
+            best_tperf = [best_tperf; err4]; % best_tperf 测试集最佳性能（红色曲线）
             
             % 挑选出最优泛化性能下的tTest;
-            [m,i] = min(err1); %返回最小值及其索引
+            [m, m1] = min(err1);  % 返回最小值及其索引
             if m<raccBest
                 raccBest = m;
-                tTestBest = tTest(:, i);
+                tTestBest = tTest(:, m1);
                 ind2Best = ind2';
                 ma2Class = mA2.Class;
             end 
@@ -163,7 +374,7 @@ end
         %    'VariableNames',VN);
         %
         % 设置保存路径
-        path = 'C:\Matlab练习\20200627';
+        path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
         try
             path = fullfile(path, hmenu4_1.UserData.matName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
         catch
@@ -261,8 +472,7 @@ end
                         [mA1,mA2] = createTwoTable(mappedA,lbs,rate);
                     end
                     classificationLearner
-                    
-                    
+                                        
                 case 'ClassDemo'
                     disp([answer ' 分类将继续执行.'])
                     %dessert = 2;
@@ -282,16 +492,19 @@ end
                     for k = 1 : n
                         [mA1,mA2, ind1, ind2] = createTwoTable(mappedA,lbs,rate);
                         XTrain = table2array(mA1(:, 1:end-1))';           %XTrain每一列为一个样本
-                        TTrain = ind2vec(double(mA1.Class)');            %XTrain每一列为一个类别标签
+                        TTrain = ind2vec(double(mA1.Class)');
+                        %%警告使用稀疏矩阵形式的输入数据训练网络将会导致内存占用太大！所以还是换成下面的向量形式的TTrain？
+                        % TTrain = double(mA1.Class)';
                         XTest = table2array(mA2(:, 1:end-1))';             %XTest每一列为一个样本                
                         TTest = ind2vec(double(mA2.Class)');            %TTest每一列为一个类别标签
                         disp(['第',num2str(k),'次计算']);
-                        [err1, err2, err3, err4, tTest] = classDemo(XTrain, TTrain, XTest, TTest, type, var);%前3个为必需参数，后面为可选参数
-                        %racc 误分率，错误率
-                        %best_perf 训练集最佳性能（蓝色曲线）
-                        %best_vperf 验证集最佳性能（绿色曲线）
-                        %best_tperf 测试集最佳性能（红色曲线）
-                        %tTest 为预测的类别标签列向量 
+                        [net, tr, tTest, c, cm] = classDemo(XTrain, TTrain, XTest, TTest, type, var);%前3个为必需参数，后面为可选参数
+                        %这个函数能给出的有价值的计算结果是： net tr tTest c cm 
+                        % net，训练好的网络
+                        % tr，训练记录结构体，包含了best_perf 训练集最佳性能（蓝色曲线），best_vperf 验证集最佳性能（绿色曲线），best_tperf 测试集最佳性能（红色曲线）
+                        %tTest 为预测的类别标签列向量
+                        % c, 误分率，错误率；1-c，即准确率OA
+                        % cm, 混淆矩阵                        
 
                         racc = [racc; err1];%racc 误分率，错误率
                         best_perf = [best_perf; err2]; %best_perf 训练集最佳性能（蓝色曲线）
@@ -299,10 +512,10 @@ end
                         best_tperf = [best_tperf; err4];%best_tperf 测试集最佳性能（红色曲线）
 
                         % 挑选出最优泛化性能下的tTest;
-                        [m,i] = min(err1); %返回最小值及其索引
+                        [m, m1] = min(err1); %返回最小值及其索引
                         if m<raccBest
                             raccBest = m;
-                            tTestBest = tTest(:, i);
+                            tTestBest = tTest(:, m1);
                             ind2Best = ind2;
                             ma2Class = mA2.Class;
                         end 
@@ -324,7 +537,7 @@ end
                     T = createTableForWrite(best_perf, best_vperf, best_tperf, racc)
                     %T = table(best_perf, best_vperf, best_tperf, racc, 'RowNames',arrayfun(@string, [1:numel(racc)]'))
                     % 设置保存路径
-                    path = 'C:\Matlab练习\20200627';
+                    path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
                     try
                         path = fullfile(path, hmenu4_1.UserData.matName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
                     catch
@@ -396,8 +609,39 @@ end
             end    
        
     end
-    saveAllFigure('20200627',handles,'.fig');
+    path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
+    saveAllFigure(path,handles,'.fig');
     gc = gcf; 
     closeFigure([2:gc.Number]);
 %     closeFigure([2:13]);
+end
+
+%% 子函数（用于黄金分割法寻优隐含层最佳节点数）
+function [c, net] = fcn1(mappedA, lbs, rate, hiddenSizes, trainFcn)
+    % 划分数据
+    [mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
+    XTrain = table2array(mA1(:, 1:end-1))';
+    TTrain = ind2vec(double(mA1.Class)');
+    %%警告使用稀疏矩阵形式的输入数据训练网络将会导致内存占用太大！所以还是换成下面的向量形式的TTrain?
+    % 这样的话最后使用网络net(XTest)获得的outputs也是一个向量形式，这个向量不符合confusion(targets,outputs)
+    % 对多分类输入数据的形式要求，所以不能直接输入到confusion(targets,outputs)。
+    % confusion()要求多分类的targets必须是S×Q的矩阵形式，且每一列必须是one-hot-vector，outputs也必须是S×Q的矩阵形式
+    % outputs的元素值大小位于[0,1]之间，且每一列的最大值对应其所属的S类中的一个。
+    % 而且，当对outputs向量进行转换成系数矩阵时会报错。
+    % 所以不得不继续使用稀疏矩阵形式的TTrain来作为训练网络的输入数据。
+    % 至少在未开并行计算的情况下是没有出现过警告的。
+    XTest = table2array(mA2(:, 1:end-1))';
+    TTest = ind2vec(double(mA2.Class)');                                
+    %构建网络
+    net = feedforwardnet(hiddenSizes, trainFcn); %feedforwardnet(x(i),'trainscg')
+    % 设置参数 (以下是trainscg的相关参数，可搜索trainscg查看)
+    net.trainParam.epochs = 1000;
+    net.trainParam.show = 10;
+    net.trainParam.showWindow = false;
+    % 训练网络
+    [net, tr] = train(net, XTrain, TTrain);   %不能开并行计算，否则会触发内存占用过大的警告！
+    %. 仿真网络
+    YTest = net(XTest); 
+    %. 性能评价
+    [c,cm,ind,per] = confusion(TTest,YTest);
 end
