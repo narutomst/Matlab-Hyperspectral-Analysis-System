@@ -89,8 +89,10 @@ warning off
 	net.trainParam.epochs = 2000;
 	net.trainParam.showWindow = str2num(Var.showWindow); %str2num('true')==1; str2num('false')==0
 	% 4.训练网络
-	[net, tr] = train(net,XTrain,TTrain, 'useParallel','yes','showResources','yes');%这一步网络拓扑结构才算正式确定下来10-10-9
-												 %连接权值和偏置值总数是：10*10+9*10+10+9=209
+	[net, tr] = train(net,XTrain,TTrain); %, 'useParallel','yes','showResources','yes');
+    %在这里开启并行计算，会导致出现警告：使用稀疏矩阵形式的输入数据训练网络将会导致内存占用太大！
+    %这一步网络拓扑结构才算正式确定下来10-10-9, %连接权值和偏置值总数是：10*10+9*10+10+9=209
+
 %     view(net);  
     
     if str2num(Var.plotperform)          % str2num('true')==1
