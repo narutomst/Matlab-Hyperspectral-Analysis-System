@@ -1,7 +1,7 @@
 %使用pso优化BP神经网络算法
 %% 该代码为基于PSO和BP网络的预测
-function [racc, best_perf, best_vperf, best_tperf, tTest] = f_PSO_BP(XTrain, TTrain, XTest, TTest, Var)
-
+function [net, tr, tTest, c, cm] = f_PSO_BP(XTrain, TTrain, XTest, TTest, Var)
+%这个函数能给出的有价值的计算结果是： net tr tTest c cm 
 warning off
 %% II. 声明全局变量
 

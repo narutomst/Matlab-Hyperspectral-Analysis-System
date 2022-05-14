@@ -1,7 +1,7 @@
 %使用pso优化BP神经网络算法
 %% 该代码为基于PSO和BP网络的预测
-function [racc, best_perf, best_vperf, best_tperf, tTest] = f_PSO_TANSIG(XTrain, TTrain, XTest, TTest, Var)
-
+function [net, tr, tTest, c, cm] = f_PSO_TANSIG(XTrain, TTrain, XTest, TTest, Var)
+%这个函数能给出的有价值的计算结果是： net tr tTest c cm 
 warning off
 %% II. 声明全局变量
 
@@ -48,7 +48,7 @@ acc2 = [];
 % 	net.trainParam.epochs = 2000;
 	net.trainParam.showWindow = str2num(Var.showWindow); %str2num('true')==1; str2num('false')==0
 	% 4.训练网络
-	[net, tr] = train(net, XTrain, TTrain,'useParallel','yes','showResources','yes');%这一步网络拓扑结构才算正式确定下来10-10-9
+	[net, tr] = train(net, XTrain, TTrain, 'useParallel','yes','showResources','yes');%这一步网络拓扑结构才算正式确定下来10-10-9
 												 %连接权值和偏置值总数是：10*10+9*10+10+9=209
 %     view(net);  
     

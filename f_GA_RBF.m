@@ -1,8 +1,8 @@
 % 使用已有的可用于分类的数据集demo_dataset.mat，利用RBF神经网络来做分类
 % 基本思路就是按照何同弟的来做
 % function [acc1, acc2] = f_GA_RBF()
-function [racc, best_perf, best_vperf, best_tperf, tTest] = f_GA_RBF(XTrain, TTrain, XTest, TTest, Var)
-
+function [net, tr, tTest, c, cm] = f_GA_RBF(XTrain, TTrain, XTest, TTest, Var)
+%这个函数能给出的有价值的计算结果是： net tr tTest c cm 
 warning off
 
 %'softmax'; %最后一层即输出层的传递函数是 net.layers{Var.hiddenLayerNum+1}.transferFcn

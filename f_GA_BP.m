@@ -1,6 +1,6 @@
 
-function [racc, best_perf, best_vperf, best_tperf, tTest] = f_GA_BP(XTrain, TTrain, XTest, TTest, Var)
-
+function [net, tr, tTest, c, cm] = f_GA_BP(XTrain, TTrain, XTest, TTest, Var)
+%这个函数能给出的有价值的计算结果是： net tr tTest c cm 
 warning off
 
 %'softmax'; %最后一层即输出层的传递函数是 net.layers{Var.hiddenLayerNum+1}.transferFcn

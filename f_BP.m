@@ -8,8 +8,8 @@
 % 2. 若外部测试集(如XTest)误差与训练测试集(XTrain(:, tr.testInd))误差有显著差异，
 % 则说明数据划分不当(即XTrain与XTest的划分有问题)。且可能有过拟合。
 
-function [racc, best_perf, best_vperf, best_tperf, tTest] = f_TANSIG(XTrain, TTrain, XTest, TTest, Var)
-
+function [net, tr, tTest, c, cm] = f_BP(XTrain, TTrain, XTest, TTest, Var)
+%这个函数能给出的有价值的计算结果是： net tr tTest c cm 
 hiddenSizes = [Var.hiddenNum, Var.hiddenNum1, Var.hiddenNum2, Var.hiddenNum3, Var.hiddenNum4];
 hiddenSizes = hiddenSizes(1 : Var.hiddenLayerNum);
 trainFcn = Var.trainFcn;
