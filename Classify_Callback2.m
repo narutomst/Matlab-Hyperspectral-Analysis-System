@@ -124,13 +124,13 @@ end
         % 执行20次分类，就划分20次数据；这样做是为了尽可能的使数据划分均匀
         % 因为目前的数据在pca降维后存在严重的数据倾斜，即第1主成分所占的比重太大了
         % 这样的话真的有利于分类吗？
-        n = paraTable_c.executionTimes;
-        
-%         try
-%             MyPar = parpool; %如果并行池未开启，则打开并行处理池
-%         catch
-%             MyPar = gcp; %如果并行池已经开启，则将当前并行池赋值给MyPar
-%         end
+        n = paraTable_c.executionTimes; % 迭代计算次数
+        N = hmenu4_1.UserData.M-1;     % 类别总数
+        try
+            MyPar = parpool; %如果并行池未开启，则打开并行处理池
+        catch
+            MyPar = gcp; %如果并行池已经开启，则将当前并行池赋值给MyPar
+        end
         
         racc = [];
         best_perf = []; 
@@ -139,15 +139,24 @@ end
         tTestBest = [];
         raccBest = 1;
         
+        cAlgorithmNameSet1 = ['TANSIG', 'RBF'];
+        cAlgorithmNameSet2 = ['GA_TANSIG', 'GA_RBF', 'PSO_TANSIG', 'PSO_RBF'];
+        if sum(ismember(paraTable_c.Properties.RowNames, cAlgorithmNameSet1))
+            % 每次迭代计算中，函数的返回值[net, tr, tTest, c, cm]只有一组值
+            setsNum = 1; % 使用组数setsNum来进行循环计算获得TPR, OA, AA, Kappa
+        elseif sum(ismember(paraTable_c.Properties.RowNames, cAlgorithmNameSet2))
+            % 每次迭代计算中，函数的返回值[net, tr, tTest, c, cm]具有两组值
+            % 一组是网络参数优化之前的，另一组是网络参数优化之后的。
+            setsNum = 2; 
+        else
+            disp('所选择的分类算法在每次迭代计算时可能会产生超过两组结果，无法保存！');
+        end
         acc_best = 0; % 记录n次迭代下的最高准确率OA的值
         net_best = []; % 记录最高准确率下训练好的网络（用于绘制GT图）
-        
-        N = hmenu4_1.UserData.M-1; %类别总数
-        cmNormalizedValues1 = zeros(N, N, n); %保存正常顺序的混淆矩阵
-        cmNormalizedValues2 = zeros(N, N, n); %保存调整顺序后的混淆矩阵
+        cmNormalizedValues1 = zeros(N, N, n, setsNum); %保存正常顺序的混淆矩阵
+        cmNormalizedValues2 = zeros(N, N, n, setsNum); %保存调整顺序后的混淆矩阵
         cmClassLabels2 = zeros(n, N);
-        acc = zeros(n, 1);
-        
+        acc = zeros(n, setsNum);
 %         % 记录每次得到的分类准确率，每一列的准确率对应一次迭代
 %         acc_full =   zeros(iterationPerLearningRate, iterationonSize , 'single');  
 %         idx_best = zeros(iterationonSize, 1); % 在每一个输入尺寸下记录一个最佳的学习进度曲线图    
@@ -167,12 +176,13 @@ end
             % 询问是否要进行黄金分割法来寻找隐含层节点数的最优值
             quest = {'\fontsize{10} 是否要使用黄金分割法来寻找隐含层节点数的最优值？'};
                      % \fontsize{10}：字体大小修饰符，作用是使其后面的字符大小都为10磅；
+            dlgtitle = '隐含层节点数优化';         
             btn1 = '是';
             btn2 = '否';
             opts.Default = btn2;
             opts.Interpreter = 'tex';
             % answer = questdlg(quest,dlgtitle,btn1,btn2,defbtn);
-            answer = questdlg(quest, dlgtitle, btn1, btn2, btn2, opts);
+            answer = questdlg(quest, dlgtitle, btn1, btn2, opts);
                                         
             % Handle response
             switch answer
@@ -278,41 +288,42 @@ end
                         end
                         Nh = [Nh, x(1)];
                     end
+                % 黄金分割法寻优结束。
+                % 保存结果       
+                hiddenNumInfor = struct();
+                hiddenNumInfor.dataset = hmenu4_1.UserData.matPath;    % 所使用的数据集名称
+                hiddenNumInfor.rate = paraTable_c.rate;                             % 所使用的训练集占比
+                hiddenNumInfor.drAlgorithmName = hmenu4_1.UserData.drAlgorithm;  % 降维算法名称
+                hiddenNumInfor.drDimesion = size(hmenu4_3.UserData.drData, 2);          % 降维维数
+                hiddenNumInfor.cAlgorithmName = hmenu4_1.UserData.cAlgorithm;      % 分类算法名称
+                hiddenNumInfor.hiddenLayerNum = paraTable_c.hiddenLayerNum;         % 隐含层的层数
+                % 各个隐含层的所使用的传递函数名称
+                hiddenLayerName = [paraTable_c.transferFcn]; %transferFcn, transferFcn1, transferFcn2, transferFcn3, transferFcn4
+                for i =1:paraTable_c.hiddenLayerNum-1
+                    estr = ['hiddenLayerName = [hiddenLayerName, paraTable_c.transferFcn', num2str(i),'];'];
+                    eval(estr);
+                end
+                hiddenNumInfor.hiddenLayerName = hiddenLayerName; 
+
+                hiddenNumInfor.startNum = paraTable_c.startNum;
+                hiddenNumInfor.stopNum = paraTable_c.startNum;
+                % 将寻找到的最优网络net与gold_point, avg_acc,寻优信息hiddenNumInfo一起保存为mat数据。
+                filename = fullfile('C:\Matlab练习\Project20191002\工程测试\', ['net_optim ', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS'), '.mat']); %将时间信息加入到文件名中
+                save(filename, 'hiddenNumInfor', 'gold_point', 'avg_acc');
+
+                % 将找到的各个隐层节点数的最优值赋值给paraTable_c中的相应变量(这里只考虑单隐层的情况)
+                if paraTable_c.hiddenLayerNum==1
+                    paraTable_c.hiddenNum=Nh(1);
+                    for i = 1:paraTable_c.hiddenLayerNum-1
+                        estr = ['paraTable_c.hiddenNum', num2str(i), '=Nh(',num2str(i+1),');' ];
+                        eval(estr);
+                    end
+                end
+                % 黄金分割法寻优结果保存完毕                    
             end
-% 黄金分割法寻优结束，保存结果
         end
+
         
-hiddenNumInfor = struct();
-hiddenNumInfor.dataset = hmenu4_1.UserData.matPath;    % 所使用的数据集名称
-hiddenNumInfor.rate = paraTable_c.rate;                             % 所使用的训练集占比
-hiddenNumInfor.drAlgorithmName = hmenu4_1.UserData.drAlgorithm;  % 降维算法名称
-hiddenNumInfor.drDimesion = size(hmenu4_3.UserData.drData, 2);          % 降维维数
-hiddenNumInfor.cAlgorithmName = hmenu4_1.UserData.cAlgorithm;      % 分类算法名称
-hiddenNumInfor.hiddenLayerNum = paraTable_c.hiddenLayerNum;         % 隐含层的层数
-% 各个隐含层的所使用的传递函数名称
-hiddenLayerName = [paraTable_c.transferFcn]; %transferFcn, transferFcn1, transferFcn2, transferFcn3, transferFcn4
-for i =1:paraTable_c.hiddenLayerNum-1
-    estr = ['hiddenLayerName = [hiddenLayerName, paraTable_c.transferFcn', num2str(i),'];'];
-    eval(estr);
-end
-hiddenNumInfor.hiddenLayerName = hiddenLayerName; 
-
-hiddenNumInfor.startNum = paraTable_c.startNum;
-hiddenNumInfor.stopNum = paraTable_c.startNum;
-% 将寻找到的最优网络net与gold_point, avg_acc,寻优信息hiddenNumInfo一起保存为mat数据。
-filename = fullfile('C:\Matlab练习\Project20191002\工程测试\', ['net_optim ', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS'), '.mat']); %将时间信息加入到文件名中
-save(filename, 'hiddenNumInfor', 'net', 'gold_point', 'avg_acc');
-
-% 将找到的各个隐层节点数的最优值赋值给paraTable_c中的相应变量(这里只考虑单隐层的情况)
-if paraTable_c.hiddenLayerNum==1
-    paraTable_c.hiddenNum=Nh(1);
-    for i = 1:paraTable_c.hiddenLayerNum-1
-        estr = ['paraTable_c.hiddenNum', num2str(i), '=Nh(',num2str(i+1),');' ];
-        eval(estr);
-    end
-end
-% 黄金分割法数据保存完毕
-
     t = table2cell(paraTable_c);
     ss = table2struct(paraTable_c);
     k = numel(t); 
@@ -335,16 +346,28 @@ end
             [net, tr, tTest, c, cm] = classDemo(XTrain, TTrain, XTest, TTest, type, var);%前3个为必需参数，后面为可选参数
             %这个函数能给出的有价值的计算结果是： net tr tTest c cm 
             % net，训练好的网络
-            % tr，训练记录结构体，包含了best_perf 训练集最佳性能（蓝色曲线），best_vperf 验证集最佳性能（绿色曲线），best_tperf 测试集最佳性能（红色曲线）
+            % tr，训练记录结构体，包含了best_perf 训练集最佳性能（蓝色曲线），
+            % best_vperf 验证集最佳性能（绿色曲线），best_tperf 测试集最佳性能（红色曲线）
             %tTest 为预测的类别标签列向量
             % c, 误分率，错误率；1-c，即准确率OA
             % cm, 混淆矩阵
-            添加OA AA Kappa 最优网络net等结果，
-
-            racc = [racc; err1];                % racc 误分率，错误率
-            best_perf = [best_perf; err2];  % best_perf 训练集最佳性能（蓝色曲线）
+            % 上述返回值都是cell array，对于函数f_TANSIG(), f_RBF(), f_BP()，上述返回值都是1×1 cell array；
+            % 对于函数f_GA_TANSIG(), f_GA_RBF(), f_GA_BP()，f_PSO_TANSIG(), f_PSO_RBF(), f_PSO_BP()，
+            % 上述返回值都是2×1 cell array；
+            
+            % 每计算一次，保存一次准确率及混淆矩阵
+            acc(k, :) = cellfun(@(x) 1-x, c);
+            for iset = 1:setsNum
+                cmNormalizedValues1(:, :, k, iset) = cm{iset};
+            end
+            
+            % 如何找到最优网络net，及预测向量等结果？是找优化前的最高准确率还是找优化后的最高准确率？
+            % 找优化后的最高准确率所对应的网络。
+            
+            racc = [racc; err1];                   % racc 误分率，错误率
+            best_perf = [best_perf; err2];    % best_perf 训练集最佳性能（蓝色曲线）
             best_vperf = [best_vperf; err3]; % best_vperf 验证集最佳性能（绿色曲线）
-            best_tperf = [best_tperf; err4]; % best_tperf 测试集最佳性能（红色曲线）
+            best_tperf = [best_tperf; err4];  % best_tperf 测试集最佳性能（红色曲线）
             
             % 挑选出最优泛化性能下的tTest;
             [m, m1] = min(err1);  % 返回最小值及其索引
@@ -355,7 +378,24 @@ end
                 ma2Class = mA2.Class;
             end 
         end
-  
+        
+    %% 计算分类结果（根据混淆矩阵cmNormalizedValues1，计算OA, AA, Kappa）
+        [size1, size2, size3, size4] = size(cmNormalizedValues1);  % 16×16×20×2 double
+        cmt = cmNormalizedValues1;
+        % 先计算TPR
+        Ns = sum(sum(cmt(:, :, 1)));
+        p_o = sum(squeeze(sum(cmt.*repmat(eye(size1),1,1,size3), 2)))/Ns;
+        p_e = sum( squeeze(sum(cmt)).*squeeze(sum(cmt,2)) )/Ns^2;
+        Kappa = (p_o - p_e)./(1 - p_e);
+        OA = p_o;
+        TPR(:, :, i) = single(squeeze(sum(cmt.*repmat(eye(size1),1,1,size3), 2)./sum(cmt, 2))); 
+        AA = mean(TPR(:, :, i));
+        c = TPR(:, :, i); 
+        c(size1+1, :) = OA; 
+        c(size1+2, :) = AA; 
+        c(size1+3, :) = Kappa;
+        a{i} = c;  %这种情况是3列，不将3列求平均
+        
     %% 将分类结果保存到hObject.UserData中
         hObject.UserData.racc = racc;
         hObject.UserData.best_perf = best_perf;
