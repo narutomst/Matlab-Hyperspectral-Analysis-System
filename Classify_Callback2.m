@@ -126,10 +126,23 @@ end
         % 这样的话真的有利于分类吗？
         n = paraTable_c.executionTimes; % 迭代计算次数
         N = hmenu4_1.UserData.M-1;     % 类别总数
-        try
-            MyPar = parpool; %如果并行池未开启，则打开并行处理池
-        catch
-            MyPar = gcp; %如果并行池已经开启，则将当前并行池赋值给MyPar
+        
+        % 询问是否要打开并行池
+        quest = {'\fontsize{10} 是否要使用并行计算（Parallel Computing）？'};
+                 % \fontsize{10}：字体大小修饰符，作用是使其后面的字符大小都为10磅；
+        dlgtitle = '并行计算';         
+        btn1 = '是';
+        btn2 = '否';
+        opts.Default = btn2;
+        opts.Interpreter = 'tex';
+        % answer = questdlg(quest,dlgtitle,btn1,btn2,defbtn);
+        answer = questdlg(quest, dlgtitle, btn1, btn2, opts);
+        if strcmp(answer, '是')
+            try
+                MyPar = parpool; %如果并行池未开启，则打开并行处理池
+            catch
+                MyPar = gcp; %如果并行池已经开启，则将当前并行池赋值给MyPar
+            end
         end
         
         cAlgorithmNameSet1 = ['TANSIG', 'RBF'];
