@@ -94,8 +94,10 @@ warning off
 % 	net.trainParam.epochs = 2000;
 	net.trainParam.showWindow = str2num(Var.showWindow); %str2num('true')==1; str2num('false')==0
 	% 4.训练网络
-	[net, tr] = train(net,XTrain,TTrain, 'useParallel','yes','showResources','yes');%这一步网络拓扑结构才算正式确定下来10-10-9
-												 %连接权值和偏置值总数是：10*10+9*10+10+9=209
+	[net, tr] = train(net,XTrain,TTrain);%'useParallel','yes','showResources','yes');
+    % 关闭并行计算选项，因为这会导致计算机出各种小问题，比如网络适配器不好使了，电脑失声等。
+    %这一步网络拓扑结构才算正式确定下来10-10-9
+    %连接权值和偏置值总数是：10*10+9*10+10+9=209
 %     view(net);  
     
     if str2num(Var.plotperform)          % str2num('true')==1
