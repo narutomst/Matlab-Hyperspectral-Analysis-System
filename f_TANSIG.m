@@ -118,7 +118,8 @@ warning off
 % 如果测试集上的误差在与验证集误差明显不同的迭代次数处达到最小值，则这可能表示数据集划分不当。    
 %     
 	% 5.仿真网络
-	YTest = net(XTest,'useParallel','yes','showResources','yes'); 
+	YTest = net(XTest);%'useParallel','yes','showResources','yes');
+    % 关闭并行计算选项，因为这会导致计算机出各种小问题，比如网络适配器不好使了，电脑失声等。
 	tTest = vec2ind(YTest)';
 	% 6. 性能评价
     [c,cm,ind,per] = confusion(TTest,YTest);
