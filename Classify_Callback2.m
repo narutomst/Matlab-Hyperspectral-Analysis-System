@@ -145,8 +145,8 @@ end
             end
         end
         
-        cAlgorithmNameSet1 = ['TANSIG', 'RBF'];
-        cAlgorithmNameSet2 = ['GA_TANSIG', 'GA_RBF', 'PSO_TANSIG', 'PSO_RBF'];
+        cAlgorithmNameSet1 = ["TANSIG", "RBF"];
+        cAlgorithmNameSet2 = ["GA_TANSIG", "GA_RBF", "PSO_TANSIG", "PSO_RBF"];
         if sum(ismember(paraTable_c.Properties.RowNames, cAlgorithmNameSet1))
             % 每次迭代计算中，函数的返回值[net, tr, tTest, c, cm]只有一组值
             setsNum = 1; % 使用组数setsNum来进行循环计算获得TPR, OA, AA, Kappa
@@ -157,8 +157,9 @@ end
         else
             disp('所选择的分类算法在每次迭代计算时可能会产生超过两组结果，无法保存！');
         end
-        acc_best = 0; % 记录n次迭代下的最高准确率OA的值
-        net_best = []; % 记录最高准确率下训练好的网络（用于绘制GT图）
+        acc_best = zeros(1, setsNum); % 记录n次迭代下的最高准确率OA的值
+        net_best = cell(1, setsNum); % 记录最高准确率下训练好的网络（用于绘制GT图）
+        tTest_best = cell(1, setsNum);
         cmNormalizedValues1 = zeros(N, N, n, setsNum); %保存正常顺序的混淆矩阵
         cmNormalizedValues2 = zeros(N, N, n, setsNum); %保存调整顺序后的混淆矩阵
         cmClassLabels2 = zeros(n, N, setsNum);
@@ -176,7 +177,7 @@ end
         best_perf = zeros(n, setsNum); 
         best_vperf = zeros(n, setsNum); 
         best_tperf = zeros(n, setsNum);  
-        tTestBest = [];
+
         raccBest = 1;
 
 %% 利用黄金分割搜索法来寻找各个隐藏层神经元的最佳个数
@@ -372,15 +373,35 @@ end
             % 每计算一次，保存一次准确率及混淆矩阵
             acc(k, :) = cellfun(@(x) 1-x, misclassRate);
             racc(k, :) = 1-acc(k, :);                                % racc 误分率，错误率
+
             for iset = 1:setsNum
                 cmNormalizedValues1(:, :, k, iset) = cmt{iset};
                 best_perf(k, iset)  = trainRecord{iset}.best_perf;     % best_perf 训练集最佳性能（蓝色曲线）
                 best_vperf(k, iset) = trainRecord{iset}.best_vperf;   % best_vperf 验证集最佳性能（绿色曲线）
-                best_tperf(k, iset) = trainRecord{iset}.best_tperf;    % best_tperf 测试集最佳性能（红色曲线）               
+                best_tperf(k, iset) = trainRecord{iset}.best_tperf;    % best_tperf 测试集最佳性能（红色曲线）
+            
+                % 如何找到最优网络net，及预测向量等结果？是找优化前的最高准确率还是找优化后的最高准确率？
+                % 记录一个优化前的最高值，记录一个优化后的最高值。
+                % 记录优化前的最优值              
+                if acc(k, iset) > acc_best(iset)
+                    acc_best(iset)=acc(k, iset);
+                    net_best{iset}=netTrained{iset};
+                    tTest_best{iset}=predictedVector{iset};
+                end
             end
             
-            % 如何找到最优网络net，及预测向量等结果？是找优化前的最高准确率还是找优化后的最高准确率？
-            % 找优化后的最高准确率所对应的网络。
+
+            if acc(k, 1) > acc_best(1)
+                acc_best(1)=acc(k, 1);
+                net_best{1}=
+                tTest{1}=
+            end
+            % 记录优化后的最优值
+            if acc(k, 2) > acc_best(2)
+                acc_best(2)=acc(k, 2);
+                net_best=
+                tTest=
+            end
             
             % 挑选出最优泛化性能下的tTest;
             [m, m1] = min(err1);  % 返回最小值及其索引
