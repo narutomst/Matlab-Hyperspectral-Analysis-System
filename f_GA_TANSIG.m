@@ -1,13 +1,23 @@
 
-function [net, tr, tTest, c, cm] = f_GA_TANSIG(XTrain, TTrain, XTest, TTest, Var)
-%这个函数能给出的有价值的计算结果是： net tr tTest c cm 
-        % net，训练好的网络
-        % tr，训练记录结构体，包含了best_perf 训练集最佳性能（蓝色曲线），best_vperf 验证集最佳性能（绿色曲线），best_tperf 测试集最佳性能（红色曲线）
-        %tTest 为预测的类别标签列向量
-        % c, 误分率，错误率；1-c，即准确率OA
-        % cm, 混淆矩阵  
+function [netTrained, trainRecord, predictedVector, misclassRate, cmt] = f_GA_TANSIG(XTrain, TTrain, XTest, TTest, Var)
+%这个函数能给出的有价值的计算结果是：[net tr tTest c cm]，将其保存到[netTrained, trainRecord, predictedVector, misclassRate, cmt]
+        % net，训练好的网络netTrained
+        % tr，训练记录结构体trainRecord，包含了best_perf 训练集最佳性能（蓝色曲线），
+        % best_vperf 验证集最佳性能（绿色曲线），best_tperf 测试集最佳性能（红色曲线）
+        %tTest 为预测的类别标签列向量predictedVector
+        % c, 误分率misclassRate，错误率；1-c，即准确率OA
+        % cm, 混淆矩阵，保存到cmt 
 warning off
-
+% 定义返回变量的大小，因为每个返回变量都有优化前和优化后的两个值，所以使用cell array来保存。
+% 对于函数f_TANSIG(), f_RBF(), f_BP()，上述返回值都是1×1 cell array；
+% 对于函数f_GA_TANSIG(), f_GA_RBF(), f_GA_BP()，f_PSO_TANSIG(), f_PSO_RBF(), f_PSO_BP()
+% 上述返回值都是2×1 cell array；
+netTrained = cell(2,1);
+trainRecord = cell(2,1);
+predictedVector = cell(2,1);
+misclassRate = cell(2,1);
+cmt = cell(2,1);
+%. 获取隐含层节点数及传递函数
 %'softmax'; %最后一层即输出层的传递函数是 net.layers{Var.hiddenLayerNum+1}.transferFcn
 
 hiddenSizes = [Var.hiddenNum, Var.hiddenNum1, Var.hiddenNum2, Var.hiddenNum3, Var.hiddenNum4];
@@ -53,9 +63,10 @@ acc2 = [];
 % 	net.trainParam.epochs = 2000;
 	net.trainParam.showWindow = str2num(Var.showWindow); %str2num('true')==1; str2num('false')==0
 	% 4.训练网络
-	[net, tr] = train(net, XTrain, TTrain,'useParallel','yes','showResources','yes');%这一步网络拓扑结构才算正式确定下来，
-                                                        %XTrain每一列向量是一个样本，对于分类问题，TTrain每一列是一个one-hot-vector
-												 
+	[net, tr] = train(net, XTrain, TTrain);%'useParallel','yes','showResources','yes');
+    %这一步网络拓扑结构才算正式确定下来，
+    %XTrain每一列向量是一个样本，对于分类问题，TTrain每一列是一个one-hot-vector
+	% 关闭并行计算选项，因为这会导致计算机出各种小问题，比如网络适配器不好使了，电脑失声等。											 
 %     view(net);  
     
     if str2num(Var.plotperform)          % str2num('true')==1
@@ -118,7 +129,11 @@ acc2 = [];
         plotperform(tr);
     end
 %     acc1 = [acc1, 1-racc1]; 
-    
+netTrained{1} = net;
+trainRecord{1} = tr;
+predictedVector{1} = tTest1;
+misclassRate{1} = c;
+cmt{1} = cm;
 %% VI. GA-BP神经网络
 	sumNet = [inputNum, hiddenSizes, outputNum];
     k = numel(sumNet);
@@ -174,8 +189,8 @@ acc2 = [];
 %     [W,B,val] = gadecod(x);
 %% IX. 利用新的权值和阈值进行训练
 	net.trainParam.showWindow = str2num(Var.showWindow); %str2num('true')==1; str2num('false')==0
-	[net,tr]=train(net,XTrain,TTrain,'useParallel','yes','showResources','yes');
-
+	[net,tr]=train(net,XTrain,TTrain); %'useParallel','yes','showResources','yes');
+    % 关闭并行计算选项，因为这会导致计算机出各种小问题，比如网络适配器不好使了，电脑失声等。
 	if str2num(Var.plotperform)          % str2num('true')==1
 		figure
 		plotperform(tr);
@@ -194,6 +209,11 @@ acc2 = [];
     best_tperf2 = tr.best_tperf;
     
 %     acc2 = [acc2, 1-racc2]; 
+netTrained{2} = net;
+trainRecord{2} = tr;
+predictedVector{2} = tTest2;
+misclassRate{2} = c2;
+cmt{2} = cm2;
 
 racc = [racc1, racc2];
 best_perf = [best_perf1, best_perf2];
