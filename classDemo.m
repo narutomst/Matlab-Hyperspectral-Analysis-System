@@ -143,7 +143,9 @@ switch p.Results.type
         % tr，训练记录结构体，包含了best_perf 训练集最佳性能（蓝色曲线），best_vperf 验证集最佳性能（绿色曲线），best_tperf 测试集最佳性能（红色曲线）
         %tTest 为预测的类别标签列向量
         % c, 误分率，错误率；1-c，即准确率OA
-        % cm, 混淆矩阵        
+        % cm, 混淆矩阵
+        % 上述返回值都是cell array，对于函数f_TANSIG(), f_RBF(), f_BP()，上述返回值都是1×1 cell array；
+        % 对于函数f_GA_TANSIG(), f_GA_RBF(), f_GA_BP()，f_PSO_TANSIG(), f_PSO_RBF(), f_PSO_BP()上述返回值都是2×1 cell array；
     case 'RBF'
         [net, tr, tTest, c, cm] = f_RBF(XTrain, TTrain, XTest, TTest, Var);        
     case 'GA_TANSIG'
