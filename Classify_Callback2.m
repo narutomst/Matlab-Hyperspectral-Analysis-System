@@ -132,13 +132,6 @@ end
             MyPar = gcp; %如果并行池已经开启，则将当前并行池赋值给MyPar
         end
         
-        racc = [];
-        best_perf = []; 
-        best_vperf = []; 
-        best_tperf = [];  
-        tTestBest = [];
-        raccBest = 1;
-        
         cAlgorithmNameSet1 = ['TANSIG', 'RBF'];
         cAlgorithmNameSet2 = ['GA_TANSIG', 'GA_RBF', 'PSO_TANSIG', 'PSO_RBF'];
         if sum(ismember(paraTable_c.Properties.RowNames, cAlgorithmNameSet1))
@@ -155,8 +148,9 @@ end
         net_best = []; % 记录最高准确率下训练好的网络（用于绘制GT图）
         cmNormalizedValues1 = zeros(N, N, n, setsNum); %保存正常顺序的混淆矩阵
         cmNormalizedValues2 = zeros(N, N, n, setsNum); %保存调整顺序后的混淆矩阵
-        cmClassLabels2 = zeros(n, N);
+        cmClassLabels2 = zeros(n, N, setsNum);
         acc = zeros(n, setsNum);
+        
 %         % 记录每次得到的分类准确率，每一列的准确率对应一次迭代
 %         acc_full =   zeros(iterationPerLearningRate, iterationonSize , 'single');  
 %         idx_best = zeros(iterationonSize, 1); % 在每一个输入尺寸下记录一个最佳的学习进度曲线图    
@@ -164,7 +158,13 @@ end
 %         avgTable = table(); % 将iterationPerLearningRate次重复计算的各类TPR求平均保存为一列，每一列对应一个输入尺寸，共有iterationonSize列
 %         % TPR = single(classNumber, iterationPerLearningRate, iterationonSize);
 %         TPR = zeros(9, iterationPerLearningRate, iterationonSize, 'single');        
-
+                
+        racc = zeros(n, setsNum);
+        best_perf = zeros(n, setsNum); 
+        best_vperf = zeros(n, setsNum); 
+        best_tperf = zeros(n, setsNum);  
+        tTestBest = [];
+        raccBest = 1;
 
 %% 利用黄金分割搜索法来寻找各个隐藏层神经元的最佳个数
 % 这里仅针对单个隐层进行寻优，以说明寻找最佳隐含层节点数的过程，但是对于多个隐含层的情况，
@@ -343,8 +343,9 @@ end
         %     TTest = dummyvar(double(mA2.Class))';
             TTest = ind2vec(double(mA2.Class)');
             disp(['第',num2str(k),'次计算']);
-            [net, tr, tTest, c, cm] = classDemo(XTrain, TTrain, XTest, TTest, type, var);%前3个为必需参数，后面为可选参数
-            %这个函数能给出的有价值的计算结果是： net tr tTest c cm 
+            [netTrained, trainRecord, predictedVector, misclassRate, cmt] = classDemo(XTrain, TTrain, XTest, TTest, type, var);%前3个为必需参数，后面为可选参数
+            %这个函数能给出的有价值的计算结果是： [net tr tTest c cm], 
+            % 这里写为netTrained, trainRecord, predictedVector, misclassRate, cmt
             % net，训练好的网络
             % tr，训练记录结构体，包含了best_perf 训练集最佳性能（蓝色曲线），
             % best_vperf 验证集最佳性能（绿色曲线），best_tperf 测试集最佳性能（红色曲线）
@@ -356,18 +357,17 @@ end
             % 上述返回值都是2×1 cell array；
             
             % 每计算一次，保存一次准确率及混淆矩阵
-            acc(k, :) = cellfun(@(x) 1-x, c);
+            acc(k, :) = cellfun(@(x) 1-x, misclassRate);
+            racc(k, :) = 1-acc(k, :);                                % racc 误分率，错误率
             for iset = 1:setsNum
-                cmNormalizedValues1(:, :, k, iset) = cm{iset};
+                cmNormalizedValues1(:, :, k, iset) = cmt{iset};
+                best_perf(k, iset)  = trainRecord{iset}.best_perf;     % best_perf 训练集最佳性能（蓝色曲线）
+                best_vperf(k, iset) = trainRecord{iset}.best_vperf;   % best_vperf 验证集最佳性能（绿色曲线）
+                best_tperf(k, iset) = trainRecord{iset}.best_tperf;    % best_tperf 测试集最佳性能（红色曲线）               
             end
             
             % 如何找到最优网络net，及预测向量等结果？是找优化前的最高准确率还是找优化后的最高准确率？
             % 找优化后的最高准确率所对应的网络。
-            
-            racc = [racc; err1];                   % racc 误分率，错误率
-            best_perf = [best_perf; err2];    % best_perf 训练集最佳性能（蓝色曲线）
-            best_vperf = [best_vperf; err3]; % best_vperf 验证集最佳性能（绿色曲线）
-            best_tperf = [best_tperf; err4];  % best_tperf 测试集最佳性能（红色曲线）
             
             % 挑选出最优泛化性能下的tTest;
             [m, m1] = min(err1);  % 返回最小值及其索引
