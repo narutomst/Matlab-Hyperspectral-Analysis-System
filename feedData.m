@@ -333,6 +333,8 @@ hmenu4_1 = findobj(handles,'Text','加载数据');
 if isempty(hmenu4_1.UserData)
     hmenu4_1.UserData.matPath = [];
     hmenu4_1.UserData.gtPath = [];
+    hmenu4_1.UserData.matName = [];
+    hmenu4_1.UserData.datasetName = [];
     hmenu4_1.UserData.drAlgorithm = [];
     hmenu4_1.UserData.drValue = numel(popupmenu1.String);
     hmenu4_1.UserData.cAlgorithm = [];
@@ -340,7 +342,7 @@ if isempty(hmenu4_1.UserData)
     hmenu4_1.UserData.x3 = [];
     hmenu4_1.UserData.lbs2 = [];
     hmenu4_1.UserData.x2 = [];
-    hmenu4_1.UserData.lbs = []; 
+    hmenu4_1.UserData.lbs = [];
 elseif ~isempty(hmenu4_1.UserData.matPath) && strcmp(hObject.Text, '重新选择算法')
     % 若触发feedData窗口的菜单是【重新选择算法】，则锁定【浏览】按钮
     pushbutton1.Enable = 'off';
@@ -483,6 +485,8 @@ global x2 lbs bkcGT colorBase
     hObject.UserData.lbs = lbs;
     hObject.UserData.matName = matInfo.name;
     hObject.UserData.gtName = gtInfo.name;
+    [filepath,name,ext] = fileparts(hObject.UserData.matPath);
+    hObject.UserData.datasetName = name;
     time1 = toc(timerVal_1);
     disp(['数据加载成功！历时',num2str(time1),'秒.']);
     %直接保存数据到hObject，则后续处理步骤不用再load
