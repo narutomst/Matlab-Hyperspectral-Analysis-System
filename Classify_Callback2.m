@@ -157,14 +157,31 @@ end
         else
             disp('所选择的分类算法在每次迭代计算时可能会产生超过两组结果，无法保存！');
         end
-        acc_best = zeros(1, setsNum); % 记录n次迭代下的最高准确率OA的值
-        net_best = cell(1, setsNum); % 记录最高准确率下训练好的网络（用于绘制GT图）
+        acc_best = zeros(setsNum, setsNum); % 记录n次迭代下的最高准确率OA的值
+        % acc_best(1,1)保存优化前的最高acc值; acc_best(2, 2)保存优化后的最高acc值
+        % acc_best(1,2)保存优化前的最高acc值对应的网络在优化后的准确率值
+        % acc_best(2,1)保存优化后的最高acc值对应的网络在优化前的准确率值
+        net_best = cell(setsNum, setsNum); % 记录最高准确率下训练好的网络（用于绘制GT图）
+        % net_best{1,1}保存优化前具有最高acc值的网络; net_best{2, 2}保存优化后具有最高acc值的网络
+        % net_best{1,2}保存优化前具有最高acc值的网络在优化后的网络
+        % net_best{2,1}保存优化后具有最高acc值的网络在优化前的网络
+        best_perf = cell(setsNum, setsNum);
+        % best_perf{1,1}保存优化前具有最高acc值的网络训练记录；best_perf{1,2}保存优化前具有最高acc值的网络在优化后的网络训练记录
+        % best_perf{2,2}保存优化后具有最高acc值的网络训练记录；best_perf{2,1}保存优化后具有最高acc值的网络在优化前的网络           
+        best_vperf = cell(setsNum, setsNum);  
+        best_tperf = cell(setsNum, setsNum);  
         tTest_best = cell(1, setsNum);
+        % tTest_best也可以初始化为cell(setsNum, setsNum)，考虑到会极大消耗存储空间，于是将其初始化为cell(1, setsNum)。
+        % tTest_best{1,1}保存优化前具有最高acc值的网络预测向量结果; 
+        % tTest_best{1,2}保存优化后具有最高acc值的网络预测向量结果；
         cmNormalizedValues1 = zeros(N, N, n, setsNum); %保存正常顺序的混淆矩阵
+        % cmNormalizedValues1(:, :, k, 1)保存第k次迭代计算优化前的网络性能的混淆矩阵;
+        % cmNormalizedValues1(:, :, k, 2)保存第k次迭代计算优化后的网络性能的混淆矩阵;
         cmNormalizedValues2 = zeros(N, N, n, setsNum); %保存调整顺序后的混淆矩阵
         cmClassLabels2 = zeros(n, N, setsNum);
         acc = zeros(n, setsNum);
-        
+        % acc(k,1)保存第k次迭代计算优化前的准确率；acc(k,2)保存第k次迭代计算优化后的准确率；
+       
 %         % 记录每次得到的分类准确率，每一列的准确率对应一次迭代
 %         acc_full =   zeros(iterationPerLearningRate, iterationonSize , 'single');  
 %         idx_best = zeros(iterationonSize, 1); % 在每一个输入尺寸下记录一个最佳的学习进度曲线图    
@@ -174,12 +191,6 @@ end
 %         TPR = zeros(9, iterationPerLearningRate, iterationonSize, 'single');        
                 
         racc = zeros(n, setsNum);
-        best_perf = zeros(n, setsNum); 
-        best_vperf = zeros(n, setsNum); 
-        best_tperf = zeros(n, setsNum);  
-
-        raccBest = 1;
-
 %% 利用黄金分割搜索法来寻找各个隐藏层神经元的最佳个数
 % 这里仅针对单个隐层进行寻优，以说明寻找最佳隐含层节点数的过程，但是对于多个隐含层的情况，
 % 这种方法并不见得就有好的效果，例如单隐层huston.mat数据集上0.2的训练集，1~100的寻优结果为85
@@ -376,32 +387,24 @@ end
 
             for iset = 1:setsNum
                 cmNormalizedValues1(:, :, k, iset) = cmt{iset};
-                best_perf(k, iset)  = trainRecord{iset}.best_perf;     % best_perf 训练集最佳性能（蓝色曲线）
-                best_vperf(k, iset) = trainRecord{iset}.best_vperf;   % best_vperf 验证集最佳性能（绿色曲线）
-                best_tperf(k, iset) = trainRecord{iset}.best_tperf;    % best_tperf 测试集最佳性能（红色曲线）
-            
                 % 如何找到最优网络net，及预测向量等结果？是找优化前的最高准确率还是找优化后的最高准确率？
                 % 记录一个优化前的最高值，记录一个优化后的最高值。
+                % 如果优化前后的两个最高准确率不是发生同一次（第k次）怎么办？
                 % 记录优化前的最优值              
-                if acc(k, iset) > acc_best(iset)
-                    acc_best(iset)=acc(k, iset);
-                    net_best{iset}=netTrained{iset};
-                    tTest_best{iset}=predictedVector{iset};
+                if acc(k, iset) > acc_best(iset, iset)    
+                    % acc_best(1,1)保存优化前的最高acc值; acc_best(2, 2)保存优化后的最高acc值
+                    % acc_best(1,2)保存优化前的最高acc值对应的网络在优化后的准确率值
+                    % acc_best(2,1)保存优化后的最高acc值对应的网络在优化前的准确率值
+                    acc_best(iset, :)=acc(k, :);
+                    net_best(iset, :)=netTrained;
+                    tTest_best(iset, :)=predictedVector;
+                    
+                    best_perf(k, iset)  = trainRecord{iset}.best_perf;     % best_perf 训练集最佳性能（蓝色曲线）
+                    best_vperf(k, iset) = trainRecord{iset}.best_vperf;   % best_vperf 验证集最佳性能（绿色曲线）
+                    best_tperf(k, iset) = trainRecord{iset}.best_tperf;    % best_tperf 测试集最佳性能（红色曲线）                    
                 end
             end
-            
-
-            if acc(k, 1) > acc_best(1)
-                acc_best(1)=acc(k, 1);
-                net_best{1}=
-                tTest{1}=
-            end
-            % 记录优化后的最优值
-            if acc(k, 2) > acc_best(2)
-                acc_best(2)=acc(k, 2);
-                net_best=
-                tTest=
-            end
+ 
             
             % 挑选出最优泛化性能下的tTest;
             [m, m1] = min(err1);  % 返回最小值及其索引
