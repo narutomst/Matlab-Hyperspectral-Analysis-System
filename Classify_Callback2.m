@@ -414,19 +414,26 @@ end
     %% 计算分类结果（根据混淆矩阵cmNormalizedValues1，计算OA, AA, Kappa）
         [size1, size2, size3, size4] = size(cmNormalizedValues1);  % 16×16×20×2 double
         cmt = cmNormalizedValues1;
+        load('工程测试\20220517\cmNormalizedValues1.mat','cmt');
+        [size1, size2, size3, size4] = size(cmt);   % huston.mat数据集的混淆矩阵尺寸：15×15×20×2
+        
         % 先计算TPR
-        Ns = sum(sum(cmt(:, :, 1)));
-        p_o = sum(squeeze(sum(cmt.*repmat(eye(size1),1,1,size3), 2)))/Ns;
-        p_e = sum( squeeze(sum(cmt)).*squeeze(sum(cmt,2)) )/Ns^2;
-        Kappa = (p_o - p_e)./(1 - p_e);
-        OA = p_o;
-        TPR(:, :, i) = single(squeeze(sum(cmt.*repmat(eye(size1),1,1,size3), 2)./sum(cmt, 2))); 
-        AA = mean(TPR(:, :, i));
-        c = TPR(:, :, i); 
-        c(size1+1, :) = OA; 
-        c(size1+2, :) = AA; 
-        c(size1+3, :) = Kappa;
-        a{i} = c;  %这种情况是3列，不将3列求平均
+        Ns = sum(sum(cmt(:, :, 1, 1)));   %测试集样本总数
+        p_o = sum(squeeze(sum(cmt.*repmat(eye(size1),1,1,size3, size4), 2)))/Ns; % 1×20×2
+        p_e = sum( squeeze(sum(cmt)).*squeeze(sum(cmt,2)) )/Ns^2; % 1×20×2
+        Kappa = (p_o - p_e)./(1 - p_e);% 1×20×2
+        OA = single(p_o);            %1×20×2
+        TPR = single(squeeze( sum(cmt.*repmat(eye(size1),1,1,size3,size4), 2)./sum(cmt, 2) ));%15×20×2
+        AA = mean(TPR);  %1×20×2
+        STD = std(TPR);    %1×20×2
+        %这种情况是20列，不将20列求平均。想要得到平均值，应该对TPR、OA、 AA、Kappa、std的行求平均，即mean(TPR, 2);
+        
+        c = zeros(size2+4, size3, size4,'single');
+        c(1 : size2, :, :) = TPR; 
+        c(size2+1, :, :) = OA; 
+        c(size2+2, :, :) = AA; 
+        c(size2+3, :, :) = Kappa;
+        c(size2+4, :, :) = STD;
         
     %% 将分类结果保存到hObject.UserData中
         hObject.UserData.racc = racc;
@@ -440,30 +447,47 @@ end
         acc_tperf = 1-best_tperf;  %best_tperf 测试集最佳性能（红色曲线）
         
     %% 将分类结果写入Excel表格
-    T = createTableForWrite(best_perf, best_vperf, best_tperf, racc)
-    
-        %T = table(best_perf, best_vperf, best_tperf, racc, 'RowNames',arrayfun(@string, [1:nn]'),...
-        %    'VariableNames',VN);
-        %
-        % 设置保存路径
+     %为cell的每一列创建列名称 VariableNames
+        VariableNames = cell(1,size3);
+        for i = 1:size3
+            VariableNames{i}= ['iter_',num2str(i)];
+        end
+        % 创建行的名称 RowNames，必须是字符元胞数组 即1×(15+4) cell；
+        RowNames = cell(1, size1+4); % 4行分别是OA、AA、kappa、std；
+        for i = 1:size(cmt, 1)
+            RowNames{i} = ['class_',num2str(i)];
+        end
+        RowNames(i+1 : end) = {'OA', 'AA', 'Kappa','std'};
+        
+        % 生成Excel文件保存地址
         path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
         try
-            path = fullfile(path, hmenu4_1.UserData.matName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
+            path = fullfile(path, hmenu4_1.UserData.datasetName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
         catch
         end
         if ~exist(path, 'dir')
             [status,msg,msgID] = mkdir(path);
         end
-            filename = [hmenu4_1.UserData.matName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
+            filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
         try
             filename = fullfile(path,filename);%拼接路径
         catch
         end
+
+        for iset = 1:size4
+            accTable = array2table(c(:, :, iset), 'VariableNames', VariableNames);
+            accTable.Properties.RowNames = RowNames;
+            writetable(accTable,filename,'Sheet',iset,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
+        end
+% 到这里为止，测试没有问题。2022-05-18 01-08-35
         
+        
+        T = createTableForWrite(best_perf, best_vperf, best_tperf, racc)
+  
         writetable(T,filename,'Sheet',1,'Range','A1', 'WriteRowNames',true);
         
         %T1 = table(acc_perf, acc_vperf, acc_tperf, acc, 'RowNames',arrayfun(@string, [1:numel(acc)]'))
-        %filename = [hmenu4_1.UserData.matName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
+        %filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
         T1 = createTableForWrite(acc_perf, acc_vperf, acc_tperf, acc)
         writetable(T1,filename,'Sheet',2,'Range','A1', 'WriteRowNames',true);  
         
@@ -611,13 +635,13 @@ end
                     % 设置保存路径
                     path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
                     try
-                        path = fullfile(path, hmenu4_1.UserData.matName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
+                        path = fullfile(path, hmenu4_1.UserData.datasetName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
                     catch
                     end
                     if ~exist(path, 'dir')
                         [status,msg,msgID] = mkdir(path);
                     end
-                        filename = [hmenu4_1.UserData.matName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
+                        filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
                     try
                         filename = fullfile(path,filename);%拼接路径
                     catch
@@ -625,7 +649,7 @@ end
                     writetable(T,filename,'Sheet',1,'Range','A1', 'WriteRowNames',true);
                     T1 = createTableForWrite(acc_perf, acc_vperf, acc_tperf, acc)
                     %T1 = table(acc_perf, acc_vperf, acc_tperf, acc, 'RowNames',arrayfun(@string, [1:numel(acc)]'))
-                    %filename = [hmenu4_1.UserData.matName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
+                    %filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
                     writetable(T1,filename,'Sheet',2,'Range','A1', 'WriteRowNames',true);  
 
                     %% 绘制预测的GT图和真实的GT图
