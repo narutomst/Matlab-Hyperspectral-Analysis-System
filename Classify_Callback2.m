@@ -165,13 +165,14 @@ end
         % net_best{1,1}保存优化前具有最高acc值的网络; net_best{2, 2}保存优化后具有最高acc值的网络
         % net_best{1,2}保存优化前具有最高acc值的网络在优化后的网络
         % net_best{2,1}保存优化后具有最高acc值的网络在优化前的网络
-        best_perf = cell(setsNum, setsNum);
-        % best_perf{1,1}保存优化前具有最高acc值的网络训练记录；best_perf{1,2}保存优化前具有最高acc值的网络在优化后的网络训练记录
-        % best_perf{2,2}保存优化后具有最高acc值的网络训练记录；best_perf{2,1}保存优化后具有最高acc值的网络在优化前的网络           
-        best_vperf = cell(setsNum, setsNum);  
-        best_tperf = cell(setsNum, setsNum);  
+        best_perf = zeros(setsNum, setsNum);
+        % best_perf(1,1)保存优化前具有最高acc值的网络训练记录；best_perf(1,2)保存优化前具有最高acc值的网络在优化后的网络训练记录
+        % best_perf(2,2)保存优化后具有最高acc值的网络训练记录；best_perf(2,1)保存优化后具有最高acc值的网络在优化前的网络训练记录
+        best_vperf = zeros(setsNum, setsNum);  
+        best_tperf = zeros(setsNum, setsNum);  
         tTest_best = cell(1, setsNum);
-        % tTest_best也可以初始化为cell(setsNum, setsNum)，考虑到会极大消耗存储空间，于是将其初始化为cell(1, setsNum)。
+        % tTest_best也可以初始化为cell(setsNum, setsNum)，考虑到会极大消耗存储空间，
+        % 于是将其初始化为cell(1, setsNum)。
         % tTest_best{1,1}保存优化前具有最高acc值的网络预测向量结果; 
         % tTest_best{1,2}保存优化后具有最高acc值的网络预测向量结果；
         cmNormalizedValues1 = zeros(N, N, n, setsNum); %保存正常顺序的混淆矩阵
@@ -390,30 +391,24 @@ end
                 % 如何找到最优网络net，及预测向量等结果？是找优化前的最高准确率还是找优化后的最高准确率？
                 % 记录一个优化前的最高值，记录一个优化后的最高值。
                 % 如果优化前后的两个最高准确率不是发生同一次（第k次）怎么办？
-                % 记录优化前的最优值              
+                % 记录优化前和优化后的最优值
                 if acc(k, iset) > acc_best(iset, iset)    
                     % acc_best(1,1)保存优化前的最高acc值; acc_best(2, 2)保存优化后的最高acc值
                     % acc_best(1,2)保存优化前的最高acc值对应的网络在优化后的准确率值
                     % acc_best(2,1)保存优化后的最高acc值对应的网络在优化前的准确率值
                     acc_best(iset, :)=acc(k, :);
                     net_best(iset, :)=netTrained;
-                    tTest_best(iset, :)=predictedVector;
-                    
-                    best_perf(k, iset)  = trainRecord{iset}.best_perf;     % best_perf 训练集最佳性能（蓝色曲线）
-                    best_vperf(k, iset) = trainRecord{iset}.best_vperf;   % best_vperf 验证集最佳性能（绿色曲线）
-                    best_tperf(k, iset) = trainRecord{iset}.best_tperf;    % best_tperf 测试集最佳性能（红色曲线）                    
+                    tTest_best(1, iset)=predictedVector(iset);
+                    % tTest_best{1,1}保存优化前具有最高acc值的网络的预测向量结果；
+                    % tTest_best{1,2}保存优化后具有最高acc值的网络的预测向量结果。
+                    best_perf(iset, :)  = cellfun(@(x) x.best_perf, trainRecord);     % best_perf 训练集最佳性能（蓝色曲线）
+                    % best_perf(1,1)保存优化前具有最高acc值的网络训练记录；best_perf(1,2)保存优化前具有最高acc值的网络在优化后的网络训练记录
+                    % best_perf(2,2)保存优化后具有最高acc值的网络训练记录；best_perf(2,1)保存优化后具有最高acc值的网络在优化前的网络训练记录
+                    best_vperf(iset, :) = cellfun(@(x) x.best_vperf, trainRecord);  % best_vperf 验证集最佳性能（绿色曲线）
+                    best_tperf(iset, :) = cellfun(@(x) x.best_tperf, trainRecord);    % best_tperf 测试集最佳性能（红色曲线）                    
                 end
             end
  
-            
-            % 挑选出最优泛化性能下的tTest;
-            [m, m1] = min(err1);  % 返回最小值及其索引
-            if m<raccBest
-                raccBest = m;
-                tTestBest = tTest(:, m1);
-                ind2Best = ind2';
-                ma2Class = mA2.Class;
-            end 
         end
         
     %% 计算分类结果（根据混淆矩阵cmNormalizedValues1，计算OA, AA, Kappa）
