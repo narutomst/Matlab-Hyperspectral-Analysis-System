@@ -414,7 +414,7 @@ end
     %% 计算分类结果（根据混淆矩阵cmNormalizedValues1，计算OA, AA, Kappa）
         [size1, size2, size3, size4] = size(cmNormalizedValues1);  % 16×16×20×2 double
         cmt = cmNormalizedValues1;
-        load('工程测试\20220517\cmNormalizedValues1.mat','cmt');
+        load('工程测试\20220517\cmNormalizedValues1.mat','cmt'); %用于测试
         [size1, size2, size3, size4] = size(cmt);   % huston.mat数据集的混淆矩阵尺寸：15×15×20×2
         
         % 先计算TPR
@@ -434,18 +434,7 @@ end
         c(size2+2, :, :) = AA; 
         c(size2+3, :, :) = Kappa;
         c(size2+4, :, :) = STD;
-        
-    %% 将分类结果保存到hObject.UserData中
-        hObject.UserData.racc = racc;
-        hObject.UserData.best_perf = best_perf;
-        hObject.UserData.best_vperf = best_vperf;
-        hObject.UserData.best_tperf = best_tperf;
-        %hObject.UserData.lbsOrigin = lbs;
-        acc = 1-racc;                   %acc准确率；racc 误分率，错误率
-        acc_perf = 1-best_perf;    %best_perf 训练集最佳性能（蓝色曲线）
-        acc_vperf = 1-best_vperf; %best_vperf 验证集最佳性能（绿色曲线）
-        acc_tperf = 1-best_tperf;  %best_tperf 测试集最佳性能（红色曲线）
-        
+                
     %% 将分类结果写入Excel表格
      %为cell的每一列创建列名称 VariableNames
         VariableNames = cell(1,size3);
@@ -479,8 +468,18 @@ end
             accTable.Properties.RowNames = RowNames;
             writetable(accTable,filename,'Sheet',iset,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
         end
-% 到这里为止，测试没有问题。2022-05-18 01-08-35
-        
+% 到这里为止，测试没有问题。2022-05-18 01-43-51
+
+    %% 将分类结果保存到hObject.UserData中
+        hObject.UserData.racc = racc;
+        hObject.UserData.best_perf = best_perf;
+        hObject.UserData.best_vperf = best_vperf;
+        hObject.UserData.best_tperf = best_tperf;
+        %hObject.UserData.lbsOrigin = lbs;
+        acc = 1-racc;                   %acc准确率；racc 误分率，错误率
+        acc_perf = 1-best_perf;    %best_perf 训练集最佳性能（蓝色曲线）
+        acc_vperf = 1-best_vperf; %best_vperf 验证集最佳性能（绿色曲线）
+        acc_tperf = 1-best_tperf;  %best_tperf 测试集最佳性能（红色曲线）        
         
         T = createTableForWrite(best_perf, best_vperf, best_tperf, racc)
   
