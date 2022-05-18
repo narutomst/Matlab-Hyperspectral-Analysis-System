@@ -436,6 +436,7 @@ end
         c(:, size3+1, :) = mean(c(:, 1:size3, :), 2);
         c(:, size3+2, :) = std(c(:, 1:size3, :), 0, 2); %对矩阵的行求标准差，等价于% std(permute(c(:, 1:size3, :),[2,1,3]));
         % c的最终尺寸为18×22×2
+
     %% 将分类结果写入Excel表格
      %为cell的每一列创建列名称 VariableNames
         VariableNames = cell(1,size3+2);
@@ -464,14 +465,53 @@ end
             filename = fullfile(path,filename);%拼接路径
         catch
         end
-
+        
         for iset = 1:size4
             accTable = array2table(c(:, :, iset), 'VariableNames', VariableNames);
             accTable.Properties.RowNames = RowNames;
             writetable(accTable,filename,'Sheet',iset,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
         end
-% 到这里为止，测试没有问题。2022-05-18 01-43-51
-
+        %% 保存有关分类结果及网络配置的详细信息到附加Sheet中
+        % 保存降维及分类参数设置paraTable_c到Sheet(iset+1)
+        writetable(paraTable_c, filename, 'Sheet',iset+1,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
+        % 保存数据集信息hmenu4_1.UserData到Sheet(iset+1)
+        info_1 = hmenu4_1.UserData;
+        info_1.x3 = [];
+        info_1.lbs2 = [];
+        info_1.x2 = [];
+        info_1.lbs = [];
+        info_1.cmap = [];
+        info_1 = struct2table(info_1, 'AsArray',true);
+        writetable(info_1, filename, 'Sheet',iset+1,'Range','A3', 'WriteRowNames',true, 'WriteVariableNames', true);
+        % 单独保存cmap
+        info_cmap = hmenu4_1.UserData.cmap;
+        VariableNames = ["R","G","B"]; %VariableNames属性为字符向量元胞数组。如需指定多个变量名称，请在字符串数组或字符向量元胞数组中指定这些名称。
+        % 创建行的名称 RowNames，；
+        RowNames = string(1:size(info_cmap,1)); % ；
+        info_cmap = array2table(info_cmap, 'VariableNames', VariableNames);
+        info_cmap.Properties.RowNames = RowNames;
+        writetable(info_cmap,filename,'Sheet',iset+1,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);
+        % 保存view(net)图像，详细参看C:\Matlab练习\Project20191002\save_view(net).m
+        jframe = view(net_best{1,1});
+        jframe_properties = get(jframe);
+        jpanel = get(jframe,'ContentPane');
+        jpanel_properties = get(jpanel);
+        hFig = figure('Menubar','none', 'Position',[100, 100, jpanel_properties.Width, jpanel_properties.Height]);
+        [~,h] = javacomponent(jpanel);
+        h_properties = get(h);
+        set(h, 'units','normalized', 'position',[0 0 1 1]);
+        %# close java window
+        jframe.setVisible(false);
+        jframe.dispose();
+        %# print to file
+        filename_2 = fullfile(path,"net_best{1,1}");%拼接路径
+        set(hFig, 'PaperPositionMode', 'auto');
+        saveas(hFig, filename_2);        % 保存为fig
+        saveas(hFig, filename_2,'jpg'); %保存为jpg
+        %# close figure
+        close(hFig);
+% 测试到此，一切正常        
+        
     %% 将分类结果保存到hObject.UserData中
         hObject.UserData.racc = racc;
         hObject.UserData.best_perf = best_perf;
