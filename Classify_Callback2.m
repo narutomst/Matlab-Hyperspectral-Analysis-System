@@ -425,28 +425,30 @@ end
         OA = single(p_o);            %1×20×2
         TPR = single(squeeze( sum(cmt.*repmat(eye(size1),1,1,size3,size4), 2)./sum(cmt, 2) ));%15×20×2
         AA = mean(TPR);  %1×20×2
-        STD = std(TPR);    %1×20×2
-        %这种情况是20列，不将20列求平均。想要得到平均值，应该对TPR、OA、 AA、Kappa、std的行求平均，即mean(TPR, 2);
-        
-        c = zeros(size2+4, size3, size4,'single');
-        c(1 : size2, :, :) = TPR; 
-        c(size2+1, :, :) = OA; 
-        c(size2+2, :, :) = AA; 
-        c(size2+3, :, :) = Kappa;
-        c(size2+4, :, :) = STD;
-                
+        % 这种情况是20列，想要得到平均值，应该对TPR、OA、 AA、Kappa的行求平均，即mean(TPR, 2);
+        c = zeros(size2+3, size3+2, size4,'single');
+        % size2+3表示在上方向上增加了OA、 AA、Kappa三行数据。
+        % size3+2表示在列方向上增加了average、std两列。
+        c(1 : size2, 1:size3, :) = TPR; 
+        c(size2+1, 1:size3, :) = OA; 
+        c(size2+2, 1:size3, :) = AA; 
+        c(size2+3, 1:size3, :) = Kappa;
+        c(:, size3+1, :) = mean(c(:, 1:size3, :), 2);
+        c(:, size3+2, :) = std(c(:, 1:size3, :), 0, 2); %对矩阵的行求标准差，等价于% std(permute(c(:, 1:size3, :),[2,1,3]));
+        % c的最终尺寸为18×22×2
     %% 将分类结果写入Excel表格
      %为cell的每一列创建列名称 VariableNames
-        VariableNames = cell(1,size3);
+        VariableNames = cell(1,size3+2);
         for i = 1:size3
             VariableNames{i}= ['iter_',num2str(i)];
         end
-        % 创建行的名称 RowNames，必须是字符元胞数组 即1×(15+4) cell；
-        RowNames = cell(1, size1+4); % 4行分别是OA、AA、kappa、std；
+        VariableNames(size3+1 : size3+2)  = {'average', 'std'};
+        % 创建行的名称 RowNames，必须是字符元胞数组 即1×(15+3) cell；
+        RowNames = cell(1, size1+3); % 3行分别是OA、AA、kappa；
         for i = 1:size(cmt, 1)
             RowNames{i} = ['class_',num2str(i)];
         end
-        RowNames(i+1 : end) = {'OA', 'AA', 'Kappa','std'};
+        RowNames(i+1 : end) = {'OA', 'AA', 'Kappa'};
         
         % 生成Excel文件保存地址
         path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
@@ -481,7 +483,7 @@ end
         acc_vperf = 1-best_vperf; %best_vperf 验证集最佳性能（绿色曲线）
         acc_tperf = 1-best_tperf;  %best_tperf 测试集最佳性能（红色曲线）        
         
-        T = createTableForWrite(best_perf, best_vperf, best_tperf, racc)
+        T = createTableForWrite(best_perf, best_vperf, best_tperf, racc);
   
         writetable(T,filename,'Sheet',1,'Range','A1', 'WriteRowNames',true);
         
@@ -492,7 +494,7 @@ end
         
         %% 绘制预测的GT图和真实的GT图
         lbsTest = lbs;
-        lbsTest(ind2Best) = tTestBest;         %tTest 为预测的类别标签列向量%用预测值代替lbs中的真实值
+        lbsTest(ind2Best) = tTest_best;         %tTest 为预测的类别标签列向量%用预测值代替lbs中的真实值
                                                               %tTestBest为n个预测的类别标签列向量中最优的那个
         hObject.UserData.lbsTest = lbsTest; %保存包含有预测值的标签向量
         
@@ -535,8 +537,8 @@ end
         %% 显示分类用时
         time2 = toc(timerVal_1);
         disp({[hmenu4_1.UserData.matPath, ' 分类完毕! 历时',num2str(time2-time1),'秒.']});
-        
         %delete(MyPar) %计算完成后关闭并行处理池
+
         
     % 如果加载数据完毕，未选择[执行降维]而直接选择[执行分类]，则询问是否启动classificationLearner    
     else
