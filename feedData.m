@@ -337,8 +337,10 @@ if isempty(hmenu4_1.UserData)
     hmenu4_1.UserData.datasetName = [];
     hmenu4_1.UserData.drAlgorithm = [];
     hmenu4_1.UserData.drValue = numel(popupmenu1.String);
+    hmenu4_1.UserData.drElapsedTime = [];
     hmenu4_1.UserData.cAlgorithm = [];
     hmenu4_1.UserData.cValue = numel(popupmenu2.String);
+    hmenu4_1.UserData.cElapsedTime = [];
     hmenu4_1.UserData.x3 = [];
     hmenu4_1.UserData.lbs2 = [];
     hmenu4_1.UserData.x2 = [];
