@@ -2,8 +2,8 @@
 % 分别用于在Classification App用于训练分类器和使用训练好的分类器模型预测结果
 
 function [table1,table2,ind1,ind2] = createTwoTable(x2,lbs,rate) 
-% 输入数据：x, 2维矩阵，每一行为一个样本，每一列为一个属性
-%                 y,列向量，为x每个样本所属的类的值
+% 输入数据：x2, 2维矩阵，每一行为一个样本，每一列为一个属性
+%                 lbs，列向量，即labels，为x2中每个样本所属的类的编号值
 %                 rate，标量（0～1），指定训练集所占的百分比
 dbstop if error
 C = numel(unique(lbs(:))); %总的类别数
