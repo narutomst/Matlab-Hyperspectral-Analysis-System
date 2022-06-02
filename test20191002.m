@@ -966,10 +966,7 @@ for i = 1:n
 	para{2*i-1} = paraTable_dr.Properties.VariableNames{i};
 end
 % no_dims = 10;在外部Excel中设置(默认值从这里读取)
-% para{2} = 10;也可以在此处设置
-% try
-%     mappedA = compute_mapping(A, type, para{2}, para{3:end-2}, para{end});
-% catch
+hmenu4_1.UserData.drDims = para{2};
     timerVal_1 = tic;
     disp('---------------执行降维---------------');
     disp(paraTable_dr);
