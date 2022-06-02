@@ -516,7 +516,7 @@ end
         jframe.setVisible(false);
         jframe.dispose();
         %# print to file
-        filename_2 = fullfile(path,"net_best{1,1}");%拼接路径
+        filename_2 = fullfile(path,"net_best{2,2}");%拼接路径
         set(hFig, 'PaperPositionMode', 'auto');
         saveas(hFig, filename_2);        % 保存为fig
         saveas(hFig, filename_2,'jpg'); %保存为jpg
@@ -530,21 +530,125 @@ end
         filename_2 = fullfile(path,"net_best.mat");%拼接路径
         save(filename_2, 'net_best');
         %# 绘制net_best{}的混淆矩阵图及ROC图
-        netBest = net_best{1,1};
+        load("C:\Matlab练习\Project20191002\工程测试\2022-06-02 16-46-57\Botswana\PCA\GA_TANSIG\net_best.mat");
+        netBest = net_best{2,2};
         YTest = netBest(mappedA'); 
         % mappedA是每一行为一个样本，而输入到train()，net()，sim()函数的XTest XTrain必须保证每一列为一个样本，
         % net()的返回值类型为one-hot-vector，每一列代表一个输入样本所属的类           
-        TTest = vec2ind(lbs)';
+        TTest = ind2vec(lbs');
         figure()
-        plotconfusion(TTest, YTest); %输入参数与confusion()的相同
+        f = plotconfusion(TTest, YTest); %输入参数与confusion()的相同
+        f.Units = 'normalized';
+        f.Position = [0.2375, 0.000926, 0.5562, 0.9315];  % 具有14个类别的混淆矩阵图的最佳尺寸
+        f.Children(1).FontName = 'MS Sans Serif';
+        
+        f.Children(2).Title.String = '混淆矩阵';
+        f.Children(2).XLabel.String = '真实类别';
+        f.Children(2).YLabel.String = '预测类别';
+        f.Children(2).XTickLabelRotation = 0;
+% f.Children(2).Children
+% ans = 
+%     677×1 graphics 数组:
+% 
+%   Line
+%   Line
+%   Text     (5.2%)
+%   Text     (94.8%)
+%   Patch
+%   Text     (4.0%)
+%   Text     (96.0%)
+%   Patch
+%   ……
+%   Text     (8.3%)
+%   Text     (270)
+%   Patch
+        path = "C:\Matlab练习\Project20191002\工程测试\2022-06-02 16-46-57\Botswana\PCA\GA_TANSIG";
+        filename_2 = fullfile(path,"net_best{2,2}_"+"originConfusion");%拼接路径
+        saveas(gcf, filename_2);        % 原始混淆矩阵保存为fig
+        
+        %# 这里，我们需要处理的范围是i=1:14,j=1:14，将每一个格子中的百分数去掉
+        N = hmenu4_1.UserData.M-1;     % 类别总数
+        for i = 1:N
+            for j = 1:N
+                %for k = 1:2
+                idx_1 = 2+(15-j)*15*3+(15-i) *3+1;
+                % 将每一个格子中的百分数去掉
+                f.Children(2).Children(idx_1).String='';
+                % 将每一个格子中的整数位置调整到格子正中间 
+                idx_2 = 2+(15-j)*15*3+(15-i) *3+2;
+                f.Children(2).Children(idx_2).VerticalAlignment = 'middle';
+                % 将每一个格子的颜色修改为其他颜色,比如品红色[0.8529 0.4686  0.6765 ]
+                % confusion matrix默认的格子底色1 浅红色 [0.9765 0.7686 0.7529]; 
+                % confusion matrix默认的格子底色2 浅绿色 [0.7373 0.9020 0.7686];  
+                idx_3 = 2+(15-j)*15*3+(15-i) *3+3;
+                f.Children(2).Children(idx_3).FaceColor = [0.8529 0.4686  0.6765];
+            end
+        end
+        % 将混淆矩阵对角线上的每个格子的颜色设置为浅蓝色[0.6686 0.8529 0.9765 ]
+        for i = 1:N
+            idx_3 = 2+(15-i)*15*3+(15-i) *3+3;
+            f.Children(2).Children(idx_3).FaceColor = [0.6686 0.8529 0.9765];
+        end
+        % 修改最右边一列和最下面一行的字体的颜色
+        % confusion matrix默认的字体颜色1 红色Color: [0.8863 0.2392 0.1765]
+        % confusion matrix默认的字体颜色2 绿色Color: [0.1333 0.6745 0.2353]
+        for i=1:N
+            %for j = N+1
+            idx_1 = 2+(15-i) *3+1;
+            f.Children(2).Children(idx_1).Color = [0.75 0.01  0.01];
+            idx_2 = 2+(15-i) *3+2;
+            f.Children(2).Children(idx_2).Color = [0 0 1];            
+        end
+        for j=1:N   %for i = N+1
+            idx_1 = 2+(15-j)*15*3+1;
+            f.Children(2).Children(idx_1).Color = [0.75 0.01  0.01];
+            idx_2 = 2+(15-j)*15*3+2;
+            f.Children(2).Children(idx_2).Color = [0 0 1];            
+        end
+        % i=15,j=15
+        f.Children(2).Children(2+1).Color = [0.75 0.01  0.01];
+        f.Children(2).Children(2+2).Color = [0 0  0];
+        
+        %# 混淆矩阵格式修改完毕，可以保存
+        filename_2 = fullfile(path,"net_best{2,2}_"+"simpleConfusion");%拼接路径
+        saveas(gcf, filename_2);        % 简化后的混淆矩阵保存为fig
+        saveas(gcf, filename_2,'jpg'); % 简化后的混淆矩阵保存为jpg
+        
+        %## 绘制ROC曲线
+        %#ROC原始曲线
+        figure()
+        f = plotroc(TTest, YTest);
+ %         f.Children
+%         ans = 
+%           3×1 graphics 数组:
+%           UIControl
+%           Legend       (Class 1, Class 2, Class 3, Class 4, Class 5, Class 6, Clas…)
+%           Axes         (ROC)       filename_2 = fullfile(path,"net_best{2,2}_"+"originROC");%拼接路径
+        filename_2 = fullfile(path,"net_best{2,2}_"+"originROC");
         saveas(gcf, filename_2);        % 保存为fig
-        saveas(gcf, filename_2,'jpg'); %保存为jpg
-        figure()
-        plotroc(TTest, YTest);
+        %# 对ROC图进行格式化
+        f.Children(3).Title.String = '接收者操作特征曲线'; % (receiver operating characteristic curve
+        f.Children(3).XLabel.String = '假阳性率'; %False Positive Rate
+        f.Children(3).YLabel.String = '真阳性率'; %True Positive Rate
+        filename_2 = fullfile(path,"net_best{2,2}_"+"接收者操作特征曲线");
         saveas(gcf, filename_2);        % 保存为fig
         saveas(gcf, filename_2,'jpg'); %保存为jpg
 
-% % 测试到此，一切正常        
+        %#ROC局部放大曲线 [0, 0.5] [0.5, 1]
+        %filename_2 = fullfile(path,"net_best{2,2}_"+"zoomROC");%拼接路径
+        filename_2 = fullfile(path,"net_best{2,2}_"+"接收者操作特征曲线局部放大");%拼接路径
+        f.Children(3).XLim = [0, 0.5];
+        f.Children(3).YLim = [0.5, 1];
+        %saveas(gcf, filename_2);        % 保存为fig
+        saveas(gcf, filename_2,'jpg'); %保存为jpg
+        %#ROC局部放大曲线 [0, 0.25] [0.75, 1]
+        %filename_2 = fullfile(path,"net_best{2,2}_"+"zoomROC2");%拼接路径
+        filename_2 = fullfile(path,"net_best{2,2}_"+"接收者操作特征曲线局部放大2");%拼接路径
+        f.Children(3).XLim = [0, 0.25];
+        f.Children(3).YLim = [0.75, 1];
+        %saveas(gcf, filename_2);        % 保存为fig
+        saveas(gcf, filename_2,'jpg'); %保存为jpg        
+% % 测试到此，一切正常       
         
     %% 将分类及训练结果保存到hObject.UserData中
         hObject.UserData.racc = racc;
