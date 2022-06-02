@@ -492,6 +492,7 @@ global x2 lbs bkcGT colorBase
     hObject.UserData.datasetName = name;
     time1 = toc(timerVal_1);
     disp(['数据加载成功！历时',num2str(time1),'秒.']);
+    hObject.UserData.drDims = size(x2, 2);
     %直接保存数据到hObject，则后续处理步骤不用再load
     % hmenu4_1 = findobj(handles,'Label','加载数据');
 
