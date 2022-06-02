@@ -521,15 +521,15 @@ end
 % --------------------------------------------------------------------
 function Close_Callback(hObject, eventdata, handles)
 
-    selection = questdlg('Close the figure window?',...
+    selection = questdlg('退出当前窗口?',...
     'Confirmation',...
-    'Yes','No','Yes');
+    '是','否','否');
     switch selection
-        case 'Yes'
+        case '是'
             delete(handles);
             clear,close all
             clc           
-        case 'No'
+        case '否'
             return
     end
 end
@@ -1003,6 +1003,9 @@ end
 % mappedA = compute_mapping(A, type, no_dims, ...);
 % mappedA = compute_mapping(A, type, no_dims, parameters);
 % mappedA = compute_mapping(A, type, no_dims, parameters, eig_impl);
+time1 = toc(timerVal_1);
+disp(['降维完成！历时',num2str(time1),'秒.']);
+hmenu4_1.UserData.drElapsedTime = time1;
 %% 绘制降维后的结果
 ldaPlot(mappedA,lbs,handles); %普通散点图的方式显示降维后的效果
 % ldaPlot1(mappedA,lbs,handles); %去除背景点（因为背景点覆盖住了其他点）
@@ -1019,8 +1022,6 @@ ldaPlot(mappedA,lbs,handles); %普通散点图的方式显示降维后的效果
 hObject.UserData.drData = mappedA; % hmenu4_3
 % hObject.UserData.drAlgorithm = mapping.name; % hmenu4_1
 
-    time1 = toc(timerVal_1);
-    disp(['降维完成！历时',num2str(time1),'秒.']);
     %使能【分析】>>【执行分类】>>【ClassDemo】命令选项
     hmenu4_4_2 = findobj(handles,'Label','ClassDemo');
     hmenu4_4_2.Enable = 'on';    
