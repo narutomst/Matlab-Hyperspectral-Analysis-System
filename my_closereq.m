@@ -1,13 +1,14 @@
 function my_closereq(src,callbackdata)
 % Close request function 
 % to display a question dialog box 
-   selection = questdlg('Close This Figure?',...
+
+   selection = questdlg('退出高光谱分析系统?',...
       'Close Request Function',...
-      'Yes','No','Yes'); 
+      '是','否','否'); 
    switch selection 
-      case 'Yes'
+      case '是'
          delete(gcf)
-      case 'No'
+      case '否'
       return 
    end
 end
