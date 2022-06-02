@@ -192,6 +192,9 @@ end
 %         TPR = zeros(9, iterationPerLearningRate, iterationonSize, 'single');        
                 
         racc = zeros(n, setsNum);
+        acc_perf = zeros(n, setsNum);
+        acc_vperf = zeros(n, setsNum);
+        acc_tperf = zeros(n, setsNum);        
 %% 利用黄金分割搜索法来寻找各个隐藏层神经元的最佳个数
 % 这里仅针对单个隐层进行寻优，以说明寻找最佳隐含层节点数的过程，但是对于多个隐含层的情况，
 % 这种方法并不见得就有好的效果，例如单隐层huston.mat数据集上0.2的训练集，1~100的寻优结果为85
@@ -362,7 +365,7 @@ end
 
         for k = 1 : n
             [mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
-            XTrain = table2array(mA1(:, 1:end-1))';
+            XTrain = table2array(mA1(:, 1:end-1))';  %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
         %     TTrain = dummyvar(double(mA1.Class))';
             TTrain = ind2vec(double(mA1.Class)');
             XTest = table2array(mA2(:, 1:end-1))';
@@ -385,7 +388,10 @@ end
             % 每计算一次，保存一次准确率及混淆矩阵
             acc(k, :) = cellfun(@(x) 1-x, misclassRate);
             racc(k, :) = 1-acc(k, :);                                % racc 误分率，错误率
-
+            acc_perf(k, :) = cellfun(@(x) x.best_perf, trainRecord);     %best_perf 训练集最佳性能（蓝色曲线）
+            acc_vperf(k, :) = cellfun(@(x) x.best_vperf, trainRecord);  %best_vperf 验证集最佳性能（绿色曲线）
+            acc_tperf(k, :) = cellfun(@(x) x.best_tperf, trainRecord);   %best_tperf 测试集最佳性能（红色曲线）  
+            
             for iset = 1:setsNum
                 cmNormalizedValues1(:, :, k, iset) = cmt{iset};
                 % 如何找到最优网络net，及预测向量等结果？是找优化前的最高准确率还是找优化后的最高准确率？
@@ -410,14 +416,15 @@ end
             end
  
         end
-        
+        info_1 = hmenu4_1.UserData;
+        info_1.cElapsedTime = toc(timerVal_1)-time1; % 保存分类消耗时间
     %% 计算分类结果（根据混淆矩阵cmNormalizedValues1，计算OA, AA, Kappa）
         [size1, size2, size3, size4] = size(cmNormalizedValues1);  % 16×16×20×2 double
         cmt = cmNormalizedValues1;
-        load('工程测试\20220517\cmNormalizedValues1.mat','cmt'); %用于测试
-        [size1, size2, size3, size4] = size(cmt);   % huston.mat数据集的混淆矩阵尺寸：15×15×20×2
+%         load('工程测试\20220517\cmNormalizedValues1.mat','cmt'); %用于测试
+%         [size1, size2, size3, size4] = size(cmt);   % huston.mat数据集的混淆矩阵尺寸：15×15×20×2
         
-        % 先计算TPR
+        %# 先计算TPR
         Ns = sum(sum(cmt(:, :, 1, 1)));   %测试集样本总数
         p_o = sum(squeeze(sum(cmt.*repmat(eye(size1),1,1,size3, size4), 2)))/Ns; % 1×20×2
         p_e = sum( squeeze(sum(cmt)).*squeeze(sum(cmt,2)) )/Ns^2; % 1×20×2
@@ -451,7 +458,7 @@ end
         end
         RowNames(i+1 : end) = {'OA', 'AA', 'Kappa'};
         
-        % 生成Excel文件保存地址
+        %# 生成Excel文件保存地址
         path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
         try
             path = fullfile(path, hmenu4_1.UserData.datasetName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
@@ -469,29 +476,34 @@ end
         for iset = 1:size4
             accTable = array2table(c(:, :, iset), 'VariableNames', VariableNames);
             accTable.Properties.RowNames = RowNames;
+            % Sheet 1保存优化之前的分类结果，Sheet 2保存优化之后的分类结果。
             writetable(accTable,filename,'Sheet',iset,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
         end
         %% 保存有关分类结果及网络配置的详细信息到附加Sheet中
-        % 保存降维及分类参数设置paraTable_c到Sheet(iset+1)
+        % 保存降维及分类参数设置paraTable_c到Sheet(iset+1)，即Sheet 3中
         writetable(paraTable_c, filename, 'Sheet',iset+1,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
-        % 保存数据集信息hmenu4_1.UserData到Sheet(iset+1)
-        info_1 = hmenu4_1.UserData;
+        
+        %# 保存数据集信息hmenu4_1.UserData到Sheet(iset+1)
+        %info_1 = hmenu4_1.UserData;
         info_1.x3 = [];
         info_1.lbs2 = [];
         info_1.x2 = [];
         info_1.lbs = [];
         info_1.cmap = [];
+        % info_1.elapsedTimec = toc(timerVal_1)-time1; % 保存分类消耗时间
         info_1 = struct2table(info_1, 'AsArray',true);
         writetable(info_1, filename, 'Sheet',iset+1,'Range','A3', 'WriteRowNames',true, 'WriteVariableNames', true);
-        % 单独保存cmap
+        %# 单独处理cmap
         info_cmap = hmenu4_1.UserData.cmap;
-        VariableNames = ["R","G","B"]; %VariableNames属性为字符向量元胞数组。如需指定多个变量名称，请在字符串数组或字符向量元胞数组中指定这些名称。
-        % 创建行的名称 RowNames，；
+        VariableNames = ["R","G","B"]; %VariableNames属性为字符向量元胞数组{'R','G','B'}。
+        % 如需指定多个变量名称，请在字符串数组["R","G","B"]或字符向量元胞数组{'R','G','B'}中指定这些名称。
+        % 创建行的名称 RowNames，格式为字符串数组["1","2","3"]或字符向量元胞数组{'1','2','3'}；
         RowNames = string(1:size(info_cmap,1)); % ；
         info_cmap = array2table(info_cmap, 'VariableNames', VariableNames);
         info_cmap.Properties.RowNames = RowNames;
         writetable(info_cmap,filename,'Sheet',iset+1,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);
-        % 保存view(net)图像，详细参看C:\Matlab练习\Project20191002\save_view(net).m
+        
+        %## 保存view(net)图像，详细参看C:\Matlab练习\Project20191002\save_view(net).m
         jframe = view(net_best{1,1});
         jframe_properties = get(jframe);
         jpanel = get(jframe,'ContentPane');
@@ -510,27 +522,48 @@ end
         saveas(hFig, filename_2,'jpg'); %保存为jpg
         %# close figure
         close(hFig);
-% 测试到此，一切正常        
+
+        %# 保存net_best{}为"net_best.mat"
+        % net_best{1,1}保存优化前具有最高acc值的网络; net_best{2, 2}保存优化后具有最高acc值的网络
+        % net_best{1,2}保存优化前具有最高acc值的网络在优化后的网络
+        % net_best{2,1}保存优化后具有最高acc值的网络在优化前的网络
+        filename_2 = fullfile(path,"net_best.mat");%拼接路径
+        save(filename_2, 'net_best');
+        %# 绘制net_best{}的混淆矩阵图及ROC图
+        netBest = net_best{1,1};
+        YTest = netBest(mappedA'); 
+        % mappedA是每一行为一个样本，而输入到train()，net()，sim()函数的XTest XTrain必须保证每一列为一个样本，
+        % net()的返回值类型为one-hot-vector，每一列代表一个输入样本所属的类           
+        TTest = vec2ind(lbs)';
+        figure()
+        plotconfusion(TTest, YTest); %输入参数与confusion()的相同
+        saveas(gcf, filename_2);        % 保存为fig
+        saveas(gcf, filename_2,'jpg'); %保存为jpg
+        figure()
+        plotroc(TTest, YTest);
+        saveas(gcf, filename_2);        % 保存为fig
+        saveas(gcf, filename_2,'jpg'); %保存为jpg
+
+% % 测试到此，一切正常        
         
-    %% 将分类结果保存到hObject.UserData中
+    %% 将分类及训练结果保存到hObject.UserData中
         hObject.UserData.racc = racc;
         hObject.UserData.best_perf = best_perf;
         hObject.UserData.best_vperf = best_vperf;
         hObject.UserData.best_tperf = best_tperf;
         %hObject.UserData.lbsOrigin = lbs;
-        acc = 1-racc;                   %acc准确率；racc 误分率，错误率
-        acc_perf = 1-best_perf;    %best_perf 训练集最佳性能（蓝色曲线）
-        acc_vperf = 1-best_vperf; %best_vperf 验证集最佳性能（绿色曲线）
-        acc_tperf = 1-best_tperf;  %best_tperf 测试集最佳性能（红色曲线）        
-        
-        T = createTableForWrite(best_perf, best_vperf, best_tperf, racc);
-  
-        writetable(T,filename,'Sheet',1,'Range','A1', 'WriteRowNames',true);
-        
-        %T1 = table(acc_perf, acc_vperf, acc_tperf, acc, 'RowNames',arrayfun(@string, [1:numel(acc)]'))
-        %filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
+        save('工程测试\20220517\trainRecord.mat','acc_perf', 'acc_vperf', 'acc_tperf', 'acc'); %用于测试
+        info_trainRecord = [acc_perf, acc_vperf, acc_tperf, acc];
         T1 = createTableForWrite(acc_perf, acc_vperf, acc_tperf, acc)
-        writetable(T1,filename,'Sheet',2,'Range','A1', 'WriteRowNames',true);  
+        VariableNames = ["R","G","B"]; %VariableNames属性为字符向量元胞数组{'R','G','B'}。
+        % 如需指定多个变量名称，请在字符串数组["R","G","B"]或字符向量元胞数组{'R','G','B'}中指定这些名称。
+        % 创建行的名称 RowNames，格式为字符串数组["1","2","3"]或字符向量元胞数组{'1','2','3'}；
+        RowNames = string(1:size(info_cmap,1)); % ；
+        info_cmap = array2table(info_cmap, 'VariableNames', VariableNames);
+        info_cmap.Properties.RowNames = RowNames;
+        writetable(info_cmap,filename,'Sheet',iset+1,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);
+        
+        writetable(T1,filename,'Sheet',iset+1,'Range','A7', 'WriteRowNames',true);  
         
         %% 绘制预测的GT图和真实的GT图
         lbsTest = lbs;
@@ -577,6 +610,7 @@ end
         %% 显示分类用时
         time2 = toc(timerVal_1);
         disp({[hmenu4_1.UserData.matPath, ' 分类完毕! 历时',num2str(time2-time1),'秒.']});
+        
         %delete(MyPar) %计算完成后关闭并行处理池
 
         
