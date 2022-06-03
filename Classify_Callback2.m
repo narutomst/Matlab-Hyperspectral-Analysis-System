@@ -529,8 +529,9 @@ end
         % net_best{2,1}保存优化后具有最高acc值的网络在优化前的网络
         filename_2 = fullfile(path,"net_best.mat");%拼接路径
         save(filename_2, 'net_best');
-        %# 绘制net_best{}的混淆矩阵图及ROC图
-        load("C:\Matlab练习\Project20191002\工程测试\2022-06-02 16-46-57\Botswana\PCA\GA_TANSIG\net_best.mat");
+        
+        %% 绘制net_best{2,2}的混淆矩阵图及ROC图
+        % load("C:\Matlab练习\Project20191002\工程测试\2022-06-02 16-46-57\Botswana\PCA\GA_TANSIG\net_best.mat");
         netBest = net_best{2,2};
         YTest = netBest(mappedA'); 
         % mappedA是每一行为一个样本，而输入到train()，net()，sim()函数的XTest XTrain必须保证每一列为一个样本，
@@ -562,7 +563,7 @@ end
 %   Text     (8.3%)
 %   Text     (270)
 %   Patch
-        path = "C:\Matlab练习\Project20191002\工程测试\2022-06-02 16-46-57\Botswana\PCA\GA_TANSIG";
+        % path = "C:\Matlab练习\Project20191002\工程测试\2022-06-02 16-46-57\Botswana\PCA\GA_TANSIG";
         filename_2 = fullfile(path,"net_best{2,2}_"+"originConfusion");%拼接路径
         saveas(gcf, filename_2);        % 原始混淆矩阵保存为fig
         
@@ -618,7 +619,7 @@ end
         %#ROC原始曲线
         figure()
         f = plotroc(TTest, YTest);
- %         f.Children
+%         f.Children
 %         ans = 
 %           3×1 graphics 数组:
 %           UIControl
@@ -650,52 +651,61 @@ end
         saveas(gcf, filename_2,'jpg'); %保存为jpg        
 % % 测试到此，一切正常       
         
-    %% 将分类及训练结果保存到hObject.UserData中
-        hObject.UserData.racc = racc;
-        hObject.UserData.best_perf = best_perf;
-        hObject.UserData.best_vperf = best_vperf;
-        hObject.UserData.best_tperf = best_tperf;
-        %hObject.UserData.lbsOrigin = lbs;
-        save('工程测试\20220517\trainRecord.mat','acc_perf', 'acc_vperf', 'acc_tperf', 'acc'); %用于测试
-        info_trainRecord = [acc_perf, acc_vperf, acc_tperf, acc];
-        T1 = createTableForWrite(acc_perf, acc_vperf, acc_tperf, acc)
-        VariableNames = ["R","G","B"]; %VariableNames属性为字符向量元胞数组{'R','G','B'}。
-        % 如需指定多个变量名称，请在字符串数组["R","G","B"]或字符向量元胞数组{'R','G','B'}中指定这些名称。
-        % 创建行的名称 RowNames，格式为字符串数组["1","2","3"]或字符向量元胞数组{'1','2','3'}；
-        RowNames = string(1:size(info_cmap,1)); % ；
-        info_cmap = array2table(info_cmap, 'VariableNames', VariableNames);
-        info_cmap.Properties.RowNames = RowNames;
-        writetable(info_cmap,filename,'Sheet',iset+1,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);
-        
-        writetable(T1,filename,'Sheet',iset+1,'Range','A7', 'WriteRowNames',true);  
+%     %% 将分类及训练结果保存到hObject.UserData中
+%         hObject.UserData.racc = racc;
+%         hObject.UserData.best_perf = best_perf;
+%         hObject.UserData.best_vperf = best_vperf;
+%         hObject.UserData.best_tperf = best_tperf;
+%         %hObject.UserData.lbsOrigin = lbs;
+%         save('工程测试\20220517\trainRecord.mat','acc_perf', 'acc_vperf', 'acc_tperf', 'acc'); %用于测试
+%         info_trainRecord = [acc_perf, acc_vperf, acc_tperf, acc];
+%         T1 = createTableForWrite(acc_perf, acc_vperf, acc_tperf, acc)
+%         VariableNames = ["R","G","B"]; %VariableNames属性为字符向量元胞数组{'R','G','B'}。
+%         % 如需指定多个变量名称，请在字符串数组["R","G","B"]或字符向量元胞数组{'R','G','B'}中指定这些名称。
+%         % 创建行的名称 RowNames，格式为字符串数组["1","2","3"]或字符向量元胞数组{'1','2','3'}；
+%         RowNames = string(1:size(info_cmap,1)); % ；
+%         info_cmap = array2table(info_cmap, 'VariableNames', VariableNames);
+%         info_cmap.Properties.RowNames = RowNames;
+%         writetable(info_cmap,filename,'Sheet',iset+1,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);
+%         
+%         writetable(T1,filename,'Sheet',iset+1,'Range','A7', 'WriteRowNames',true);  
         
         %% 绘制预测的GT图和真实的GT图
-        lbsTest = lbs;
-        lbsTest(ind2Best) = tTest_best;         %tTest 为预测的类别标签列向量%用预测值代替lbs中的真实值
-                                                              %tTestBest为n个预测的类别标签列向量中最优的那个
-        hObject.UserData.lbsTest = lbsTest; %保存包含有预测值的标签向量
-        
-        gtdata = handles.UserData.gtdata;
-        gtdata(gtdata~=0)=lbsTest;    %将标签向量排列成GT图
+        %YTest是net()的返回值，类型为one-hot-vector，每一列代表一个输入样本所属的类
+        Ylbs = vec2ind(YTest)';  %vec2ind()函数的输入数据，要求是由one-hot-vector列向量组成的矩阵
+        %Ylbs表示预测的lbs
+%         lbsTest = lbs;
+%         lbsTest(ind2Best) = tTest_best;         %tTest 为预测的类别标签列向量%用预测值代替lbs中的真实值
+%                                                               %tTestBest为n个预测的类别标签列向量中最优的那个
+%         hObject.UserData.lbsTest = lbsTest; %保存包含有预测值的标签向量
+%         
+%         gtdata = handles.UserData.gtdata;
+%         gtdata(gtdata~=0)=lbsTest;    %将标签向量排列成GT图
+% 
+%         hObject.UserData.imgNew = double(gtdata);%保存预测出来的GT图
+%         handles.UserData.imgNew = hObject.UserData.imgNew;
+%         %绘制预测的GT图和真实的GT图
+%         SeparatePlot3_Callback(handles.UserData.imgNew, handles.UserData.cmap, handles.UserData.M);
+%         SeparatePlot3_Callback(handles.UserData.gtdata,    handles.UserData.cmap, handles.UserData.M);
+%         SeparatePlot4_Callback(handles.UserData.gtdata, handles.UserData.imgNew, handles.UserData.cmap, handles.UserData.M);
 
-        hObject.UserData.imgNew = double(gtdata);%保存预测出来的GT图
-        handles.UserData.imgNew = hObject.UserData.imgNew;
-        %绘制预测的GT图和真实的GT图
-        SeparatePlot3_Callback(handles.UserData.imgNew, handles.UserData.cmap, handles.UserData.M);
+        % 此时的hObject是hmenu4_4_2，Text: 'ClassDemo'，Type: 'uimenu'
+        %此时的 handles.UserData.gtdata: [1476×256 double]
+        [size_1,size_2] = size(handles.UserData.gtdata);
+        Ygtdata = reshape(Ylbs, [size_1, size_2]); %Ygtdata表示预测的gtdata
+        Ygtdata = double(Ygtdata);
+        filename_2 = fullfile(path,"net_best{2,2}_"+"预测图");%拼接路径
+        SeparatePlot3_Callback(Ygtdata, handles.UserData.cmap, handles.UserData.M);
+        saveas(gcf, filename_2);        % 保存为fig
+        saveas(gcf, filename_2,'jpg'); %保存为jpg
+        filename_2 = fullfile(path, [hmenu4_1.UserData.datasetName, 'GT图']);%拼接路径
         SeparatePlot3_Callback(handles.UserData.gtdata,    handles.UserData.cmap, handles.UserData.M);
-        SeparatePlot4_Callback(handles.UserData.gtdata, handles.UserData.imgNew, handles.UserData.cmap, handles.UserData.M);
-        
-        %% 绘制confusion matrix
-        % plotconfusion()，输入数据可以是categorical列向量
-        % 也可以是由若干个one-hot vector列向量组成的矩阵
-        % 其他类型的数据会导致死循环。
-        figure()
-        pf = plotconfusion(ma2Class, categorical(tTestBest));
-        %保存当前图窗中的图片
-        %filename = generateFilename(path, handles, fmt);
-        %filename = generateFilename('20200627', handles, ['_',num2str(pf.Number),'.fig']);
-        %saveas(pf, filename);        
-        
+        saveas(gcf, filename_2);        % 保存为fig
+        saveas(gcf, filename_2,'jpg'); %保存为jpg
+        filename_2 = fullfile(path,"net_best{2,2}_"+"GT图与预测图");%拼接路径
+        SeparatePlot4_Callback(handles.UserData.gtdata, Ygtdata, handles.UserData.cmap, handles.UserData.M);      
+        saveas(gcf, filename_2);        % 保存为fig
+        saveas(gcf, filename_2,'jpg'); %保存为jpg        
         %% 绘制性能曲线>>>错误率
         
         figure()
