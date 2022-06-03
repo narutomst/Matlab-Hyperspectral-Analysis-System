@@ -1,15 +1,26 @@
 %使用pso优化BP神经网络算法
 %% 该代码为基于PSO和BP网络的预测
-function [net, tr, tTest, c, cm] = f_PSO_TANSIG(XTrain, TTrain, XTest, TTest, Var)
-%这个函数能给出的有价值的计算结果是： net tr tTest c cm 
-        % net，训练好的网络
-        % tr，训练记录结构体，包含了best_perf 训练集最佳性能（蓝色曲线），best_vperf 验证集最佳性能（绿色曲线），best_tperf 测试集最佳性能（红色曲线）
-        %tTest 为预测的类别标签列向量
-        % c, 误分率，错误率；1-c，即准确率OA
-        % cm, 混淆矩阵  
+function [netTrained, trainRecord, predictedVector, misclassRate, cmt] = f_PSO_TANSIG(XTrain, TTrain, XTest, TTest, Var)
+%这个函数能给出的有价值的计算结果是：[net tr tTest c cm]，将其保存到[netTrained, trainRecord, predictedVector, misclassRate, cmt]
+        % net，训练好的网络netTrained
+        % tr，训练记录结构体trainRecord，包含了best_perf 训练集最佳性能（蓝色曲线），
+        % best_vperf 验证集最佳性能（绿色曲线），best_tperf 测试集最佳性能（红色曲线）
+        %tTest 为预测的类别标签列向量predictedVector
+        % c, 误分率misclassRate，错误率；1-c，即准确率OA
+        % cm, 混淆矩阵，保存到cmt  
+        
 warning off
-%% II. 声明全局变量
-
+% 定义返回变量的大小，因为每个返回变量都有优化前和优化后的两个值，所以使用cell array来保存。
+% 对于函数f_TANSIG(), f_RBF(), f_BP()，上述返回值都是1×1 cell array；
+% 对于函数f_GA_TANSIG(), f_GA_RBF(), f_GA_BP()，f_PSO_TANSIG(), f_PSO_RBF(), f_PSO_BP()
+% 上述返回值都是2×1 cell array；
+netTrained = cell(2,1);
+trainRecord = cell(2,1);
+predictedVector = cell(2,1);
+misclassRate = cell(2,1);
+cmt = cell(2,1);
+%% II. 获取隐含层节点数及传递函数
+%'softmax'; %最后一层即输出层的传递函数是 net.layers{Var.hiddenLayerNum+1}.transferFcn
 hiddenSizes = [Var.hiddenNum, Var.hiddenNum1, Var.hiddenNum2, Var.hiddenNum3, Var.hiddenNum4];
 hiddenSizes = hiddenSizes(1 : Var.hiddenLayerNum);
 
@@ -59,7 +70,7 @@ acc2 = [];
     
     if str2num(Var.plotperform)          % str2num('true')==1
         figure()
-        plotperform(tr);
+        plotperform(tr{1});
     end
     % 说明：为什么有三条曲线？各代表什么意思？
 % 在训练多层网络时，一般的做法是首先将数据分成三个子集。
@@ -117,7 +128,12 @@ acc2 = [];
         plotperform(tr);
     end
    %acc1 = [acc1, 1-racc1]; 
-
+    netTrained{1} = net;
+    trainRecord{1} = tr;
+    predictedVector{1} = tTest1;
+    misclassRate{1} = c;
+    cmt{1} = cm;
+    
 	%% VI. PSO_BP神经网络
 	%%新添加
 	%初始化编码长度，以免后面出现超维错误gl
@@ -238,19 +254,19 @@ acc2 = [];
 	%% BP网络训练
     % 即使用梯度下降（或相关）算法寻找局部最优解
     net.trainParam.showWindow = str2num(Var.showWindow); %str2num('true')==1; str2num('false')==0
-	[net,tr]=train(net,XTrain,TTrain,'useParallel','yes','showResources','yes');
-    
+	[net, tr]=train(net,XTrain,TTrain); %'useParallel','yes','showResources','yes');
+    % 关闭并行计算选项，因为这会导致计算机出各种小问题，比如网络适配器不好使了，电脑失声等。
     if str2num(Var.plotperform)          % str2num('true')==1
         figure()
-        plotperform(tr);
+        plotperform(tr{2});
     end
 	%% PSO_BP网络预测
 	% 5.仿真网络
 	YTest = net(XTest); 
 	tTest2 = vec2ind(YTest)';
 	% 6. 性能评价
-    [c,cm,ind,per] = confusion(TTest,YTest);
-    racc2 = c;
+    [c2,cm2,ind2,per2] = confusion(TTest,YTest);
+    racc2 = c2;
     best_perf2 = tr.best_perf;
     best_vperf2 = tr.best_vperf;
     best_tperf2 = tr.best_tperf;
@@ -261,7 +277,7 @@ acc2 = [];
 
     if str2num(Var.plottrainstate)          % str2num('false')==0
         figure()
-        plottrainstate(tr);
+        plottrainstate(tr{2});
     end
 
     if str2num(Var.plotconfusion)    
@@ -274,9 +290,14 @@ acc2 = [];
     end
     
     if str2num(Var.plotperform)          
-        plotperform(tr);
+        plotperform(tr{2});
     end
-   acc2 = [acc2, 1-racc2]; 
+%   acc2 = [acc2, 1-racc2]; 
+netTrained{2} = net;
+trainRecord{2} = tr;
+predictedVector{2} = tTest2;
+misclassRate{2} = c2;
+cmt{2} = cm2;
    
 racc = [racc1, racc2];
 best_perf = [best_perf1, best_perf2];
