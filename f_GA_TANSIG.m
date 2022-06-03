@@ -125,7 +125,7 @@ acc2 = [];
         plotroc(TTest, YTest);
     end
     
-    if str2num(Var.plotperform)          
+    if str2num(Var.plotperform)
         plotperform(tr);
     end
 %     acc1 = [acc1, 1-racc1]; 
@@ -134,7 +134,7 @@ trainRecord{1} = tr;
 predictedVector{1} = tTest1;
 misclassRate{1} = c;
 cmt{1} = cm;
-%% VI. GA-BP神经网络
+%% VI. GA-TANSIG神经网络
 	sumNet = [inputNum, hiddenSizes, outputNum];
     k = numel(sumNet);
     S = 0;          % S = inputNum*S1+ S1*S2+S2*outputNum+ S1 + S2+outputNum;  %编码长度
@@ -230,7 +230,7 @@ tTest = [tTest1, tTest2];
 % 
 % figure
 % plot(1:N1, acc1, 'r-', 1:N2, acc2,'b--');
-% legend('BP','GA\_BP','Location','best');
+% legend('TANSIG','GA\_TANSIG','Location','best');
 % xlabel('次数');
 % ylabel('准确率');
 % string = '两种算法分类准确率对比';
