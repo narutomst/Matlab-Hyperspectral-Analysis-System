@@ -1,13 +1,23 @@
 
-function [net, tr, tTest, c, cm] = f_GA_BP(XTrain, TTrain, XTest, TTest, Var)
-%这个函数能给出的有价值的计算结果是： net tr tTest c cm 
-        % net，训练好的网络
-        % tr，训练记录结构体，包含了best_perf 训练集最佳性能（蓝色曲线），best_vperf 验证集最佳性能（绿色曲线），best_tperf 测试集最佳性能（红色曲线）
-        %tTest 为预测的类别标签列向量
-        % c, 误分率，错误率；1-c，即准确率OA
-        % cm, 混淆矩阵  
+function [netTrained, trainRecord, predictedVector, misclassRate, cmt] = f_GA_BP(XTrain, TTrain, XTest, TTest, Var)
+%这个函数能给出的有价值的计算结果是：[net tr tTest c cm]，将其保存到[netTrained, trainRecord, predictedVector, misclassRate, cmt]
+        % net，训练好的网络netTrained
+        % tr，训练记录结构体trainRecord，包含了best_perf 训练集最佳性能（蓝色曲线），
+        % best_vperf 验证集最佳性能（绿色曲线），best_tperf 测试集最佳性能（红色曲线）
+        %tTest 为预测的类别标签列向量predictedVector
+        % c, 误分率misclassRate，错误率；1-c，即准确率OA
+        % cm, 混淆矩阵，保存到cmt 
 warning off
-
+% 定义返回变量的大小，因为每个返回变量都有优化前和优化后的两个值，所以使用cell array来保存。
+% 对于函数f_TANSIG(), f_RBF(), f_BP()，上述返回值都是1×1 cell array；
+% 对于函数f_GA_TANSIG(), f_GA_RBF(), f_GA_BP()，f_PSO_TANSIG(), f_PSO_RBF(), f_PSO_BP()
+% 上述返回值都是2×1 cell array；
+netTrained = cell(2,1);
+trainRecord = cell(2,1);
+predictedVector = cell(2,1);
+misclassRate = cell(2,1);
+cmt = cell(2,1);
+%. 获取隐含层节点数及传递函数
 %'softmax'; %最后一层即输出层的传递函数是 net.layers{Var.hiddenLayerNum+1}.transferFcn
 
 hiddenSizes = [Var.hiddenNum, Var.hiddenNum1, Var.hiddenNum2, Var.hiddenNum3, Var.hiddenNum4];
@@ -77,10 +87,10 @@ acc2 = [];
 % 如果测试集上的误差在与验证集误差明显不同的迭代次数处达到最小值，则这可能表示数据集划分不当。    
 %     
 	% 5.仿真网络
-	y = net(XTest); 
-% 	tTest = vec2ind(YTest);
+	YTest = net(XTest); 
+	tTest1 = vec2ind(YTest)';
 	% 6. 性能评价
-    [c,cm,ind,per] = confusion(TTest, y);
+    [c,cm,ind,per] = confusion(TTest, YTest);
     racc1 = c;
     best_perf1 = tr.best_perf;
     best_vperf1 = tr.best_vperf;
@@ -117,8 +127,12 @@ acc2 = [];
     if str2num(Var.plotperform)          
         plotperform(tr);
     end
-    acc1 = [acc1, 1-racc1]; 
-    
+%     acc1 = [acc1, 1-racc1]; 
+netTrained{1} = net;
+trainRecord{1} = tr;
+predictedVector{1} = tTest1;
+misclassRate{1} = c;
+cmt{1} = cm;
 %% VI. GA-BP神经网络
 	sumNet = [inputNum, hiddenSizes, outputNum];
     k = numel(sumNet);
@@ -182,22 +196,27 @@ acc2 = [];
 	end
 
 %% X. 仿真测试
-	y = net(XTest); 
-
+	YTest = net(XTest); 
+    tTest2 = vec2ind(YTest)';
 %% V. 性能评价
 
-    [c2,cm2,ind2,per2] = confusion(TTest,y);
+    [c2,cm2,ind2,per2] = confusion(TTest,YTest);
     racc2 = c2;
     best_perf2 = tr.best_perf;
     best_vperf2 = tr.best_vperf;
     best_tperf2 = tr.best_tperf;
     
-    acc2 = [acc2, 1-racc2]; 
+%     acc2 = [acc2, 1-racc2]; 
+netTrained{2} = net;
+trainRecord{2} = tr;
+predictedVector{2} = tTest2;
+misclassRate{2} = c2;
+cmt{2} = cm2;
 
-racc = [racc1; racc2];
-best_perf = [best_perf1; best_perf2];
-best_vperf = [best_vperf1; best_vperf2];
-best_tperf = [best_tperf1; best_tperf2];
+racc = [racc1, racc2];
+best_perf = [best_perf1, best_perf2];
+best_vperf = [best_vperf1, best_vperf2];
+best_tperf = [best_tperf1, best_tperf2];
 %%两种算法的结果对比
 % average1 = mean(acc1);
 % average2 = mean(acc2);
