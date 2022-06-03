@@ -1,5 +1,5 @@
-%使用pso优化BP神经网络算法
-%% 该代码为基于PSO和BP网络的预测
+%使用pso优化TANSIG神经网络算法
+%% 该代码为基于PSO和TANSIG网络的预测
 function [netTrained, trainRecord, predictedVector, misclassRate, cmt] = f_PSO_TANSIG(XTrain, TTrain, XTest, TTest, Var)
 %这个函数能给出的有价值的计算结果是：[net tr tTest c cm]，将其保存到[netTrained, trainRecord, predictedVector, misclassRate, cmt]
         % net，训练好的网络netTrained
@@ -134,7 +134,7 @@ acc2 = [];
     misclassRate{1} = c;
     cmt{1} = cm;
     
-	%% VI. PSO_BP神经网络
+	%% VI. PSO_TANSIG神经网络
 	%%新添加
 	%初始化编码长度，以免后面出现超维错误gl
 	sumNet = [inputNum,hiddenSizes,outputNum];
@@ -251,7 +251,7 @@ acc2 = [];
 	x=Gbest;
     [val, net] = fun(x, inputNum, hiddenSizes, outputNum, net, XTrain, TTrain);
 
-	%% BP网络训练
+	%% TANSIG网络训练
     % 即使用梯度下降（或相关）算法寻找局部最优解
     net.trainParam.showWindow = str2num(Var.showWindow); %str2num('true')==1; str2num('false')==0
 	[net, tr]=train(net,XTrain,TTrain); %'useParallel','yes','showResources','yes');
@@ -260,7 +260,7 @@ acc2 = [];
         figure()
         plotperform(tr{2});
     end
-	%% PSO_BP网络预测
+	%% PSO_TANSIG网络预测
 	% 5.仿真网络
 	YTest = net(XTest); 
 	tTest2 = vec2ind(YTest)';
@@ -314,7 +314,7 @@ tTest = [tTest1, tTest2];
 
 % figure(2)
 % plot(1:N1, acc1, 'r-', 1:N2, acc2,'b--');
-% %legend('BP','PSO\_BP','Location','best');
+% %legend('TANSIG','PSO\_TANSIG','Location','best');
 % legend('RBF','PSO\_RBF','Location','best');
 % xlabel('次数');
 % ylabel('准确率');
