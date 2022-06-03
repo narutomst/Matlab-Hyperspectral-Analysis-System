@@ -64,7 +64,7 @@ acc2 = [];
 % 	net.trainParam.epochs = 2000;
 	net.trainParam.showWindow = str2num(Var.showWindow); %str2num('true')==1; str2num('false')==0
 	% 4.训练网络
-	[net, tr] = train(net, XTrain, TTrain, 'useParallel','yes','showResources','yes');%这一步网络拓扑结构才算正式确定下来10-10-9
+	[net, tr] = train(net, XTrain, TTrain);% 'useParallel','yes','showResources','yes');%这一步网络拓扑结构才算正式确定下来10-10-9
 												 %连接权值和偏置值总数是：10*10+9*10+10+9=209
 %     view(net);  
     
@@ -152,7 +152,7 @@ acc2 = [];
 	we =0.4;
 	maxgen=100; % 进化次数 ：100
 	sizepop=50;    % 种群规模：50个个体
-    k_stop = 10;   %若一个适应度值连续重复出现了40次，那么认为进化结束
+    k_stop = 40;   %若一个适应度值连续重复出现了40次，那么认为进化结束
     
 	Vmax=0.3;
 	Vmin=-0.3;
