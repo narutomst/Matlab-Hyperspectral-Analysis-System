@@ -1063,7 +1063,7 @@ end
                 %# 生成Excel文件保存地址
                 path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
                 try
-                    path = fullfile(path, hmenu4_1.UserData.datasetName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
+                    path = fullfile(path, hmenu4_1.UserData.datasetName, [hmenu4_1.UserData.drAlgorithm,'null'], hmenu4_1.UserData.cAlgorithm);
                 catch
                 end
                 if ~exist(path, 'dir')
