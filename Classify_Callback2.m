@@ -532,6 +532,7 @@ end
         
         %% 绘制net_best{2,2}的混淆矩阵图及ROC图
         % load("C:\Matlab练习\Project20191002\工程测试\2022-06-02 16-46-57\Botswana\PCA\GA_TANSIG\net_best.mat");
+        load("C:\Matlab练习\Project20191002\工程测试\2022-06-04 02-35-46\Botswana\PCA\PSO_RBF\net_best.mat");
         netBest = net_best{2,2};
         YTest = netBest(mappedA'); 
         % mappedA是每一行为一个样本，而输入到train()，net()，sim()函数的XTest XTrain必须保证每一列为一个样本，
@@ -679,9 +680,9 @@ end
 %                                                               %tTestBest为n个预测的类别标签列向量中最优的那个
 %         hObject.UserData.lbsTest = lbsTest; %保存包含有预测值的标签向量
 %         
-%         gtdata = handles.UserData.gtdata;
-%         gtdata(gtdata~=0)=lbsTest;    %将标签向量排列成GT图
-% 
+        gtdata = handles.UserData.gtdata;
+        gtdata(gtdata~=0)=Ylbs;    %将标签向量排列成GT图
+        Ygtdata = gtdata; %Ygtdata表示预测的gtdata
 %         hObject.UserData.imgNew = double(gtdata);%保存预测出来的GT图
 %         handles.UserData.imgNew = hObject.UserData.imgNew;
 %         %绘制预测的GT图和真实的GT图
@@ -690,10 +691,8 @@ end
 %         SeparatePlot4_Callback(handles.UserData.gtdata, handles.UserData.imgNew, handles.UserData.cmap, handles.UserData.M);
 
         % 此时的hObject是hmenu4_4_2，Text: 'ClassDemo'，Type: 'uimenu'
-        %此时的 handles.UserData.gtdata: [1476×256 double]
-        [size_1,size_2] = size(handles.UserData.gtdata);
-        Ygtdata = reshape(Ylbs, [size_1, size_2]); %Ygtdata表示预测的gtdata
-        Ygtdata = double(Ygtdata);
+        % 此时的 handles.UserData.gtdata: [1476×256 double]
+
         filename_2 = fullfile(path,"net_best{2,2}_"+"预测图");%拼接路径
         SeparatePlot3_Callback(Ygtdata, handles.UserData.cmap, handles.UserData.M);
         saveas(gcf, filename_2);        % 保存为fig
