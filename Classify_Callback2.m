@@ -701,12 +701,15 @@ end
         SeparatePlot3_Callback(handles.UserData.gtdata,    handles.UserData.cmap, handles.UserData.M);
         saveas(gcf, filename_2);        % 保存为fig
         saveas(gcf, filename_2,'jpg'); %保存为jpg
-        filename_2 = fullfile(path,"net_best{2,2}_"+"GT图与预测图");%拼接路径
-        SeparatePlot4_Callback(handles.UserData.gtdata, Ygtdata, handles.UserData.cmap, handles.UserData.M);      
-        saveas(gcf, filename_2);        % 保存为fig
-        saveas(gcf, filename_2,'jpg'); %保存为jpg        
-        %% 绘制性能曲线>>>错误率
         
+        %# SeparatePlot4_Callback()将会绘制多张双图模式的GT图vs预测图，请手动保存满意的图片
+        SeparatePlot4_Callback(handles.UserData.gtdata, Ygtdata, handles.UserData.cmap, handles.UserData.M);      
+        filename_2 = fullfile(path,"net_best{2,2}_"+"GT图与预测图");%拼接路径
+        % 手动执行以下两句，可保存当前figure
+%         saveas(gcf, filename_2);        % 保存为fig
+%         saveas(gcf, filename_2,'jpg'); %保存为jpg
+        
+        %% 绘制性能曲线>>>错误率        
         figure()
         plotErr(best_perf, best_vperf, best_tperf, racc, 4);
             %racc 误分率，错误率
