@@ -1,8 +1,15 @@
-function plotErr(varargin) % 绘制性能曲线>>>错误率
-err_perf = varargin{1};   
-err_vperf = varargin{2};
-err_tperf = varargin{3};
-racc = varargin{4};
+function plotErr(varargin) % 绘制性能曲线>>>误差率
+err_perf = varargin{1};    % trainRecord.best_perf
+err_vperf = varargin{2};  % trainRecord.best_vperf
+err_tperf = varargin{3};  % trainRecord.best_tperf
+racc = varargin{4};          % racc是1-acc，是误分率
+% 实际上这些值来自于
+% err_perf = cellfun(@(x) x.best_perf, trainRecord);
+% err_vperf = cellfun(@(x) x.best_vperf, trainRecord);
+% err_tperf = cellfun(@(x) x.best_tperf, trainRecord);
+% 这些值都是一些很小的正值，如0.0054，0.0117，0.0137，是在网络训练过程中获得的误差数据，
+% 因此这些变量以err开头更合适
+
 [n, m] = size(err_perf);
 
 if nargin==4 
@@ -13,9 +20,9 @@ if nargin==4
         figure()
         plot((1:n)',[err_perf(:, i), err_vperf(:, i), err_tperf(:, i), racc(:, i)],'LineWidth',1.5);
             %racc 误分率，错误率
-            %err_perf 训练集最佳性能（蓝色曲线）
-            %err_vperf 验证集最佳性能（绿色曲线）
-            %err_tperf 测试集最佳性能（红色曲线）
+            %err_perf 即trainRecord.best_perf，训练集最佳性能（蓝色曲线）
+            %err_vperf 即trainRecord.best_vperf，验证集最佳性能（绿色曲线）
+            %err_tperf 即trainRecord.best_tperf，测试集最佳性能（红色曲线）
             %tTest 为预测的类别标签列向量        
         title('训练性能（err_perf,err_vperf,err_tperf）与泛化性能（racc)','Interpreter','none');
         xlabel('次数');
@@ -40,9 +47,9 @@ elseif nargin==5
         %figure()
         plot((1:n)',racc,'LineWidth',1.5);
             %racc 误分率，错误率
-            %err_perf 训练集最佳性能（蓝色曲线）
-            %err_vperf 验证集最佳性能（绿色曲线）
-            %err_tperf 测试集最佳性能（红色曲线）
+            %err_perf 即trainRecord.best_perf，训练集最佳性能（蓝色曲线）
+            %err_vperf 即trainRecord.best_vperf，验证集最佳性能（绿色曲线）
+            %err_tperf 即trainRecord.best_tperf，测试集最佳性能（红色曲线）
             %tTest 为预测的类别标签列向量        
         title('泛化性能（racc)','Interpreter','none');
         xlabel('次数');
@@ -62,14 +69,14 @@ elseif nargin==5
             legend('racc','Interpreter','none','Location','best');  
         end 
         hold off 
-    %% 仅绘制训练集性能err_perf 和泛化性能 racc   
+    %% 仅绘制训练集性能err_perf（即trainRecord.best_perf） 和泛化性能 racc   
     elseif K==2
         %figure()
         plot((1:n)',[err_perf, racc],'LineWidth',1.5);
             %racc 误分率，错误率
-            %err_perf 训练集最佳性能（蓝色曲线）
-            %err_vperf 验证集最佳性能（绿色曲线）
-            %err_tperf 测试集最佳性能（红色曲线）
+            %err_perf 即trainRecord.best_perf，训练集最佳性能（蓝色曲线）
+            %err_vperf 即trainRecord.best_vperf，验证集最佳性能（绿色曲线）
+            %err_tperf 即trainRecord.best_tperf，测试集最佳性能（红色曲线）
             %tTest 为预测的类别标签列向量        
         title('训练性能（err_perf）与泛化性能（racc)','Interpreter','none');
         xlabel('次数');
@@ -89,14 +96,14 @@ elseif nargin==5
             legend('err_perf','racc','Interpreter','none','Location','best');  
         end 
         hold off 
-    %% 绘制训练性能 err_perf 测试性能 err_tperf 和泛化性能 racc    
+    %% 绘制训练性能 err_perf（即trainRecord.best_perf） 测试性能 err_tperf（即trainRecord.best_tperf） 和泛化性能 racc    
     elseif K==3
         %figure()
         plot((1:n)',[err_perf, err_tperf, racc],'LineWidth',1.5);
             %racc 误分率，错误率
-            %err_perf 训练集最佳性能（蓝色曲线）
-            %err_vperf 验证集最佳性能（绿色曲线）
-            %err_tperf 测试集最佳性能（红色曲线）
+            %err_perf 即trainRecord.best_perf，训练集最佳性能（蓝色曲线）
+            %err_vperf 即trainRecord.best_vperf，验证集最佳性能（绿色曲线）
+            %err_tperf 即trainRecord.best_tperf，测试集最佳性能（红色曲线）
             %tTest 为预测的类别标签列向量        
         title('训练性能（err_perf, err_tperf）与泛化性能（racc)','Interpreter','none');
         xlabel('次数');
@@ -116,14 +123,14 @@ elseif nargin==5
             legend('err_perf','err_tperf','racc','Interpreter','none','Location','best');  
         end 
         hold off
-   %% 绘制训练性能 err_perf 验证性能 err_vperf 测试性能 err_tperf 和泛化性能 racc     
+   %% 绘制训练性能 err_perf（即trainRecord.best_perf） 验证性能 err_vperf（即trainRecord.best_vperf） 测试性能 err_tperf（即trainRecord.best_tperf） 和泛化性能 racc     
     elseif K==4
         %figure()
         plot((1:n)',[err_perf, err_vperf, err_tperf, racc],'LineWidth',1.5);
             %racc 误分率，错误率
-            %err_perf 训练集最佳性能（蓝色曲线）
-            %err_vperf 验证集最佳性能（绿色曲线）
-            %err_tperf 测试集最佳性能（红色曲线）
+            %err_perf 即trainRecord.best_perf，训练集最佳性能（蓝色曲线）
+            %err_vperf 即trainRecord.best_vperf，验证集最佳性能（绿色曲线）
+            %err_tperf 即trainRecord.best_tperf，测试集最佳性能（红色曲线）
             %tTest 为预测的类别标签列向量        
         title('训练性能（err_perf,err_vperf,err_tperf）与泛化性能（racc)','Interpreter','none');
         xlabel('次数');
