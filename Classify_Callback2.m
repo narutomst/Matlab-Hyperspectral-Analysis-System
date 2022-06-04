@@ -494,7 +494,16 @@ end
         info_cmap = array2table(info_cmap, 'VariableNames', VariableNames);
         info_cmap.Properties.RowNames = RowNames;
         writetable(info_cmap,filename,'Sheet',iset+1,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);
-        
+       
+        %% 保存训练过程中的性能数据err_perf, err_vperf, err_tperf, racc到Excel中Sheet
+        T1 = createTableForWrite(err_perf, err_vperf, err_tperf, racc);
+        errTable = [T1.Variables; mean(T1.Variables); std(T1.Variables)];  % T1.Variables 是20×8 double
+        errTable = array2table(errTable, 'VariableNames', T1.Properties.VariableNames);
+        errTable.Properties.RowNames = [T1.Properties.RowNames; {'average'}; {'std'}]; %新增2行的行名称
+        filename = "C:\Matlab练习\Project20191002\工程测试\2022-06-04 19-45-16\Botswana\LDA\GA_TANSIG\Botswana_LDA_GA_TANSIG.xlsx";
+        errTable.Properties.Description = '保存训练过程中的性能数据err_perf, err_vperf, err_tperf, racc';
+        writetable(errTable,filename,'Sheet',iset+2,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true); 
+
         %## 保存view(net)图像，详细参看C:\Matlab练习\Project20191002\save_view(net).m
         jframe = view(net_best{1,1});
         jframe_properties = get(jframe);
@@ -644,24 +653,7 @@ end
         saveas(gcf, filename_2,'jpg'); %保存为jpg        
 % % 测试到此，一切正常       
         
-%     %% 将分类及训练结果保存到hObject.UserData中
-%         hObject.UserData.racc = racc;
-%         hObject.UserData.err_perf = err_perf;
-%         hObject.UserData.err_vperf = err_vperf;
-%         hObject.UserData.err_tperf = err_tperf;
-%         %hObject.UserData.lbsOrigin = lbs;
-%         save('工程测试\20220517\trainRecord.mat','err_perf', 'err_vperf', 'err_tperf', 'racc'); %用于测试
-%         info_trainRecord = [err_perf, err_vperf, err_tperf, racc];
-%         T1 = createTableForWrite(err_perf, err_vperf, err_tperf, racc)
-%         VariableNames = ["R","G","B"]; %VariableNames属性为字符向量元胞数组{'R','G','B'}。
-%         % 如需指定多个变量名称，请在字符串数组["R","G","B"]或字符向量元胞数组{'R','G','B'}中指定这些名称。
-%         % 创建行的名称 RowNames，格式为字符串数组["1","2","3"]或字符向量元胞数组{'1','2','3'}；
-%         RowNames = string(1:size(info_cmap,1)); % ；
-%         info_cmap = array2table(info_cmap, 'VariableNames', VariableNames);
-%         info_cmap.Properties.RowNames = RowNames;
-%         writetable(info_cmap,filename,'Sheet',iset+1,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);
-%         
-%         writetable(T1,filename,'Sheet',iset+1,'Range','A7', 'WriteRowNames',true);  
+
         
         %% 绘制预测的GT图和真实的GT图
         %YTest是net()的返回值，类型为one-hot-vector，每一列代表一个输入样本所属的类
@@ -702,6 +694,8 @@ end
 %         saveas(gcf, filename_2,'jpg'); %保存为jpg
         
         %% 绘制性能曲线
+        %# 保存训练过程中的性能数据err_perf, err_vperf, err_tperf, racc
+        
         %# 绘制错误率曲线
         figure()
         plotErr(err_perf, err_vperf, err_tperf, racc, 4);
@@ -714,7 +708,7 @@ end
         saveas(gcf, filename_2);        % 保存为fig
         saveas(gcf, filename_2,'jpg'); %保存为jpg
         %# 绘制准确率曲线       
-        load("C:\Matlab练习\Project20191002\工程测试\2022-06-04 19-45-16\Botswana\LDA\GA_TANSIG\racc,err_perf,err_vperf,err_tperf.mat")
+        % load("C:\Matlab练习\Project20191002\工程测试\2022-06-04 19-45-16\Botswana\LDA\GA_TANSIG\racc,err_perf,err_vperf,err_tperf.mat")
         figure()
         plotAcc(1-err_perf, 1-err_vperf, 1-err_tperf, acc, 4);
         filename_2 = fullfile(path, [num2str(n), '次网络训练性能曲线_准确率']); %拼接路径
