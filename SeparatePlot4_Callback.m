@@ -1,5 +1,5 @@
 function SeparatePlot4_Callback(img1, img2, cmap, M)
-%用3种方式来实现绘制真实标签图和预测标签图
+%用3种方式来实现绘制真实标签图和预测标签图    Botswana 1476×256
 Location = 'eastoutside';
 if 1
 %% subplot()方式绘制并排的双子图，一行两列或者两行一列
@@ -11,7 +11,7 @@ if 1
         %显示效果1
         num = 2;
         for i =1:num
-            axes_1 = subplot(num,1,i);
+            axes_1 = subplot(1,num,i);
             if ndims(img1) == 3
                 himage_1 = imshow(img1,'Parent',axes_1);
             elseif ndims(img1) == 2
@@ -48,7 +48,7 @@ if 1
         str = [str, '], p_1)'];
         eval(str);                                                  % h = copyobj(cobj,[newParent1,newParent2])
         obj = findobj(p_1, 'Type', 'colorBar');        % clb = findobj(handles,'Type','colorBar');
-        obj(1).Visible='off';
+        obj(2).Visible='off';
         % 显示效果3
         p_2 = figure();
         str = ['copyobj(['];
@@ -58,7 +58,11 @@ if 1
         str = [str, '], p_2)'];
         eval(str);
         himage = findobj(p_2, 'Type', 'image');
-        hscrollpanel = imscrollpanel(p_2, himage);   
+        %hscrollpanel = imscrollpanel(p_2, himage);  
+%         错误使用 iptcheckhandle (line 54)
+% Function IMSCROLLPANEL expected its second input argument, HIMAGE, to be a valid handle to a single
+% graphics object.
+
         % 显示效果4
         p_3 = figure();
         str = ['copyobj(['];
@@ -68,7 +72,10 @@ if 1
         str = [str, '], p_3)'];
         eval(str);
         himage = findobj(p_3, 'Type', 'image');
-        hscrollpanel = imscrollpanel(p_3, himage);               
+        %hscrollpanel = imscrollpanel(p_3, himage); 
+% 错误使用 iptcheckhandle (line 54)
+% Function IMSCROLLPANEL expected its second input argument, HIMAGE, to be a valid handle to a single
+% graphics object.        
     else
         flag = 211;     % 两行一列排列子图，共有4种显示方式：
         %1. 不带滚动条显示，每个子图带一个colorbar；
