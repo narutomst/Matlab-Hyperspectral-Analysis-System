@@ -165,11 +165,7 @@ end
         % net_best{1,1}保存优化前具有最高acc值的网络; net_best{2, 2}保存优化后具有最高acc值的网络
         % net_best{1,2}保存优化前具有最高acc值的网络在优化后的网络
         % net_best{2,1}保存优化后具有最高acc值的网络在优化前的网络
-        best_perf = zeros(setsNum, setsNum);
-        % best_perf(1,1)保存优化前具有最高acc值的网络训练记录；best_perf(1,2)保存优化前具有最高acc值的网络在优化后的网络训练记录
-        % best_perf(2,2)保存优化后具有最高acc值的网络训练记录；best_perf(2,1)保存优化后具有最高acc值的网络在优化前的网络训练记录
-        best_vperf = zeros(setsNum, setsNum);  
-        best_tperf = zeros(setsNum, setsNum);  
+
         tTest_best = cell(1, setsNum);
         % tTest_best也可以初始化为cell(setsNum, setsNum)，考虑到会极大消耗存储空间，
         % 于是将其初始化为cell(1, setsNum)。
@@ -191,10 +187,10 @@ end
 %         % TPR = single(classNumber, iterationPerLearningRate, iterationonSize);
 %         TPR = zeros(9, iterationPerLearningRate, iterationonSize, 'single');        
                 
-        racc = zeros(n, setsNum);
-        acc_perf = zeros(n, setsNum);
-        acc_vperf = zeros(n, setsNum);
-        acc_tperf = zeros(n, setsNum);        
+        racc = zeros(n, setsNum);        % 即混淆矩阵返回值中的第一个值c，误分率，等于1-acc
+        err_perf = zeros(n, setsNum);   % （即trainRecord.best_perf）
+        err_vperf = zeros(n, setsNum); %（即trainRecord.best_vperf）
+        err_tperf = zeros(n, setsNum); %（即trainRecord.best_tperf）       
 %% 利用黄金分割搜索法来寻找各个隐藏层神经元的最佳个数
 % 这里仅针对单个隐层进行寻优，以说明寻找最佳隐含层节点数的过程，但是对于多个隐含层的情况，
 % 这种方法并不见得就有好的效果，例如单隐层huston.mat数据集上0.2的训练集，1~100的寻优结果为85
@@ -375,22 +371,22 @@ end
             [netTrained, trainRecord, predictedVector, misclassRate, cmt] = classDemo(XTrain, TTrain, XTest, TTest, type, var);%前3个为必需参数，后面为可选参数
             %这个函数能给出的有价值的计算结果是： [net tr tTest c cm], 
             % 这里写为netTrained, trainRecord, predictedVector, misclassRate, cmt
-            % net，训练好的网络
-            % tr，训练记录结构体，包含了best_perf 训练集最佳性能（蓝色曲线），
-            % best_vperf 验证集最佳性能（绿色曲线），best_tperf 测试集最佳性能（红色曲线）
-            %tTest 为预测的类别标签列向量
-            % c, 误分率，错误率；1-c，即准确率OA
-            % cm, 混淆矩阵
+            % netTrained，即net，训练好的网络
+            % trainRecord，即tr，训练记录结构体，包含了tr.best_perf 训练集最佳性能（蓝色曲线），
+            % tr.best_vperf 验证集最佳性能（绿色曲线），tr.best_tperf 测试集最佳性能（红色曲线）
+            % predictedVector，即tTest，为预测的类别标签列向量
+            % misclassRate，即混淆矩阵返回值的第一个值c, 误分率，其值等于1-acc；而1-c，即准确率OA
+            % cmt，即cm, 混淆矩阵
             % 上述返回值都是cell array，对于函数f_TANSIG(), f_RBF(), f_BP()，上述返回值都是1×1 cell array；
             % 对于函数f_GA_TANSIG(), f_GA_RBF(), f_GA_BP()，f_PSO_TANSIG(), f_PSO_RBF(), f_PSO_BP()，
             % 上述返回值都是2×1 cell array；
             
             % 每计算一次，保存一次准确率及混淆矩阵
             acc(k, :) = cellfun(@(x) 1-x, misclassRate);
-            racc(k, :) = 1-acc(k, :);                                % racc 误分率，错误率
-            acc_perf(k, :) = cellfun(@(x) x.best_perf, trainRecord);     %best_perf 训练集最佳性能（蓝色曲线）
-            acc_vperf(k, :) = cellfun(@(x) x.best_vperf, trainRecord);  %best_vperf 验证集最佳性能（绿色曲线）
-            acc_tperf(k, :) = cellfun(@(x) x.best_tperf, trainRecord);   %best_tperf 测试集最佳性能（红色曲线）  
+            racc(k, :) = 1-acc(k, :);                                % racc 误分率，即混淆矩阵返回值中的第一个值c, 其值为1-acc
+            err_perf(k, :) = cellfun(@(x) x.best_perf, trainRecord);     %trainRecord.best_perf 训练集最佳性能（蓝色曲线）
+            err_vperf(k, :) = cellfun(@(x) x.best_vperf, trainRecord);  %trainRecord.best_vperf 验证集最佳性能（绿色曲线）
+            err_tperf(k, :) = cellfun(@(x) x.best_tperf, trainRecord);   %trainRecord.best_tperf 测试集最佳性能（红色曲线）  
             
             for iset = 1:setsNum
                 cmNormalizedValues1(:, :, k, iset) = cmt{iset};
@@ -406,19 +402,15 @@ end
                     net_best(iset, :)=netTrained;
                     tTest_best(1, iset)=predictedVector(iset);
                     % tTest_best{1,1}保存优化前具有最高acc值的网络的预测向量结果；
-                    % tTest_best{1,2}保存优化后具有最高acc值的网络的预测向量结果。
-                    best_perf(iset, :)  = cellfun(@(x) x.best_perf, trainRecord);     % best_perf 训练集最佳性能（蓝色曲线）
-                    % best_perf(1,1)保存优化前具有最高acc值的网络训练记录；best_perf(1,2)保存优化前具有最高acc值的网络在优化后的网络训练记录
-                    % best_perf(2,2)保存优化后具有最高acc值的网络训练记录；best_perf(2,1)保存优化后具有最高acc值的网络在优化前的网络训练记录
-                    best_vperf(iset, :) = cellfun(@(x) x.best_vperf, trainRecord);  % best_vperf 验证集最佳性能（绿色曲线）
-                    best_tperf(iset, :) = cellfun(@(x) x.best_tperf, trainRecord);    % best_tperf 测试集最佳性能（红色曲线）                    
+                    % tTest_best{1,2}保存优化后具有最高acc值的网络的预测向量结果。                  
                 end
             end
  
         end
         info_1 = hmenu4_1.UserData;
         info_1.cElapsedTime = toc(timerVal_1)-time1; % 保存分类消耗时间
-    %% 计算分类结果（根据混淆矩阵cmNormalizedValues1，计算OA, AA, Kappa）
+    
+        %% 计算分类结果（根据混淆矩阵cmNormalizedValues1，计算OA, AA, Kappa）
         [size1, size2, size3, size4] = size(cmNormalizedValues1);  % 16×16×20×2 double
         cmt = cmNormalizedValues1;
 %         load('工程测试\20220517\cmNormalizedValues1.mat','cmt'); %用于测试
@@ -532,7 +524,7 @@ end
         
         %% 绘制net_best{2,2}的混淆矩阵图及ROC图
         % load("C:\Matlab练习\Project20191002\工程测试\2022-06-02 16-46-57\Botswana\PCA\GA_TANSIG\net_best.mat");
-        load("C:\Matlab练习\Project20191002\工程测试\2022-06-04 02-35-46\Botswana\PCA\PSO_RBF\net_best.mat");
+        % load("C:\Matlab练习\Project20191002\工程测试\2022-06-04 02-35-46\Botswana\PCA\PSO_RBF\net_best.mat");
         netBest = net_best{2,2};
         YTest = netBest(mappedA'); 
         % mappedA是每一行为一个样本，而输入到train()，net()，sim()函数的XTest XTrain必须保证每一列为一个样本，
@@ -658,9 +650,9 @@ end
 %         hObject.UserData.best_vperf = best_vperf;
 %         hObject.UserData.best_tperf = best_tperf;
 %         %hObject.UserData.lbsOrigin = lbs;
-%         save('工程测试\20220517\trainRecord.mat','acc_perf', 'acc_vperf', 'acc_tperf', 'acc'); %用于测试
-%         info_trainRecord = [acc_perf, acc_vperf, acc_tperf, acc];
-%         T1 = createTableForWrite(acc_perf, acc_vperf, acc_tperf, acc)
+%         save('工程测试\20220517\trainRecord.mat','err_perf', 'err_vperf', 'err_tperf', 'racc'); %用于测试
+%         info_trainRecord = [err_perf, err_vperf, err_tperf, racc];
+%         T1 = createTableForWrite(err_perf, err_vperf, err_tperf, racc)
 %         VariableNames = ["R","G","B"]; %VariableNames属性为字符向量元胞数组{'R','G','B'}。
 %         % 如需指定多个变量名称，请在字符串数组["R","G","B"]或字符向量元胞数组{'R','G','B'}中指定这些名称。
 %         % 创建行的名称 RowNames，格式为字符串数组["1","2","3"]或字符向量元胞数组{'1','2','3'}；
@@ -709,7 +701,8 @@ end
 %         saveas(gcf, filename_2);        % 保存为fig
 %         saveas(gcf, filename_2,'jpg'); %保存为jpg
         
-        %% 绘制性能曲线>>>错误率        
+        %% 绘制性能曲线
+        %# 绘制错误率曲线
         figure()
         plotErr(best_perf, best_vperf, best_tperf, racc, 4);
             %racc 误分率，错误率
@@ -717,15 +710,21 @@ end
             %best_vperf 验证集最佳性能（绿色曲线）
             %best_tperf 测试集最佳性能（红色曲线）
             %tTest 为预测的类别标签列向量        
-
-        
-        %% 绘制性能曲线>>>>准确率       
+        filename_2 = fullfile(path, [num2str(n), '次网络训练性能曲线_误差率']); %拼接路径
+        saveas(gcf, filename_2);        % 保存为fig
+        saveas(gcf, filename_2,'jpg'); %保存为jpg
+        %# 绘制准确率曲线       
         figure()
-        plotErr1(acc_perf, acc_vperf, acc_tperf, acc, 4);
-
+        plotErr1(1-err_perf, 1-err_vperf, 1-err_tperf, acc, 4);
+        filename_2 = fullfile(path, [num2str(n), '次网络训练性能曲线_准确率']); %拼接路径
+        saveas(gcf, filename_2);        % 保存为fig
+        saveas(gcf, filename_2,'jpg'); %保存为jpg
         %% 显示分类用时
         time2 = toc(timerVal_1);
+        % filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
+        % filename = fullfile(path, filename);
         disp({[hmenu4_1.UserData.matPath, ' 分类完毕! 历时',num2str(time2-time1),'秒.']});
+        disp(['分类结果详细数据保存于',filename]);
         
         %delete(MyPar) %计算完成后关闭并行处理池
 
