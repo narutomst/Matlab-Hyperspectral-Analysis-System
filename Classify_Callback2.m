@@ -646,9 +646,9 @@ end
         
 %     %% 将分类及训练结果保存到hObject.UserData中
 %         hObject.UserData.racc = racc;
-%         hObject.UserData.best_perf = best_perf;
-%         hObject.UserData.best_vperf = best_vperf;
-%         hObject.UserData.best_tperf = best_tperf;
+%         hObject.UserData.err_perf = err_perf;
+%         hObject.UserData.err_vperf = err_vperf;
+%         hObject.UserData.err_tperf = err_tperf;
 %         %hObject.UserData.lbsOrigin = lbs;
 %         save('工程测试\20220517\trainRecord.mat','err_perf', 'err_vperf', 'err_tperf', 'racc'); %用于测试
 %         info_trainRecord = [err_perf, err_vperf, err_tperf, racc];
@@ -704,18 +704,19 @@ end
         %% 绘制性能曲线
         %# 绘制错误率曲线
         figure()
-        plotErr(best_perf, best_vperf, best_tperf, racc, 4);
+        plotErr(err_perf, err_vperf, err_tperf, racc, 4);
             %racc 误分率，错误率
-            %best_perf 训练集最佳性能（蓝色曲线）
-            %best_vperf 验证集最佳性能（绿色曲线）
-            %best_tperf 测试集最佳性能（红色曲线）
+            %err_perf 训练集最佳性能（蓝色曲线）
+            %err_vperf 验证集最佳性能（绿色曲线）
+            %err_tperf 测试集最佳性能（红色曲线）
             %tTest 为预测的类别标签列向量        
         filename_2 = fullfile(path, [num2str(n), '次网络训练性能曲线_误差率']); %拼接路径
         saveas(gcf, filename_2);        % 保存为fig
         saveas(gcf, filename_2,'jpg'); %保存为jpg
         %# 绘制准确率曲线       
+        load("C:\Matlab练习\Project20191002\工程测试\2022-06-04 19-45-16\Botswana\LDA\GA_TANSIG\racc,err_perf,err_vperf,err_tperf.mat")
         figure()
-        plotErr1(1-err_perf, 1-err_vperf, 1-err_tperf, acc, 4);
+        plotAcc(1-err_perf, 1-err_vperf, 1-err_tperf, acc, 4);
         filename_2 = fullfile(path, [num2str(n), '次网络训练性能曲线_准确率']); %拼接路径
         saveas(gcf, filename_2);        % 保存为fig
         saveas(gcf, filename_2,'jpg'); %保存为jpg
