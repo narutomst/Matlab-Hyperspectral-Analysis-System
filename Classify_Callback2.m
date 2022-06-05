@@ -57,17 +57,14 @@ try
 catch    
     paraTable_c = importfile2(workbookFile, "Sheet2", [2,2]);
 end
-% paraTable_c =
-% 
-%   1×25 table
-% 
+% paraTable_c = 
+%   1×25 table 
 %             dimReduce rate app  executionTimes  trainFcn  hiddenNum  transferFcn showWindow plotperform plottrainstate ploterrhist plotconfusion plotroc hiddenLayerNum hiddenNum1 transferFcn1 hiddenNum2 transferFcn2 hiddenNum3 transferFcn3 hiddenNum4 transferFcn4 hiddenNumOptimization startNum stopNum
 %             _________     ____ ___    ______________    __________  _________      ___________   __________      ___________    ______________ ___________ _____________   _______  ______________       __________      ____________    __________      ____________    __________    ____________    __________      ____________    _____________________        ________    _______
 % 
 % TANSIG      true       0.2   3             20            "trainscg"       10            "tansig"         false               false             false             false           false           false           2                      20              "tansig"            20               "tansig"          20             "tansig"          20                "tansig"                   true                       1           100  
 % 
 % paraTable_c.Properties
-% 
 % ans = 
 %   TableProperties - 属性:
 % 
@@ -85,8 +82,6 @@ end
 % paraTable_c.Properties.RowNames
 % ans =
 %   1×1 cell 数组
-
-
 
 % 得到最终分类准确率acc
 % hyperDemo_1(hmenu4_1.UserData.x3);
@@ -222,9 +217,10 @@ end
                     avg_acc = cell(1,paraTable_c.hiddenLayerNum);%记录分割点对应的准确率
 
                     for LayerNum=1 : paraTable_c.hiddenLayerNum  % 每个隐藏层一个大循环
-                        N_1 = 20; %每个黄金分割点上的计算次数。
+                        N_1 = n; %每个黄金分割点上的计算次数就按照ParametersForDimReduceClassify.xlsx中设定的迭代次数executionTimes来吧。
+                        avg_acc{LayerNum} = [];    %  用于迭代保存多个列数据，每一列代表在一个黄金分割点上20次重复计算的分类结果
+                                                                %（即对20次分类结果的[各类别的准确率，OA,AA,kappa]取平均所得到的一列数据）
                         flag=1;
-
                         while(flag)
                             x_1 = a + 0.382*(b-a); %x_1和x_2总是位于区间中间
                             x_2 = a + 0.618*(b-a); %所以为了不漏掉可能的点，x_1的整数值应该尽量向左端点约值，x_2的整数值应该尽量向右端点约值
@@ -251,9 +247,12 @@ end
                                     acc = {[],[]}; %记录两个黄金分割点各20次的准确率
                                     acc_average = [0,0];%记录两个黄金分割点的平均准确率
                                     for i = 1 : 2
+                                        % 这里想要获得的结果包括，两个黄金分割点20次计算各得到一列分类结果的数据
+                                        % 保存到avg_acc中
+                                        % 这里能给出的输入参数有mappedA, lbs, rate, type, var
                                         for j = 1 : N_1
-                                            c = fcn1(mappedA, lbs, rate, x(i), 'trainscg');
-                                            acc{i} = [acc{i}, 1-c];
+                                           c = fcn1(mappedA, lbs, rate, x(i), 'trainscg');
+                                           acc{i} = [acc{i}, 1-c];
                                         end
                                         acc_average(i) = mean(acc{i});
                                     end
@@ -349,16 +348,37 @@ end
             end
         end
        
-        t = table2cell(paraTable_c);
-        ss = table2struct(paraTable_c);
-        k = numel(t); 
-        para = cell(1,2*k);
+        t = table2cell(paraTable_c);   
+        % t =
+        %   1×25 cell 数组
+        %     {[1]}    {[0.2000]}    {[3]}    {[20]}    {["trainscg"]}    {[20]}    {["tansig"]}    {[0]}    {[0]}
+        %     {[0]}    {[0]}    {[0]}    {[0]}    {[2]}    {[20]}    {["tansig"]}    {[20]}    {["tansig"]}    {[20]}
+        %     {["tansig"]}    {[20]}    {["tansig"]}    {[1]}    {[1]}    {[100]}
+        k = numel(t);                        % 25
+        para = cell(1,2*k);                 % 1×50 cell 数组
         for i = 1:k
-            para{2*i} = t{i};
             para{2*i-1} = paraTable_c.Properties.VariableNames{i};
+            para{2*i} = t{i};            
         end
-        var = cellfun(@string, para(9:end)); %对cell array中的所有cell应用string
-
+        % para =
+        %   1×50 cell 数组
+        %   列 1 至 8
+        %     {'dimReduce'}    {[1]}    {'rate'}    {[0.2000]}    {'app'}    {[3]}    {'executionTimes'}    {[20]}    
+        %   列 9 至 50
+        %     {'trainFcn'}  {["trainscg"]}    {'hiddenNum'}    {[20]}    {'transferFcn'}    {["tansig"]}    {'showWindow'}    {[0]}
+        %     {'plotperform'}    {[0]}    {'plottrainstate'}    {[0]}    {'ploterrhist'}    {[0]}    {'plotconfusion'}    {[0]}
+        %     {'plotroc'}    {[0]}    {'hiddenLayerNum'}    {[2]}    {'hiddenNum1'}    {[20]}    {'transferFcn1'}    {["tansig"]}
+        %     {'hiddenNum2'}    {[20]}    {'transferFcn2'}    {["tansig"]}    {'hiddenNum3'}    {[20]}    {'transferFcn3'}
+        %     {["tansig"]}    {'hiddenNum4'}    {[20]}    {'transferFcn4'}    {["tansig"]}    {'hiddenNumOptimi…'}    {[1]}
+        %     {'startNum'}    {[1]}    {'stopNum'}    {[100]} 
+        var = cellfun(@string, para(9:end)); %对cell array中的每一个cell应用string
+        % var = 
+        %   1×42 string 数组
+        %     "trainFcn"    "trainscg"    "hiddenNum"    "20"    "transferFcn"    "tansig"    "showWindow"    "false"
+        %     "plotperform"    "false"    "plottrainstate"    "false"    "ploterrhist"    "false"    "plotconfusion"    "false"
+        %     "plotroc"    "false"    "hiddenLayerNum"    "2"    "hiddenNum1"    "20"    "transferFcn1"    "tansig"    "hiddenNum2"
+        %     "20"    "transferFcn2"    "tansig"    "hiddenNum3"    "20"    "transferFcn3"    "tansig"    "hiddenNum4"    "20"
+        %     "transferFcn4"    "tansig"    "hiddenNumOptimiza…"    "true"    "startNum"    "1"    "stopNum"    "100"
         for k = 1 : n
             [mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
             XTrain = table2array(mA1(:, 1:end-1))';  %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
@@ -877,6 +897,8 @@ end
                                             for i = 1 : 2
                                                 for j = 1 : N_1
                                                     c = fcn1(mappedA, lbs, rate, x(i), 'trainscg');
+                                                    % 这里为什么选择用fcn1()而不是别的具体的分类函数？比如f_TANSIG，f_GA_TANSIG,
+                                                    % f_PSO_TANSIG, f_RBF, f_GA_RBF, f_PSO_RBF
                                                     acc{i} = [acc{i}, 1-c];
                                                 end
                                                 acc_average(i) = mean(acc{i});
@@ -1350,9 +1372,9 @@ end
 function [c, net] = fcn1(mappedA, lbs, rate, hiddenSizes, trainFcn)
     % 划分数据
     [mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
-    XTrain = table2array(mA1(:, 1:end-1))';
+    XTrain = table2array(mA1(:, 1:end-1))';   %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
     TTrain = ind2vec(double(mA1.Class)');
-    %%警告使用稀疏矩阵形式的输入数据训练网络将会导致内存占用太大！所以还是换成下面的向量形式的TTrain?
+    %%有时候会出现警告使用稀疏矩阵形式的输入数据训练网络将会导致内存占用太大！所以还是换成下面的向量形式的TTrain?
     % 这样的话最后使用网络net(XTest)获得的outputs也是一个向量形式，这个向量不符合confusion(targets,outputs)
     % 对多分类输入数据的形式要求，所以不能直接输入到confusion(targets,outputs)。
     % confusion()要求多分类的targets必须是S×Q的矩阵形式，且每一列必须是one-hot-vector，outputs也必须是S×Q的矩阵形式
@@ -1360,8 +1382,14 @@ function [c, net] = fcn1(mappedA, lbs, rate, hiddenSizes, trainFcn)
     % 而且，当对outputs向量进行转换成系数矩阵时会报错。
     % 所以不得不继续使用稀疏矩阵形式的TTrain来作为训练网络的输入数据。
     % 至少在未开并行计算的情况下是没有出现过警告的。
-    XTest = table2array(mA2(:, 1:end-1))';
-    TTest = ind2vec(double(mA2.Class)');                                
+    XTest = table2array(mA2(:, 1:end-1))';     %XTest每一列为一个样本
+    TTest = ind2vec(double(mA2.Class)');     %TTest每一列为一个类别标签                            
+    disp(['第',num2str(k),'次计算']);
+    [netTrained, trainRecord, predictedVector, misclassRate, cmt] = classDemo(XTrain, TTrain, XTest, TTest, type, var);%前3个为必需参数，后面为可选参数
+    %这个函数能给出的有价值的计算结果是： [net tr tTest c cm],     
+    
+    
+    
     %构建网络
     net = patternnet(hiddenSizes, trainFcn); %patternnet(x(i),'trainscg')
     % 设置参数 (以下是trainscg的相关参数，可搜索trainscg查看)
