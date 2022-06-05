@@ -333,7 +333,8 @@ end
                 hiddenNumInfor.startNum = paraTable_c.startNum;
                 hiddenNumInfor.stopNum = paraTable_c.startNum;
                 % 将寻找到的最优网络net与gold_point, avg_acc,寻优信息hiddenNumInfo一起保存为mat数据。
-                filename = fullfile('C:\Matlab练习\Project20191002\工程测试\', ['net_optim ', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS'), '.mat']); %将时间信息加入到文件名中
+                path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
+                filename = fullfile(path,'net_optim.mat'); %将时间信息加入到文件名中
                 save(filename, 'hiddenNumInfor', 'gold_point', 'avg_acc');
 
                 % 将找到的各个隐层节点数的最优值赋值给paraTable_c中的相应变量(这里只考虑单隐层的情况)
@@ -461,6 +462,17 @@ end
         try
             filename = fullfile(path,filename);%拼接路径
         catch
+        end
+
+        %% 保存神经网络隐含层节点数的优化结果
+        % 将寻找到的最优网络net与gold_point, avg_acc,寻优信息hiddenNumInfo一起保存为mat数据。
+        % 之所以放到这里是因为有两个原因
+        % 1. 如果直接在前面【神经网络隐含层节点数寻优】代码块中生成带时间的文件夹名的话，时间会过于早于Excel的写入时间。
+        % 2. 神经网络隐含层节点数寻优的结果与数据集、降维算法、分类算法都有关系，这里的path包含了上述的几个关键信息，
+        %     所以直接用这里的path作为[保存神经网络隐含层节点数的优化结果]是更合理的。
+        if paraTable_c.hiddenNumOptimization
+            filename = fullfile(path,'net_optim.mat'); %将时间信息加入到文件名中
+            save(filename, 'hiddenNumInfor', 'gold_point', 'avg_acc');
         end
         
         for iset = 1:size4
@@ -1351,7 +1363,7 @@ function [c, net] = fcn1(mappedA, lbs, rate, hiddenSizes, trainFcn)
     XTest = table2array(mA2(:, 1:end-1))';
     TTest = ind2vec(double(mA2.Class)');                                
     %构建网络
-    net = feedforwardnet(hiddenSizes, trainFcn); %feedforwardnet(x(i),'trainscg')
+    net = patternnet(hiddenSizes, trainFcn); %patternnet(x(i),'trainscg')
     % 设置参数 (以下是trainscg的相关参数，可搜索trainscg查看)
     net.trainParam.epochs = 1000;
     net.trainParam.show = 10;
