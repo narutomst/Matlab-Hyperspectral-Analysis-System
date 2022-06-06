@@ -214,7 +214,7 @@ end
                     a = paraTable_c.startNum; % 区间下界；向零取整，以免遗漏任何一个可能的节点数
                     b = paraTable_c.stopNum; %区间上界；         
                     gold_point = cell(1,paraTable_c.hiddenLayerNum);%记录黄金分割点
-                    avg_acc = cell(1,paraTable_c.hiddenLayerNum);   %记录在黄金分割点上重复计算20次获得的各类别准确率，OA，AA，kappa
+                    acc_avg = cell(1,paraTable_c.hiddenLayerNum);   %记录在黄金分割点上重复计算20次获得的各类别准确率，OA，AA，kappa
                     OA_detail = cell(1,paraTable_c.hiddenLayerNum); %记录在黄金分割点上重复计算20次获得的20个OA值
                     %# 生成首次隐含层节点优化时的var，作为classDemo()函数的输入参数
                     t = table2cell(paraTable_c);   
@@ -250,7 +250,7 @@ end
                     %     "transferFcn4"    "tansig"    "hiddenNumOptimiza…"    "true"    "startNum"    "1"    "stopNum"    "100"                    
                     for LayerNum=1 : paraTable_c.hiddenLayerNum  % 每个隐藏层一个大循环
                         N_1 = n; %每个黄金分割点上的计算次数就按照ParametersForDimReduceClassify.xlsx中设定的迭代次数executionTimes来吧。
-                        avg_acc{LayerNum} = [];    %  用于迭代保存多个列数据，每一列代表在一个黄金分割点上20次重复计算得到的分类结果
+                        acc_avg{LayerNum} = [];    %  用于迭代保存多个列数据，每一列代表在一个黄金分割点上20次重复计算得到的分类结果
                                                                 %（即对20次分类结果的[各类别的准确率，OA,AA,kappa]取平均所得到的一列数据）
                         OA_detail{LayerNum} = []; %  用于迭代保存多个列数据，每一列代表在一个黄金分割点上20次重复计算得到的20个OA值
                         % 找到var中需要更新的参数的序号，即更新var中的第LayerNum个隐含层的节点数为x(i), hiddenNumLayerNum
@@ -285,7 +285,7 @@ end
                                     acc_average = [0,0];%记录两个黄金分割点的平均准确率
                                     for i = 1 : 2
                                         % 这里想要获得的结果包括，两个黄金分割点20次计算各得到一列分类结果的数据
-                                        % 保存到avg_acc中
+                                        % 保存到acc_avg中
                                         % 这里能给出的输入参数有mappedA, lbs, rate, type, var
                                         % 可以在fcn1内部进行n次重复计算，返回值给出一列分类结果的数据及20次acc
                                         %# 更新var中的第LayerNum个隐含层的节点数为x(i), hiddenNumLayerNum
@@ -294,7 +294,7 @@ end
                                         % 输入参数 (n, N, setsNum, mappedA, lbs, rate, type, var)
                                         % 输出2个列向量，20次分类结果的平均值avgResult_20iter, 和20次分类结果的OA值，OA_20iter
                                         [avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate, type, var);                                     
-                                        avg_acc{LayerNum} = [avg_acc{LayerNum}, avgResult_20iter];
+                                        acc_avg{LayerNum} = [acc_avg{LayerNum}, avgResult_20iter];
                                         OA_detail{LayerNum} = [OA_detail{LayerNum}, OA_20iter]; 
                                         acc{i} = OA_20iter;    
                                         acc_average(i) = mean(acc{i});
@@ -306,7 +306,7 @@ end
                                         a = floor(x_1);
                                     end
                                     gold_point{LayerNum} = [gold_point{LayerNum}, x]
-                                    avg_acc{LayerNum} = [avg_acc{LayerNum}, acc_average]
+                                    acc_avg{LayerNum} = [acc_avg{LayerNum}, acc_average];
 
                                 case 1 % 若x中第二个数与gold_point中的点重复，则只计算第一个，保存第一个
                                     acc = []; %记录x中第一个黄金分割点各20次的准确率
@@ -316,19 +316,19 @@ end
                                     % 输入参数 (n, N, setsNum, mappedA, lbs, rate, type, var)
                                     % 输出2个列向量，20次分类结果的平均值avgResult_20iter, 和20次分类结果的OA值，OA_20iter
                                     [avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate, type, var);                                     
-                                    avg_acc{LayerNum} = [avg_acc{LayerNum}, avgResult_20iter];
+                                    acc_avg{LayerNum} = [acc_avg{LayerNum}, avgResult_20iter];
                                     OA_detail{LayerNum} = [OA_detail{LayerNum}, OA_20iter]; 
                                     acc = OA_20iter;    
                                     acc_average = mean(acc);
                                         
-                                    if acc_average >= avg_acc{LayerNum}(nonzeros(Locb))
+                                    if acc_average >= acc_avg{LayerNum}(nonzeros(Locb))
                                         b = ceil(x_2);
                                     else
                                         a = floor(x_1);
                                     end
 
                                     gold_point{LayerNum} = [gold_point{LayerNum}, x(1)]
-                                    avg_acc{LayerNum} = [avg_acc{LayerNum}, acc_average]
+                                    acc_avg{LayerNum} = [acc_avg{LayerNum}, acc_average];
 
                                 case 2 % 若x中第一个数与gold_point中的点重复，则只计算第二个，保存第二个
                                     acc = []; %记录x中第二个黄金分割点各20次的准确率
@@ -338,19 +338,19 @@ end
                                     % 输入参数 (n, N, setsNum, mappedA, lbs, rate, type, var)
                                     % 输出2个列向量，20次分类结果的平均值avgResult_20iter, 和20次分类结果的OA值，OA_20iter
                                     [avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate, type, var);                                     
-                                    avg_acc{LayerNum} = [avg_acc{LayerNum}, avgResult_20iter];
+                                    acc_avg{LayerNum} = [acc_avg{LayerNum}, avgResult_20iter];
                                     OA_detail{LayerNum} = [OA_detail{LayerNum}, OA_20iter]; 
                                     acc = OA_20iter;    
                                     acc_average = mean(acc);                                    
 
-                                    if avg_acc{LayerNum}(nonzeros(Locb)) >= acc_average%第2个点的准确率与avg_acc(Locb)做比较
+                                    if acc_avg{LayerNum}(nonzeros(Locb)) >= acc_average%第2个点的准确率与acc_avg(Locb)做比较
                                         b = ceil(x_2);
                                     else
                                         a = floor(x_1);
                                     end
 
                                     gold_point{LayerNum} = [gold_point{LayerNum}, x(2)]
-                                    avg_acc{LayerNum} = [avg_acc{LayerNum}, acc_average]		 	 		
+                                    acc_avg{LayerNum} = [acc_avg{LayerNum}, acc_average];		 	 		
                                 % 若x中两个数字都和gold_point重复，则结束switch
                             end
 
@@ -362,6 +362,32 @@ end
 
                         end
                         Nh = [Nh, x(1)];
+                        % 在黄金分割点上的计算结束
+                        %# 将startNum和stopNum作为第LayerNum隐含层节点数的计算结果也添加进acc_avg和OA_detail中来
+                        % 这样第LayerNum隐含层节点数（即网络宽度）与分类准确率的关系将更加完整
+                        if paraTable_c.startNum==1 %若startNum==1，则令startNum=2，作为第LayerNum隐含层节点数进行计算
+                            startNum = 2;
+                        else
+                            startNum = paraTable_c.startNum;
+                        end
+                        stopNum = paraTable_c.stopNum;
+                        x = [startNum, stopNum];
+                        acc = {[],[]}; %记录两个黄金分割点各20次的准确率
+                        acc_average = [0,0];%记录两个黄金分割点的平均准确率
+                        for i = 1 : 2
+                            %# 更新var中的第LayerNum个隐含层的节点数为x(i), hiddenNumLayerNum
+                            %TF = contains(str,pattern)
+                            var(str_idx+1) = string(x(i));
+                            % 输入参数 (n, N, setsNum, mappedA, lbs, rate, type, var)
+                            % 输出2个列向量，20次分类结果的平均值avgResult_20iter, 和20次分类结果的OA值，OA_20iter
+                            [avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate, type, var);                                     
+                            acc_avg{LayerNum} = [acc_avg{LayerNum}, avgResult_20iter];
+                            OA_detail{LayerNum} = [OA_detail{LayerNum}, OA_20iter]; 
+                        end
+                        gold_point{LayerNum} = [gold_point{LayerNum}, x]
+                        acc_avg{LayerNum} = [acc_avg{LayerNum}, acc_average];
+                        %# 保存第LayerNum隐含层节点数取黄金分割点时的分类结果
+                        
                     end
                 % 黄金分割法寻优结束。
                 % 保存结果       
@@ -382,10 +408,10 @@ end
 
                 hiddenNumInfor.startNum = paraTable_c.startNum;
                 hiddenNumInfor.stopNum = paraTable_c.startNum;
-                % 将寻找到的最优网络net与gold_point, avg_acc, OA_detail寻优信息hiddenNumInfo一起保存为mat数据。
+                % 将寻找到的最优网络net与gold_point, acc_avg, OA_detail寻优信息hiddenNumInfo一起保存为mat数据。
                 path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
                 filename = fullfile(path,'net_optim.mat'); %将时间信息加入到文件名中
-                save(filename, 'hiddenNumInfor', 'gold_point', 'avg_acc');
+                save(filename, 'hiddenNumInfor', 'gold_point', 'acc_avg');
 
                 % 将找到的各个隐层节点数的最优值赋值给paraTable_c中的相应变量(这里只考虑单隐层的情况)
                 if paraTable_c.hiddenLayerNum==1
@@ -536,14 +562,14 @@ end
         end
 
         %% 保存神经网络隐含层节点数的优化结果
-        % 将寻找到的最优网络net与gold_point, avg_acc,寻优信息hiddenNumInfo一起保存为mat数据。
+        % 将寻找到的最优网络net与gold_point, acc_avg,寻优信息hiddenNumInfo一起保存为mat数据。
         % 之所以放到这里是因为有两个原因
         % 1. 如果直接在前面【神经网络隐含层节点数寻优】代码块中生成带时间的文件夹名的话，时间会过于早于Excel的写入时间。
         % 2. 神经网络隐含层节点数寻优的结果与数据集、降维算法、分类算法都有关系，这里的path包含了上述的几个关键信息，
         %     所以直接用这里的path作为[保存神经网络隐含层节点数的优化结果]是更合理的。
         if paraTable_c.hiddenNumOptimization
             filename = fullfile(path,'net_optim.mat'); %将时间信息加入到文件名中
-            save(filename, 'hiddenNumInfor', 'gold_point', 'avg_acc');
+            save(filename, 'hiddenNumInfor', 'gold_point', 'acc_avg');
         end
         
         for iset = 1:size4
@@ -914,7 +940,7 @@ end
                             a = paraTable_c.startNum; % 区间下界；向零取整，以免遗漏任何一个可能的节点数
                             b = paraTable_c.stopNum; %区间上界；         
                             gold_point = cell(1,paraTable_c.hiddenLayerNum);%记录黄金分割点
-                            avg_acc = cell(1,paraTable_c.hiddenLayerNum);%记录分割点对应的准确率
+                            acc_avg = cell(1,paraTable_c.hiddenLayerNum);%记录分割点对应的准确率
 
                             for LayerNum=1 : paraTable_c.hiddenLayerNum  % 每个隐藏层一个大循环
                                 N_1 = 20; %每个黄金分割点上的计算次数。
@@ -961,7 +987,7 @@ end
                                                 a = floor(x_1);
                                             end
                                             gold_point{LayerNum} = [gold_point{LayerNum}, x]
-                                            avg_acc{LayerNum} = [avg_acc{LayerNum}, acc_average]
+                                            acc_avg{LayerNum} = [acc_avg{LayerNum}, acc_average]
 
                                         case 1 % 若x中第二个数与gold_point中的点重复，则只计算第一个，保存第一个
                                             acc = []; %记录x中第一个黄金分割点各20次的准确率
@@ -972,14 +998,14 @@ end
                                             end
                                             acc_average = mean(acc);
 
-                                            if acc_average >= avg_acc{LayerNum}(nonzeros(Locb))
+                                            if acc_average >= acc_avg{LayerNum}(nonzeros(Locb))
                                                 b = ceil(x_2);
                                             else
                                                 a = floor(x_1);
                                             end
 
                                             gold_point{LayerNum} = [gold_point{LayerNum}, x(1)]
-                                            avg_acc{LayerNum} = [avg_acc{LayerNum}, acc_average]
+                                            acc_avg{LayerNum} = [acc_avg{LayerNum}, acc_average]
 
                                         case 2 % 若x中第一个数与gold_point中的点重复，则只计算第二个，保存第二个
                                             acc = []; %记录x中第二个黄金分割点各20次的准确率
@@ -990,14 +1016,14 @@ end
                                             end
                                             acc_average = mean(acc);
 
-                                            if avg_acc{LayerNum}(nonzeros(Locb)) >= acc_average%第2个点的准确率与avg_acc(Locb)做比较
+                                            if acc_avg{LayerNum}(nonzeros(Locb)) >= acc_average%第2个点的准确率与acc_avg(Locb)做比较
                                                 b = ceil(x_2);
                                             else
                                                 a = floor(x_1);
                                             end
 
                                             gold_point{LayerNum} = [gold_point{LayerNum}, x(2)]
-                                            avg_acc{LayerNum} = [avg_acc{LayerNum}, acc_average]		 	 		
+                                            acc_avg{LayerNum} = [acc_avg{LayerNum}, acc_average]		 	 		
                                         % 若x中两个数字都和gold_point重复，则结束switch
                                     end
 
@@ -1029,9 +1055,9 @@ end
 
                         hiddenNumInfor.startNum = paraTable_c.startNum;
                         hiddenNumInfor.stopNum = paraTable_c.startNum;
-                        % 将寻找到的最优网络net与gold_point, avg_acc,寻优信息hiddenNumInfo一起保存为mat数据。
+                        % 将寻找到的最优网络net与gold_point, acc_avg,寻优信息hiddenNumInfo一起保存为mat数据。
                         filename = fullfile('C:\Matlab练习\Project20191002\工程测试\', ['net_optim ', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS'), '.mat']); %将时间信息加入到文件名中
-                        save(filename, 'hiddenNumInfor', 'gold_point', 'avg_acc');
+                        save(filename, 'hiddenNumInfor', 'gold_point', 'acc_avg');
 
                         % 将找到的各个隐层节点数的最优值赋值给paraTable_c中的相应变量(这里只考虑单隐层的情况)
                         if paraTable_c.hiddenLayerNum==1
