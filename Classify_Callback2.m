@@ -139,7 +139,7 @@ end
                 MyPar = gcp; %如果并行池已经开启，则将当前并行池赋值给MyPar
             end
         end
-        
+        time1 = toc(timerVal_1);
         cAlgorithmNameSet1 = ["TANSIG", "RBF"];
         cAlgorithmNameSet2 = ["GA_TANSIG", "GA_RBF", "PSO_TANSIG", "PSO_RBF"];
         if sum(ismember(paraTable_c.Properties.RowNames, cAlgorithmNameSet1))
@@ -207,7 +207,7 @@ end
             % Handle response
             switch answer
                 case '是'
-                       
+                    time_1 = toc(timerVal_1);
                     Ni = size(hmenu4_3.UserData.drData, 2); %输入层节点数记为Ni，10249x5 double
                     No = N; %输出层节点数记为No
                     Nh = []; %隐含层节点数记为Nh
@@ -220,6 +220,8 @@ end
                     OA_detail = cell(1,paraTable_c.hiddenLayerNum); %记录在黄金分割点上重复计算20次获得的20个OA值
                     %# 生成首次隐含层节点优化时的var，作为classDemo()函数的输入参数
                     OA_avg = cell(1,paraTable_c.hiddenLayerNum); % 记录mean(OA_detail{LayerNum})
+                    time_goldSection = zeros(1,paraTable_c.hiddenLayerNum); %记录每一层节点数优化所消耗的时间
+                    
                     t = table2cell(paraTable_c);   
                     % t =
                     %   1×25 cell 数组
@@ -399,26 +401,11 @@ end
                         %# 保存第LayerNum隐含层节点数取黄金分割点时的分类结果
                         % gold_point{LayerNum}，acc_avg{LayerNum}, OA_detail{LayerNum}, OA_avg{LayerNum}
                         % 或者等所有hiddenLayerNum个隐含层节点数全部优化完之后再保存
+                        d = time_goldSection(end);
+                        time_goldSection(LayerNum) = toc(timerVal_1) - time_1 - d;
                     end
                 % 黄金分割法寻优结束。
-                % 保存结果       
-                hiddenNumInfor = struct();
-                hiddenNumInfor.dataset = hmenu4_1.UserData.matPath;    % 所使用的数据集名称
-                hiddenNumInfor.rate = paraTable_c.rate;                             % 所使用的训练集占比
-                hiddenNumInfor.drAlgorithmName = hmenu4_1.UserData.drAlgorithm;  % 降维算法名称
-                hiddenNumInfor.drDimesion = size(hmenu4_3.UserData.drData, 2);          % 降维维数
-                hiddenNumInfor.cAlgorithmName = hmenu4_1.UserData.cAlgorithm;      % 分类算法名称
-                hiddenNumInfor.hiddenLayerNum = paraTable_c.hiddenLayerNum;         % 隐含层的层数
-                % 各个隐含层的所使用的传递函数名称
-                hiddenLayerName = [paraTable_c.transferFcn]; %transferFcn, transferFcn1, transferFcn2, transferFcn3, transferFcn4
-                for i =1:paraTable_c.hiddenLayerNum-1
-                    estr = ['hiddenLayerName = [hiddenLayerName, paraTable_c.transferFcn', num2str(i),'];'];
-                    eval(estr);
-                end
-                hiddenNumInfor.hiddenLayerName = hiddenLayerName; 
 
-                hiddenNumInfor.startNum = paraTable_c.startNum;
-                hiddenNumInfor.stopNum = paraTable_c.startNum;
                 % 将寻找到的最优网络net与gold_point, acc_avg, OA_detail、OA_detail寻优信息hiddenNumInfo一起保存为mat数据。
                 path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
                 filename = fullfile(path,'net_optim.mat'); %将时间信息加入到文件名中
@@ -434,6 +421,7 @@ end
                 end
                 % 黄金分割法寻优结果保存完毕                    
             end
+            
         end
        
         t = table2cell(paraTable_c);   
@@ -573,7 +561,7 @@ end
         end
 
         %% 保存神经网络隐含层节点数的优化结果
-        % 将寻找到的最优网络net与gold_point, acc_avg,寻优信息hiddenNumInfo一起保存为mat数据。
+        % 将寻找到的最优网络net与gold_point, acc_avg, OA_detail，寻优信息hiddenNumInfo一起保存为mat数据。
         % 之所以放到这里是因为有两个原因
         % 1. 如果直接在前面【神经网络隐含层节点数寻优】代码块中生成带时间的文件夹名的话，时间会过于早于Excel的写入时间。
         % 2. 神经网络隐含层节点数寻优的结果与数据集、降维算法、分类算法都有关系，这里的path包含了上述的几个关键信息，
