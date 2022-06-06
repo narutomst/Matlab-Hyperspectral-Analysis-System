@@ -214,12 +214,49 @@ end
                     a = paraTable_c.startNum; % 区间下界；向零取整，以免遗漏任何一个可能的节点数
                     b = paraTable_c.stopNum; %区间上界；         
                     gold_point = cell(1,paraTable_c.hiddenLayerNum);%记录黄金分割点
-                    avg_acc = cell(1,paraTable_c.hiddenLayerNum);%记录分割点对应的准确率
-
+                    avg_acc = cell(1,paraTable_c.hiddenLayerNum);   %记录在黄金分割点上重复计算20次获得的各类别准确率，OA，AA，kappa
+                    OA_detail = cell(1,paraTable_c.hiddenLayerNum); %记录在黄金分割点上重复计算20次获得的20个OA值
+                    %# 生成首次隐含层节点优化时的var，作为classDemo()函数的输入参数
+                    t = table2cell(paraTable_c);   
+                    % t =
+                    %   1×25 cell 数组
+                    %     {[1]}    {[0.2000]}    {[3]}    {[20]}    {["trainscg"]}    {[20]}    {["tansig"]}    {[0]}    {[0]}
+                    %     {[0]}    {[0]}    {[0]}    {[0]}    {[2]}    {[20]}    {["tansig"]}    {[20]}    {["tansig"]}    {[20]}
+                    %     {["tansig"]}    {[20]}    {["tansig"]}    {[1]}    {[1]}    {[100]}
+                    k = numel(t);                        % 25
+                    para = cell(1,2*k);                 % 1×50 cell 数组
+                    for i = 1:k
+                        para{2*i-1} = paraTable_c.Properties.VariableNames{i};
+                        para{2*i} = t{i};            
+                    end
+                    % para =
+                    %   1×50 cell 数组
+                    %   列 1 至 8
+                    %     {'dimReduce'}    {[1]}    {'rate'}    {[0.2000]}    {'app'}    {[3]}    {'executionTimes'}    {[20]}    
+                    %   列 9 至 50
+                    %     {'trainFcn'}  {["trainscg"]}    {'hiddenNum'}    {[20]}    {'transferFcn'}    {["tansig"]}    {'showWindow'}    {[0]}
+                    %     {'plotperform'}    {[0]}    {'plottrainstate'}    {[0]}    {'ploterrhist'}    {[0]}    {'plotconfusion'}    {[0]}
+                    %     {'plotroc'}    {[0]}    {'hiddenLayerNum'}    {[2]}    {'hiddenNum1'}    {[20]}    {'transferFcn1'}    {["tansig"]}
+                    %     {'hiddenNum2'}    {[20]}    {'transferFcn2'}    {["tansig"]}    {'hiddenNum3'}    {[20]}    {'transferFcn3'}
+                    %     {["tansig"]}    {'hiddenNum4'}    {[20]}    {'transferFcn4'}    {["tansig"]}    {'hiddenNumOptimi…'}    {[1]}
+                    %     {'startNum'}    {[1]}    {'stopNum'}    {[100]} 
+                    var = cellfun(@string, para(9:end)); %对cell array中的每一个cell应用string
+                    % var = 
+                    %   1×42 string 数组
+                    %     "trainFcn"    "trainscg"    "hiddenNum"    "20"    "transferFcn"    "tansig"    "showWindow"    "false"
+                    %     "plotperform"    "false"    "plottrainstate"    "false"    "ploterrhist"    "false"    "plotconfusion"    "false"
+                    %     "plotroc"    "false"    "hiddenLayerNum"    "2"    "hiddenNum1"    "20"    "transferFcn1"    "tansig"    "hiddenNum2"
+                    %     "20"    "transferFcn2"    "tansig"    "hiddenNum3"    "20"    "transferFcn3"    "tansig"    "hiddenNum4"    "20"
+                    %     "transferFcn4"    "tansig"    "hiddenNumOptimiza…"    "true"    "startNum"    "1"    "stopNum"    "100"                    
                     for LayerNum=1 : paraTable_c.hiddenLayerNum  % 每个隐藏层一个大循环
                         N_1 = n; %每个黄金分割点上的计算次数就按照ParametersForDimReduceClassify.xlsx中设定的迭代次数executionTimes来吧。
-                        avg_acc{LayerNum} = [];    %  用于迭代保存多个列数据，每一列代表在一个黄金分割点上20次重复计算的分类结果
+                        avg_acc{LayerNum} = [];    %  用于迭代保存多个列数据，每一列代表在一个黄金分割点上20次重复计算得到的分类结果
                                                                 %（即对20次分类结果的[各类别的准确率，OA,AA,kappa]取平均所得到的一列数据）
+                        OA_detail{LayerNum} = []; %  用于迭代保存多个列数据，每一列代表在一个黄金分割点上20次重复计算得到的20个OA值
+                        % 找到var中需要更新的参数的序号，即更新var中的第LayerNum个隐含层的节点数为x(i), hiddenNumLayerNum
+                        TF = contains(var, ['hiddenNum', num2str(LayerNum)]);
+                        str_idx = find(TF);
+                        
                         flag=1;
                         while(flag)
                             x_1 = a + 0.382*(b-a); %x_1和x_2总是位于区间中间
@@ -250,10 +287,16 @@ end
                                         % 这里想要获得的结果包括，两个黄金分割点20次计算各得到一列分类结果的数据
                                         % 保存到avg_acc中
                                         % 这里能给出的输入参数有mappedA, lbs, rate, type, var
-                                        for j = 1 : N_1
-                                           c = fcn1(mappedA, lbs, rate, x(i), 'trainscg');
-                                           acc{i} = [acc{i}, 1-c];
-                                        end
+                                        % 可以在fcn1内部进行n次重复计算，返回值给出一列分类结果的数据及20次acc
+                                        %# 更新var中的第LayerNum个隐含层的节点数为x(i), hiddenNumLayerNum
+                                        %TF = contains(str,pattern)
+                                        var(str_idx+1) = string(x(i));
+                                        % 输入参数 (n, N, setsNum, mappedA, lbs, rate, type, var)
+                                        % 输出2个列向量，20次分类结果的平均值avgResult_20iter, 和20次分类结果的OA值，OA_20iter
+                                        [avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate, type, var);                                     
+                                        avg_acc{LayerNum} = [avg_acc{LayerNum}, avgResult_20iter];
+                                        OA_detail{LayerNum} = [OA_detail{LayerNum}, OA_20iter]; 
+                                        acc{i} = OA_20iter;    
                                         acc_average(i) = mean(acc{i});
                                     end
 
@@ -268,12 +311,16 @@ end
                                 case 1 % 若x中第二个数与gold_point中的点重复，则只计算第一个，保存第一个
                                     acc = []; %记录x中第一个黄金分割点各20次的准确率
                                     acc_average = [0];%记录x中第一个黄金分割点的平均准确率		
-                                    for j = 1 : N_1
-                                        [c, net] = fcn1(mappedA, lbs, rate, x(1), 'trainscg');
-                                        acc = [acc, 1-c];
-                                    end
-                                    acc_average = mean(acc);
 
+                                    var(str_idx+1) = string(x(1));
+                                    % 输入参数 (n, N, setsNum, mappedA, lbs, rate, type, var)
+                                    % 输出2个列向量，20次分类结果的平均值avgResult_20iter, 和20次分类结果的OA值，OA_20iter
+                                    [avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate, type, var);                                     
+                                    avg_acc{LayerNum} = [avg_acc{LayerNum}, avgResult_20iter];
+                                    OA_detail{LayerNum} = [OA_detail{LayerNum}, OA_20iter]; 
+                                    acc = OA_20iter;    
+                                    acc_average = mean(acc);
+                                        
                                     if acc_average >= avg_acc{LayerNum}(nonzeros(Locb))
                                         b = ceil(x_2);
                                     else
@@ -286,11 +333,15 @@ end
                                 case 2 % 若x中第一个数与gold_point中的点重复，则只计算第二个，保存第二个
                                     acc = []; %记录x中第二个黄金分割点各20次的准确率
                                     acc_average = [0];%记录x中第二个黄金分割点的平均准确率		
-                                    for j = 1 : N_1
-                                        [c, net] = fcn1(mappedA, lbs, rate, x(2), 'trainscg');
-                                        acc = [acc, 1-c];
-                                    end
-                                    acc_average = mean(acc);
+
+                                    var(str_idx+1) = string(x(2));
+                                    % 输入参数 (n, N, setsNum, mappedA, lbs, rate, type, var)
+                                    % 输出2个列向量，20次分类结果的平均值avgResult_20iter, 和20次分类结果的OA值，OA_20iter
+                                    [avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate, type, var);                                     
+                                    avg_acc{LayerNum} = [avg_acc{LayerNum}, avgResult_20iter];
+                                    OA_detail{LayerNum} = [OA_detail{LayerNum}, OA_20iter]; 
+                                    acc = OA_20iter;    
+                                    acc_average = mean(acc);                                    
 
                                     if avg_acc{LayerNum}(nonzeros(Locb)) >= acc_average%第2个点的准确率与avg_acc(Locb)做比较
                                         b = ceil(x_2);
@@ -331,7 +382,7 @@ end
 
                 hiddenNumInfor.startNum = paraTable_c.startNum;
                 hiddenNumInfor.stopNum = paraTable_c.startNum;
-                % 将寻找到的最优网络net与gold_point, avg_acc,寻优信息hiddenNumInfo一起保存为mat数据。
+                % 将寻找到的最优网络net与gold_point, avg_acc, OA_detail寻优信息hiddenNumInfo一起保存为mat数据。
                 path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
                 filename = fullfile(path,'net_optim.mat'); %将时间信息加入到文件名中
                 save(filename, 'hiddenNumInfor', 'gold_point', 'avg_acc');
@@ -1369,37 +1420,107 @@ end
 end
 
 %% 子函数（用于黄金分割法寻优隐含层最佳节点数）
-function [c, net] = fcn1(mappedA, lbs, rate, hiddenSizes, trainFcn)
+function [avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate, type, var)
+
+	%# n,N,sets这三个参数主要用于保存分类结果的各个变量的初始化
+	acc_best = zeros(setsNum, setsNum); % 记录n次迭代下的最高准确率OA的值
+	% acc_best(1,1)保存优化前的最高acc值; acc_best(2, 2)保存优化后的最高acc值
+	% acc_best(1,2)保存优化前的最高acc值对应的网络在优化后的准确率值
+	% acc_best(2,1)保存优化后的最高acc值对应的网络在优化前的准确率值
+	net_best = cell(setsNum, setsNum); % 记录最高准确率下训练好的网络（用于绘制GT图）
+	% net_best{1,1}保存优化前具有最高acc值的网络; net_best{2, 2}保存优化后具有最高acc值的网络
+	% net_best{1,2}保存优化前具有最高acc值的网络在优化后的网络
+	% net_best{2,1}保存优化后具有最高acc值的网络在优化前的网络
+
+	tTest_best = cell(1, setsNum);
+	% tTest_best也可以初始化为cell(setsNum, setsNum)，考虑到会极大消耗存储空间，
+	% 于是将其初始化为cell(1, setsNum)。
+	% tTest_best{1,1}保存优化前具有最高acc值的网络预测向量结果; 
+	% tTest_best{1,2}保存优化后具有最高acc值的网络预测向量结果；
+	cmNormalizedValues1 = zeros(N, N, n, setsNum); %保存正常顺序的混淆矩阵
+	% cmNormalizedValues1(:, :, k, 1)保存第k次迭代计算优化前的网络性能的混淆矩阵;
+	% cmNormalizedValues1(:, :, k, 2)保存第k次迭代计算优化后的网络性能的混淆矩阵;
+	acc = zeros(n, setsNum);
+	% acc(k,1)保存第k次迭代计算优化前的准确率；acc(k,2)保存第k次迭代计算优化后的准确率；
+			
+	racc = zeros(n, setsNum);        % 即混淆矩阵返回值中的第一个值c，误分率，等于1-acc
+	err_perf = zeros(n, setsNum);   % （即trainRecord.best_perf）
+	err_vperf = zeros(n, setsNum); %（即trainRecord.best_vperf）
+	err_tperf = zeros(n, setsNum); %（即trainRecord.best_tperf） 
+	
+	for i = 1:n
     % 划分数据
-    [mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
-    XTrain = table2array(mA1(:, 1:end-1))';   %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
-    TTrain = ind2vec(double(mA1.Class)');
-    %%有时候会出现警告使用稀疏矩阵形式的输入数据训练网络将会导致内存占用太大！所以还是换成下面的向量形式的TTrain?
-    % 这样的话最后使用网络net(XTest)获得的outputs也是一个向量形式，这个向量不符合confusion(targets,outputs)
-    % 对多分类输入数据的形式要求，所以不能直接输入到confusion(targets,outputs)。
-    % confusion()要求多分类的targets必须是S×Q的矩阵形式，且每一列必须是one-hot-vector，outputs也必须是S×Q的矩阵形式
-    % outputs的元素值大小位于[0,1]之间，且每一列的最大值对应其所属的S类中的一个。
-    % 而且，当对outputs向量进行转换成系数矩阵时会报错。
-    % 所以不得不继续使用稀疏矩阵形式的TTrain来作为训练网络的输入数据。
-    % 至少在未开并行计算的情况下是没有出现过警告的。
-    XTest = table2array(mA2(:, 1:end-1))';     %XTest每一列为一个样本
-    TTest = ind2vec(double(mA2.Class)');     %TTest每一列为一个类别标签                            
-    disp(['第',num2str(k),'次计算']);
-    [netTrained, trainRecord, predictedVector, misclassRate, cmt] = classDemo(XTrain, TTrain, XTest, TTest, type, var);%前3个为必需参数，后面为可选参数
-    %这个函数能给出的有价值的计算结果是： [net tr tTest c cm],     
+		[mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
+		XTrain = table2array(mA1(:, 1:end-1))';   %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
+		TTrain = ind2vec(double(mA1.Class)');
+		%%有时候会出现警告使用稀疏矩阵形式的输入数据训练网络将会导致内存占用太大！所以还是换成下面的向量形式的TTrain?
+		% 这样的话最后使用网络net(XTest)获得的outputs也是一个向量形式，这个向量不符合confusion(targets,outputs)
+		% 对多分类输入数据的形式要求，所以不能直接输入到confusion(targets,outputs)。
+		% confusion()要求多分类的targets必须是S×Q的矩阵形式，且每一列必须是one-hot-vector，outputs也必须是S×Q的矩阵形式
+		% outputs的元素值大小位于[0,1]之间，且每一列的最大值对应其所属的S类中的一个。
+		% 而且，当对outputs向量进行转换成系数矩阵时会报错。
+		% 所以不得不继续使用稀疏矩阵形式的TTrain来作为训练网络的输入数据。
+		% 至少在未开并行计算的情况下是没有出现过警告的。
+		XTest = table2array(mA2(:, 1:end-1))';     %XTest每一列为一个样本
+		TTest = ind2vec(double(mA2.Class)');     %TTest每一列为一个类别标签                            
+		disp(['第',num2str(k),'次计算']);
+		[netTrained, trainRecord, predictedVector, misclassRate, cmt] = classDemo(XTrain, TTrain, XTest, TTest, type, var);%前3个为必需参数，后面为可选参数
+		%这个函数能给出的有价值的计算结果是： [net tr tTest c cm],     
+            % 每计算一次，保存一次准确率及混淆矩阵
+		acc(k, :) = cellfun(@(x) 1-x, misclassRate);
+		racc(k, :) = 1-acc(k, :);                                % racc 误分率，即混淆矩阵返回值中的第一个值c, 其值为1-acc
+		err_perf(k, :) = cellfun(@(x) x.best_perf, trainRecord);     %trainRecord.best_perf 训练集最佳性能（蓝色曲线）
+		err_vperf(k, :) = cellfun(@(x) x.best_vperf, trainRecord);  %trainRecord.best_vperf 验证集最佳性能（绿色曲线）
+		err_tperf(k, :) = cellfun(@(x) x.best_tperf, trainRecord);   %trainRecord.best_tperf 测试集最佳性能（红色曲线）  
+		
+		for iset = 1:setsNum
+			cmNormalizedValues1(:, :, k, iset) = cmt{iset};
+			% 如何找到最优网络net，及预测向量等结果？是找优化前的最高准确率还是找优化后的最高准确率？
+			% 记录一个优化前的最高值，记录一个优化后的最高值。
+			% 如果优化前后的两个最高准确率不是发生同一次（第k次）怎么办？
+			% 记录优化前和优化后的最优值
+			if acc(k, iset) > acc_best(iset, iset)    
+				% acc_best(1,1)保存优化前的最高acc值; acc_best(2, 2)保存优化后的最高acc值
+				% acc_best(1,2)保存优化前的最高acc值对应的网络在优化后的准确率值
+				% acc_best(2,1)保存优化后的最高acc值对应的网络在优化前的准确率值
+				acc_best(iset, :)=acc(k, :);
+				net_best(iset, :)=netTrained;
+				tTest_best(1, iset)=predictedVector(iset);
+				% tTest_best{1,1}保存优化前具有最高acc值的网络的预测向量结果；
+				% tTest_best{1,2}保存优化后具有最高acc值的网络的预测向量结果。                  
+			end
+		end
+	end
+	info_1 = hmenu4_1.UserData;
+	info_1.cElapsedTime = toc(timerVal_1)-time1; % 保存分类消耗时间
+
+	%% 计算分类结果（根据混淆矩阵cmNormalizedValues1，计算OA, AA, Kappa）
+	[size1, size2, size3, size4] = size(cmNormalizedValues1);  % 16×16×20×2 double
+	cmt = cmNormalizedValues1;
+	% load('工程测试\20220517\cmNormalizedValues1.mat','cmt'); %用于测试
+	% [size1, size2, size3, size4] = size(cmt);   % huston.mat数据集的混淆矩阵尺寸：15×15×20×2
+	
+	%# 先计算TPR
+	Ns = sum(sum(cmt(:, :, 1, 1)));   %测试集样本总数
+	p_o = sum(squeeze(sum(cmt.*repmat(eye(size1),1,1,size3, size4), 2)))/Ns; % 1×20×2
+	p_e = sum( squeeze(sum(cmt)).*squeeze(sum(cmt,2)) )/Ns^2; % 1×20×2
+	Kappa = (p_o - p_e)./(1 - p_e);% 1×20×2
+	OA = single(p_o);            %1×20×2
+	TPR = single(squeeze( sum(cmt.*repmat(eye(size1),1,1,size3,size4), 2)./sum(cmt, 2) ));%15×20×2
+	AA = mean(TPR);  %1×20×2
+	% 这种情况是20列，想要得到平均值，应该对TPR、OA、 AA、Kappa的行求平均，即mean(TPR, 2);
+	c = zeros(size2+3, size3+2, size4,'single');
+	% size2+3表示在上方向上增加了OA、 AA、Kappa三行数据。
+	% size3+2表示在列方向上增加了average、std两列。
+	c(1 : size2, 1:size3, :) = TPR; 
+	c(size2+1, 1:size3, :) = OA; 
+	c(size2+2, 1:size3, :) = AA; 
+	c(size2+3, 1:size3, :) = Kappa;
+	c(:, size3+1, :) = mean(c(:, 1:size3, :), 2);
+	c(:, size3+2, :) = std(c(:, 1:size3, :), 0, 2); %对矩阵的行求标准差，等价于% std(permute(c(:, 1:size3, :),[2,1,3]));
+	% c的最终尺寸为18×22×2    
     
-    
-    
-    %构建网络
-    net = patternnet(hiddenSizes, trainFcn); %patternnet(x(i),'trainscg')
-    % 设置参数 (以下是trainscg的相关参数，可搜索trainscg查看)
-    net.trainParam.epochs = 1000;
-    net.trainParam.show = 10;
-    net.trainParam.showWindow = false;
-    % 训练网络
-    [net, tr] = train(net, XTrain, TTrain);   %不能开并行计算，否则会触发内存占用过大的警告！
-    %. 仿真网络
-    YTest = net(XTest); 
-    %. 性能评价
-    [c,cm,ind,per] = confusion(TTest,YTest);
+    % 返回结果，优化后的c中的average一列，以及OA
+	avgResult_20iter = c(:,size3+1,end);   % 返回c中的average一列
+	OA_20iter = c(size2+1,1:n,end)'; % 返回c中的OA一行
 end
