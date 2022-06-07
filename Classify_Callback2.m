@@ -609,9 +609,47 @@ end
         % 2. 神经网络隐含层节点数寻优的结果与数据集、降维算法、分类算法都有关系，这里的path包含了上述的几个关键信息，
         %     所以直接用这里的path作为[保存神经网络隐含层节点数的优化结果]是更合理的。
         if paraTable_c.hiddenNumOptimization
-            for iLayer = 
-            filename = fullfile(path,'net_optim.mat'); %将时间信息加入到文件名中
-            save(filename, 'hiddenNumInfor', 'gold_point', 'acc_avg');
+            %## 每一隐含层的计算结果保存到一个sheet中
+            for iLayer = 1:paraTable_c.hiddenLayerNum
+                %# 对第iLayer隐含层的分类准确率gold_point{iLayer}, acc_avg{iLayer}, OA_detail{iLayer}在列维度上调整顺序
+                % 利用sort()函数对gold_point{iLayer}中的数按从小到大排序，结果保存到gold_point_sorted{iLayer}中，
+                % 同时还得到了排序索引I
+                % 继而利用排序索引I, 在列维度上对acc_avg{iLayer},OA_detail{iLayer}排序
+                % 结果保存到acc_avg_sorted{iLayer}，OA_detail_sorted{iLayer}
+                [B, I] = sort(gold_point{iLayer});
+                gold_point_sorted{iLayer} = B;
+                acc_avg_sorted{iLayer} = acc_avg{iLayer}(:, I);
+                OA_detail_sorted{iLayer} = OA_detail{iLayer}(:, I);
+                %# 将排序之后的第iLayer隐含层的分类准确率整理成table格式
+                [size_1, size_2] = size(acc_avg{iLayer});
+                accData = [gold_point{iLayer}; gold_point_sorted{iLayer}; acc_avg_sorted{iLayer}; OA_detail_sorted{iLayer}; mean(OA_detail{iLayer}); std(OA_detail{iLayer})];
+                % 为cell的每一列创建列名称 VariableNames
+                VariableNames = cell(1,size_2);
+                for i = 1:size_2
+                    VariableNames{i}= ['goldPoint_',num2str(i)];
+                end
+                %# 创建行的名称 RowNames，必须是字符元胞数组 即1×(2+size_1+size_3+2) cell；
+                [size_3, size_4] = size(OA_detail{iLayer});
+                RowNames = cell(1, 2+size_1+size_3+2); 
+                RowNames{1} = ['goldPoint{iLayer=',num2str(iLayer),'}'];
+                RowNames{2} = 'goldPoint_sorted';
+                for i = 1+2 : size_1-3+2              % acc_avg最后3行分别是OA、AA、kappa
+                    RowNames{i} = ['class_',num2str(i)];
+                end
+                RowNames(i+1 : i+3) = {'OA', 'AA', 'Kappa'};
+                i = i+3;
+                RowNames{i+1: i+size_3} = cellstr(string(1:size_3));
+                i = i+size_3;
+                RowNames(i+1 : i+2)  = {'average', 'std'};
+                % path，filename都已经有了
+                accTable = array2table(accData, 'VariableNames', VariableNames);
+                accTable.Properties.RowNames = RowNames;
+                % Sheet 1保存优化之前的分类结果，Sheet 2保存优化之后的分类结果。
+                % Sheet 3保存执行分类任务的网络相关信息，Sheet 4保存训练性能信息。
+                % Sheet iLayer+4可以保存第iLayer隐含层的分类准确率信息，
+                writetable(accTable,filename,'Sheet',iLayer + iset+2,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);                
+                
+            end
         end
         
         %% 保存各种图像结果
