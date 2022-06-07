@@ -58,12 +58,16 @@ catch
     paraTable_c = importfile2(workbookFile, "Sheet2", [2,2]);
 end
 % paraTable_c = 
-%   1×25 table 
-%             dimReduce rate app  executionTimes  trainFcn  hiddenNum  transferFcn showWindow plotperform plottrainstate ploterrhist plotconfusion plotroc hiddenLayerNum hiddenNum1 transferFcn1 hiddenNum2 transferFcn2 hiddenNum3 transferFcn3 hiddenNum4 transferFcn4 hiddenNumOptimization startNum stopNum
-%             _________     ____ ___    ______________    __________  _________      ___________   __________      ___________    ______________ ___________ _____________   _______  ______________       __________      ____________    __________      ____________    __________    ____________    __________      ____________    _____________________        ________    _______
-% 
-% TANSIG      true       0.2   3             20            "trainscg"       10            "tansig"         false               false             false             false           false           false           2                      20              "tansig"            20               "tansig"          20             "tansig"          20                "tansig"                   true                       1           100  
-% 
+%   1×28 table 
+%             dimReduce rate app  executionTimes  trainFcn  hiddenNum  transferFcn showWindow plotperform plottrainstate ploterrhist plotconfusion plotroc 
+%             _________     ____ ___    ______________    __________  _________      ___________   __________      ___________    ______________ ___________ _____________   _______   
+% TANSIG      true       0.2   3             20            "trainscg"       10            "tansig"         false               false             false             false           false           false   
+%             hiddenLayerNum hiddenNum1 transferFcn1 hiddenNum2 transferFcn2 hiddenNum3 transferFcn3 hiddenNum4 transferFcn4 
+%               ______________       __________      ____________    __________      ____________    __________    ____________    __________      ____________    
+%                       2                      20              "tansig"            20               "tansig"          20             "tansig"          20                "tansig"                     
+%           hiddenNumOptimization startNum stopNum  hLayerNumOptimization startLayerNum stopLayerNum
+%              _____________________        ________    _______      _____________________        ____________    ____________ 
+%                        true                           1           100                      true                           1                   4
 % paraTable_c.Properties
 % ans = 
 %   TableProperties - 属性:
@@ -71,7 +75,7 @@ end
 %              Description: ''
 %                 UserData: []
 %           DimensionNames: {'Row'  'Variables'}
-%            VariableNames: {1×25 cell}
+%            VariableNames: {1×28 cell}
 %     VariableDescriptions: {}
 %            VariableUnits: {}
 %       VariableContinuity: []
@@ -109,7 +113,11 @@ end
         validateattributes(paraTable_c.startNum,{'numeric'},{'integer','positive','>=',1,'<=',500},'','startNum',24);
         validateattributes(paraTable_c.stopNum,{'numeric'},{'integer','positive','>=',1,'<=',500},'','stopNum',25);
     end
-
+    validateattributes(paraTable_c.hLayerNumOptimization,{'logical'},{'integer'},'','hLayerNumOptimization',26);
+    if paraTable_c.hLayerNumOptimization
+        validateattributes(paraTable_c.startLayerNum,{'numeric'},{'integer','positive','>=',1,'<=',4},'','startNum',27);
+        validateattributes(paraTable_c.stopLayerNum,{'numeric'},{'integer','positive','>=',1,'<=',4},'','stopNum',28);
+    end
     time1 = toc(timerVal_1);
     disp({['数据准备完毕，历时',num2str(time1),'秒.',...
     hmenu4_1.UserData.matPath,' 开始执行分类']});
@@ -224,18 +232,18 @@ end
                     
                     t = table2cell(paraTable_c);   
                     % t =
-                    %   1×25 cell 数组
+                    %   1×28 cell 数组
                     %     {[1]}    {[0.2000]}    {[3]}    {[20]}    {["trainscg"]}    {[20]}    {["tansig"]}    {[0]}    {[0]}
                     %     {[0]}    {[0]}    {[0]}    {[0]}    {[2]}    {[20]}    {["tansig"]}    {[20]}    {["tansig"]}    {[20]}
-                    %     {["tansig"]}    {[20]}    {["tansig"]}    {[1]}    {[1]}    {[100]}
-                    k = numel(t);                        % 25
-                    para = cell(1,2*k);                 % 1×50 cell 数组
+                    %     {["tansig"]}    {[20]}    {["tansig"]}    {[1]}    {[1]}    {[100]}  {[1]}    {[1]}    {[4]}
+                    k = numel(t);                        % 28
+                    para = cell(1,2*k);                 % 1×56 cell 数组
                     for i = 1:k
                         para{2*i-1} = paraTable_c.Properties.VariableNames{i};
                         para{2*i} = t{i};            
                     end
                     % para =
-                    %   1×50 cell 数组
+                    %   1×56 cell 数组
                     %   列 1 至 8
                     %     {'dimReduce'}    {[1]}    {'rate'}    {[0.2000]}    {'app'}    {[3]}    {'executionTimes'}    {[20]}    
                     %   列 9 至 50
@@ -243,16 +251,18 @@ end
                     %     {'plotperform'}    {[0]}    {'plottrainstate'}    {[0]}    {'ploterrhist'}    {[0]}    {'plotconfusion'}    {[0]}
                     %     {'plotroc'}    {[0]}    {'hiddenLayerNum'}    {[2]}    {'hiddenNum1'}    {[20]}    {'transferFcn1'}    {["tansig"]}
                     %     {'hiddenNum2'}    {[20]}    {'transferFcn2'}    {["tansig"]}    {'hiddenNum3'}    {[20]}    {'transferFcn3'}
-                    %     {["tansig"]}    {'hiddenNum4'}    {[20]}    {'transferFcn4'}    {["tansig"]}    {'hiddenNumOptimi…'}    {[1]}
-                    %     {'startNum'}    {[1]}    {'stopNum'}    {[100]} 
+                    %     {["tansig"]}    {'hiddenNum4'}    {[20]}    {'transferFcn4'}    {["tansig"]}    
+                    %     {'hiddenNumOptimi…'}    {[1]}    {'startNum'}    {[1]}    {'stopNum'}    {[100]} 
+                    %     {'hLayerNumOptimi…'}    {[1]}    {'startLayerNum'}    {[1]}    {'stopLayerNum'}    {[4]} 
                     var = cellfun(@string, para(9:end)); %对cell array中的每一个cell应用string
                     % var = 
-                    %   1×42 string 数组
+                    %   1×48 string 数组
                     %     "trainFcn"    "trainscg"    "hiddenNum"    "20"    "transferFcn"    "tansig"    "showWindow"    "false"
                     %     "plotperform"    "false"    "plottrainstate"    "false"    "ploterrhist"    "false"    "plotconfusion"    "false"
                     %     "plotroc"    "false"    "hiddenLayerNum"    "2"    "hiddenNum1"    "20"    "transferFcn1"    "tansig"    "hiddenNum2"
                     %     "20"    "transferFcn2"    "tansig"    "hiddenNum3"    "20"    "transferFcn3"    "tansig"    "hiddenNum4"    "20"
-                    %     "transferFcn4"    "tansig"    "hiddenNumOptimiza…"    "true"    "startNum"    "1"    "stopNum"    "100"                    
+                    %     "transferFcn4"    "tansig"    "hiddenNumOptimiza…"    "true"    "startNum"    "1"    "stopNum"    "100"      
+                    %     "hLayerNumOptimiza…"    "true"    "startLayerNum"    "1"    "stopLayerNum"    "4" 
                     for iLayer=1 : paraTable_c.hiddenLayerNum  % 每个隐藏层一个大循环
                         N_1 = n; %每个黄金分割点上的计算次数就按照ParametersForDimReduceClassify.xlsx中设定的迭代次数executionTimes来吧。
                         acc_avg{iLayer} = [];    %  用于迭代保存多个列数据，每一列代表在一个黄金分割点上20次重复计算得到的分类结果
@@ -373,9 +383,10 @@ end
                             if round(x_1) == round(x_2)
                                 flag = 0;
                             end
-
                         end
+                        %# 保存第iLayer隐含层的最佳节点数
                         Nh = [Nh, x(1)];
+                        
                         % 在黄金分割点上的计算结束
                         %# 将startNum和stopNum作为第LayerNum隐含层节点数的计算结果也添加进acc_avg和OA_detail中来
                         % 这样第LayerNum隐含层节点数（即网络宽度）与分类准确率的关系将更加完整
@@ -406,11 +417,6 @@ end
                     end
                 % 黄金分割法寻优结束。
 
-                % 将寻找到的最优网络net与gold_point, acc_avg, OA_detail、OA_avg寻优信息hiddenNumInfo一起保存为mat数据。
-                path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
-                filename = fullfile(path,'net_optim.mat'); %将时间信息加入到文件名中
-                save(filename, 'hiddenNumInfor', 'gold_point', 'acc_avg');
-
                 % 将找到的各个隐层节点数的最优值赋值给paraTable_c中的相应变量(这里只考虑单隐层的情况)
                 if paraTable_c.hiddenLayerNum==1
                     paraTable_c.hiddenNum=Nh(1);
@@ -426,18 +432,18 @@ end
        
         t = table2cell(paraTable_c);   
         % t =
-        %   1×25 cell 数组
+        %   1×28 cell 数组
         %     {[1]}    {[0.2000]}    {[3]}    {[20]}    {["trainscg"]}    {[20]}    {["tansig"]}    {[0]}    {[0]}
         %     {[0]}    {[0]}    {[0]}    {[0]}    {[2]}    {[20]}    {["tansig"]}    {[20]}    {["tansig"]}    {[20]}
-        %     {["tansig"]}    {[20]}    {["tansig"]}    {[1]}    {[1]}    {[100]}
-        k = numel(t);                        % 25
-        para = cell(1,2*k);                 % 1×50 cell 数组
+        %     {["tansig"]}    {[20]}    {["tansig"]}    {[1]}    {[1]}    {[100]}   {[1]}    {[1]}    {[4]}
+        k = numel(t);                        % 28
+        para = cell(1,2*k);                 % 1×56 cell 数组
         for i = 1:k
             para{2*i-1} = paraTable_c.Properties.VariableNames{i};
             para{2*i} = t{i};            
         end
         % para =
-        %   1×50 cell 数组
+        %   1×56 cell 数组
         %   列 1 至 8
         %     {'dimReduce'}    {[1]}    {'rate'}    {[0.2000]}    {'app'}    {[3]}    {'executionTimes'}    {[20]}    
         %   列 9 至 50
@@ -445,16 +451,18 @@ end
         %     {'plotperform'}    {[0]}    {'plottrainstate'}    {[0]}    {'ploterrhist'}    {[0]}    {'plotconfusion'}    {[0]}
         %     {'plotroc'}    {[0]}    {'hiddenLayerNum'}    {[2]}    {'hiddenNum1'}    {[20]}    {'transferFcn1'}    {["tansig"]}
         %     {'hiddenNum2'}    {[20]}    {'transferFcn2'}    {["tansig"]}    {'hiddenNum3'}    {[20]}    {'transferFcn3'}
-        %     {["tansig"]}    {'hiddenNum4'}    {[20]}    {'transferFcn4'}    {["tansig"]}    {'hiddenNumOptimi…'}    {[1]}
-        %     {'startNum'}    {[1]}    {'stopNum'}    {[100]} 
+        %     {["tansig"]}    {'hiddenNum4'}    {[20]}    {'transferFcn4'}    {["tansig"]}    
+        %     {'hiddenNumOptimi…'}    {[1]}   {'startNum'}    {[1]}    {'stopNum'}    {[100]} 
+        %     {'hLayerNumOptimi…'}    {[1]}    {'startLayerNum'}    {[1]}    {'stopLayerNum'}    {[4]} 
         var = cellfun(@string, para(9:end)); %对cell array中的每一个cell应用string
         % var = 
-        %   1×42 string 数组
+        %   1×48 string 数组
         %     "trainFcn"    "trainscg"    "hiddenNum"    "20"    "transferFcn"    "tansig"    "showWindow"    "false"
         %     "plotperform"    "false"    "plottrainstate"    "false"    "ploterrhist"    "false"    "plotconfusion"    "false"
         %     "plotroc"    "false"    "hiddenLayerNum"    "2"    "hiddenNum1"    "20"    "transferFcn1"    "tansig"    "hiddenNum2"
         %     "20"    "transferFcn2"    "tansig"    "hiddenNum3"    "20"    "transferFcn3"    "tansig"    "hiddenNum4"    "20"
         %     "transferFcn4"    "tansig"    "hiddenNumOptimiza…"    "true"    "startNum"    "1"    "stopNum"    "100"
+        %     "hLayerNumOptimiza…"    "true"    "startLayerNum"    "1"    "stopLayerNum"    "4" 
         for k = 1 : n
             [mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
             XTrain = table2array(mA1(:, 1:end-1))';  %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
@@ -617,6 +625,9 @@ end
         % 2. 神经网络隐含层节点数寻优的结果与数据集、降维算法、分类算法都有关系，这里的path包含了上述的几个关键信息，
         %     所以直接用这里的path作为[保存神经网络隐含层节点数的优化结果]是更合理的。
         if paraTable_c.hiddenNumOptimization
+            gold_point_sorted = cell(1,paraTable_c.hiddenLayerNum);
+            acc_avg_sorted = cell(1,paraTable_c.hiddenLayerNum);
+            OA_detail_sorted = cell(1,paraTable_c.hiddenLayerNum);
             %## 每一隐含层的计算结果保存到一个sheet中
             for iLayer = 1:paraTable_c.hiddenLayerNum
                 %# 对第iLayer隐含层的分类准确率gold_point{iLayer}, acc_avg{iLayer}, OA_detail{iLayer}在列维度上调整顺序
@@ -624,6 +635,7 @@ end
                 % 同时还得到了排序索引I
                 % 继而利用排序索引I, 在列维度上对acc_avg{iLayer},OA_detail{iLayer}排序
                 % 结果保存到acc_avg_sorted{iLayer}，OA_detail_sorted{iLayer}
+
                 [B, I] = sort(gold_point{iLayer});
                 gold_point_sorted{iLayer} = B;
                 acc_avg_sorted{iLayer} = acc_avg{iLayer}(:, I);
@@ -868,7 +880,8 @@ end
         disp(['分类结果详细数据保存于',filename]);
         
         %delete(MyPar) %计算完成后关闭并行处理池
-
+        
+        %% 询问是否要执行隐含层层数（即网络深度）优化
         
     %% 如果加载数据完毕，未选择[执行降维]而直接选择[执行分类]，则询问是否启动classificationLearner    
     else  %属于第122行的if
