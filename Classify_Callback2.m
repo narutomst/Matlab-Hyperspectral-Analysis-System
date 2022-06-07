@@ -574,7 +574,7 @@ end
         writetable(paraTable_c, filename, 'Sheet',iset+1,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
         
         %# 保存数据集信息hmenu4_1.UserData到Sheet(iset+1)
-        %info_1 = hmenu4_1.UserData;
+        info_1 = hmenu4_1.UserData;
         info_1.x3 = [];
         info_1.lbs2 = [];
         info_1.x2 = [];
@@ -592,7 +592,15 @@ end
         info_cmap = array2table(info_cmap, 'VariableNames', VariableNames);
         info_cmap.Properties.RowNames = RowNames;
         writetable(info_cmap,filename,'Sheet',iset+1,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);
-       
+        %# 保存time_goldSection
+        if exist('time_goldSection','var')==1
+            VariableNames = "iLayer_"+string(1:hiddenLayerNum);
+            RowNames = "colapsedTime";
+            timeTable = array2table(time_goldSection, 'VariableNames', VariableNames);
+            timeTable.Properties.RowNames = RowNames;
+            writetable(timeTable,filename,'Sheet',iset+1,'Range','A27', 'WriteRowNames',true, 'WriteVariableNames', true);
+        end
+        
         %% 保存训练过程中的性能数据err_perf, err_vperf, err_tperf, racc到Excel中Sheet
         T1 = createTableForWrite(err_perf, err_vperf, err_tperf, racc);
         errTable = [T1.Variables; mean(T1.Variables); std(T1.Variables)];  % T1.Variables 是20×8 double
