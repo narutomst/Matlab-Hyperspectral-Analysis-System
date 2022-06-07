@@ -881,9 +881,28 @@ end
         
         %delete(MyPar) %计算完成后关闭并行处理池
         
-        %% 询问是否要执行隐含层层数（即网络深度）优化
-        
-    %% 如果加载数据完毕，未选择[执行降维]而直接选择[执行分类]，则询问是否启动classificationLearner    
+        %% 网络隐含层层数的优化 询问是否要执行隐含层层数（即网络深度）优化
+        if paraTable_c.hLayerNumOptimization
+            % 询问是否要进行神经网络隐含层层数的最优值搜索
+            quest = {'\fontsize{10} 是否要执行网络隐含层层数优化来寻找隐含层层数的最优值？'};
+                     % \fontsize{10}：字体大小修饰符，作用是使其后面的字符大小都为10磅；
+            dlgtitle = '网络隐含层层数（即网络深度）优化';
+            btn1 = '是';
+            btn2 = '否';
+            opts.Default = btn2;
+            opts.Interpreter = 'tex';
+            % answer = questdlg(quest,dlgtitle,btn1,btn2,defbtn);
+            answer = questdlg(quest, dlgtitle, btn1, btn2, opts);
+                                        
+            % Handle response
+            switch answer
+                case '是' 
+                    %# 
+            end
+                % 隐含层层数寻优结果保存完毕                    
+        end
+            
+    %% 如果加载数据完毕，未选择[执行降维]而直接选择[执行分类]，则询问是否启动classificationLearner
     else  %属于第122行的if
         
         quest = {'\fontsize{10} 数据未执行降维，直接分类需要耗费较长时间。若想使用未降维的数据直接分类，请选择下面一种分类方式；',...
