@@ -47,7 +47,7 @@ p.addParameter( 'hiddenLayerNum',defaultHiddenLayerNum,@(x) validateattributes(s
                                      {'integer','positive','>=',1,'<=',5}));
 defaultHiddenNum = 10;
 p.addParameter( 'hiddenNum',defaultHiddenNum,@(x) validateattributes(str2num(x),{'numeric'},...
-                                     {'integer','positive','>=',10,'<=',100}));
+                                     {'integer','positive','>=',2,'<=',1000}));
 
 defaultHiddenNum1 = 10;
 p.addParameter( 'hiddenNum1',defaultHiddenNum1,@(x) validateattributes(str2num(x),{'numeric'},{'integer','positive'}));
@@ -62,6 +62,10 @@ p.addParameter( 'startNum',defaultstartNum,@(x) validateattributes(str2num(x),{'
 defaultstopNum = 100;
 p.addParameter( 'stopNum',defaultstopNum,@(x) validateattributes(str2num(x),{'numeric'},{'integer','positive'}));
 
+defaultstartLayerNum = 1;
+p.addParameter( 'startLayerNum',defaultstartLayerNum,@(x) validateattributes(str2num(x),{'numeric'},{'integer','positive', '>',0,'<',5}));
+defaultstopLayerNum = 4;
+p.addParameter( 'stopLayerNum',defaultstopLayerNum,@(x) validateattributes(str2num(x),{'numeric'},{'integer','positive', '>',0,'<',5}));
 
 p.addParameter('transferFcn',@(x) any(validatestring(x,{'tansig','radbas','purelin'})));
 p.addParameter('transferFcn1',@(x) any(validatestring(x,{'tansig','radbas','purelin'})));
@@ -76,6 +80,7 @@ p.addParameter('ploterrhist',@(x) validateattributes(x,{'logical'}));
 p.addParameter('plotconfusion',@(x) validateattributes(x,{'logical'}));
 p.addParameter('plotroc',@(x) validateattributes(x,{'logical'}));
 p.addParameter('hiddenNumOptimization',@(x) validateattributes(x,{'logical'}));
+p.addParameter('hLayerNumOptimization',@(x) validateattributes(x,{'logical'}));
 
 p.parse(XTrain, TTrain, XTest, TTest, type, varargin{:});
 % %报错：因为varargin是cell类型的，而合法的类型只能是字符串标量或者字符向量
