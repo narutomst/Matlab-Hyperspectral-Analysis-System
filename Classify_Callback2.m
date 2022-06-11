@@ -338,7 +338,7 @@ end
                                     % 则说明重复在gold_point{iLayer}中的第三个数，这个数在gold_point{iLayer}中只有一个
                                     % 其最小索引为1.
                                     % 若x中第二个数与gold_point中的点重复，则只计算第一个，保存第一个
-                                    OA_avg = [0];		
+                                    	
                                     %记录两个黄金分割点作为第LayerNum隐含层节点数时的分类准确率中的OA值20次平均准确率
                                     var(str_idx+1) = string(x(1));
                                     % 输入参数 (n, N, setsNum, mappedA, lbs, rate, type, var)
@@ -1724,7 +1724,7 @@ function [avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate,
 	err_vperf = zeros(n, setsNum); %（即trainRecord.best_vperf）
 	err_tperf = zeros(n, setsNum); %（即trainRecord.best_tperf） 
 	
-	for k = 1:n
+    for k = 1:n
     % 划分数据
 		[mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
 		XTrain = table2array(mA1(:, 1:end-1))';   %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
@@ -1749,7 +1749,7 @@ function [avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate,
 		err_vperf(k, :) = cellfun(@(x) x.best_vperf, trainRecord);  %trainRecord.best_vperf 验证集最佳性能（绿色曲线）
 		err_tperf(k, :) = cellfun(@(x) x.best_tperf, trainRecord);   %trainRecord.best_tperf 测试集最佳性能（红色曲线）  
 		
-		for iset = 1:setsNum
+        for iset = 1:setsNum
 			cmNormalizedValues1(:, :, k, iset) = cmt{iset};
 			% 如何找到最优网络net，及预测向量等结果？是找优化前的最高准确率还是找优化后的最高准确率？
 			% 记录一个优化前的最高值，记录一个优化后的最高值。
@@ -1765,7 +1765,7 @@ function [avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate,
 				% tTest_best{1,1}保存优化前具有最高acc值的网络的预测向量结果；
 				% tTest_best{1,2}保存优化后具有最高acc值的网络的预测向量结果。                  
 			end
-		end
+        end
     end
 
 	%% 计算分类结果（根据混淆矩阵cmNormalizedValues1，计算OA, AA, Kappa）
@@ -1828,7 +1828,7 @@ function [avgResult_20iter, OA_20iter, errTable] = fcn2(n, N, setsNum, mappedA, 
 	err_vperf = zeros(n, setsNum); %（即trainRecord.best_vperf）
 	err_tperf = zeros(n, setsNum); %（即trainRecord.best_tperf） 
 	
-	for k = 1:n
+    for k = 1:n
     % 划分数据
 		[mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
 		XTrain = table2array(mA1(:, 1:end-1))';   %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
@@ -1853,13 +1853,13 @@ function [avgResult_20iter, OA_20iter, errTable] = fcn2(n, N, setsNum, mappedA, 
 		err_vperf(k, :) = cellfun(@(x) x.best_vperf, trainRecord);  %trainRecord.best_vperf 验证集最佳性能（绿色曲线）
 		err_tperf(k, :) = cellfun(@(x) x.best_tperf, trainRecord);   %trainRecord.best_tperf 测试集最佳性能（红色曲线）  
 		
-		for iset = 1:setsNum
+        for iset = 1:setsNum
 			cmNormalizedValues1(:, :, k, iset) = cmt{iset};
 			% 如何找到最优网络net，及预测向量等结果？是找优化前的最高准确率还是找优化后的最高准确率？
 			% 记录一个优化前的最高值，记录一个优化后的最高值。
 			% 如果优化前后的两个最高准确率不是发生同一次（第k次）怎么办？
 			% 记录优化前和优化后的最优值
-			if acc(k, iset) > acc_best(iset, iset)    
+            if acc(k, iset) > acc_best(iset, iset)    
 				% acc_best(1,1)保存优化前的最高acc值; acc_best(2, 2)保存优化后的最高acc值
 				% acc_best(1,2)保存优化前的最高acc值对应的网络在优化后的准确率值
 				% acc_best(2,1)保存优化后的最高acc值对应的网络在优化前的准确率值
@@ -1868,8 +1868,8 @@ function [avgResult_20iter, OA_20iter, errTable] = fcn2(n, N, setsNum, mappedA, 
 				tTest_best(1, iset)=predictedVector(iset);
 				% tTest_best{1,1}保存优化前具有最高acc值的网络的预测向量结果；
 				% tTest_best{1,2}保存优化后具有最高acc值的网络的预测向量结果。                  
-			end
-		end
+            end
+        end
     end
 
 	%% 计算分类结果（根据混淆矩阵cmNormalizedValues1，计算OA, AA, Kappa）
