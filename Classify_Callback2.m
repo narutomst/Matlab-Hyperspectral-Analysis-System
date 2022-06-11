@@ -270,7 +270,10 @@ end
                         OA_detail{iLayer} = []; %  用于迭代保存多个列数据，每一列代表在一个黄金分割点上20次重复计算得到的20个OA值
                         OA_avg{iLayer} = []; % 记录mean(OA_detail{iLayer})
                         % 找到var中需要更新的参数的序号，即更新var中的第LayerNum个隐含层的节点数为x(i), hiddenNumLayerNum
-                        TF = contains(var, ['hiddenNum', num2str(iLayer)]);
+                        TF = contains(var, 'hiddenNum');
+                        if iLayer>1
+                            TF = contains(var, ['hiddenNum', num2str(iLayer)]);
+                        end
                         str_idx = find(TF);
                         
                         flag=1;
@@ -903,7 +906,8 @@ end
                     % 输入向量的维数等于输入层的节点数。
                     N = hmenu4_1.UserData.M-1;     % 类别总数
                     No = N; %输出层节点数记为No
-                    % Botswana, round(3248*0.2)=650
+                    % Botswana, round(3248*0.2)=650,No=14, 650./(a*(10+14))=[13.5417 2.7083]
+
                     a = [2, 10]; % 系数a通常取2~10
                     % 隐含层节点数计算公式 Nh = Ns/(a*(Ni+No));  %隐含层节点数记为Nh
                     Nh = Ns/(a*(Ni+No));
@@ -1720,7 +1724,7 @@ function [avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate,
 	err_vperf = zeros(n, setsNum); %（即trainRecord.best_vperf）
 	err_tperf = zeros(n, setsNum); %（即trainRecord.best_tperf） 
 	
-	for i = 1:n
+	for k = 1:n
     % 划分数据
 		[mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
 		XTrain = table2array(mA1(:, 1:end-1))';   %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
@@ -1826,7 +1830,7 @@ function [avgResult_20iter, OA_20iter, errTable] = fcn2(n, N, setsNum, mappedA, 
 	err_vperf = zeros(n, setsNum); %（即trainRecord.best_vperf）
 	err_tperf = zeros(n, setsNum); %（即trainRecord.best_tperf） 
 	
-	for i = 1:n
+	for k = 1:n
     % 划分数据
 		[mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
 		XTrain = table2array(mA1(:, 1:end-1))';   %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
