@@ -1766,9 +1766,7 @@ function [avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate,
 				% tTest_best{1,2}保存优化后具有最高acc值的网络的预测向量结果。                  
 			end
 		end
-	end
-	info_1 = hmenu4_1.UserData;
-	info_1.cElapsedTime = toc(timerVal_1)-time1; % 保存分类消耗时间
+    end
 
 	%% 计算分类结果（根据混淆矩阵cmNormalizedValues1，计算OA, AA, Kappa）
 	[size1, size2, size3, size4] = size(cmNormalizedValues1);  % 16×16×20×2 double
@@ -1872,9 +1870,7 @@ function [avgResult_20iter, OA_20iter, errTable] = fcn2(n, N, setsNum, mappedA, 
 				% tTest_best{1,2}保存优化后具有最高acc值的网络的预测向量结果。                  
 			end
 		end
-	end
-	info_1 = hmenu4_1.UserData;
-	info_1.cElapsedTime = toc(timerVal_1)-time1; % 保存分类消耗时间
+    end
 
 	%% 计算分类结果（根据混淆矩阵cmNormalizedValues1，计算OA, AA, Kappa）
 	[size1, size2, size3, size4] = size(cmNormalizedValues1);  % 16×16×20×2 double
