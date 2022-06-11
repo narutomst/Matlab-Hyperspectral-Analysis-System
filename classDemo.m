@@ -6,7 +6,7 @@ global hmenu4_1
         %tTest 为预测的类别标签列向量
         % c, 误分率，错误率；1-c，即准确率OA
         % cm, 混淆矩阵  
-timerVal_1 = tic;
+
 varargin = varargin{1}; %将cell转换为string数组
 p = inputParser;
 
@@ -81,6 +81,8 @@ p.addParameter('plotconfusion',@(x) validateattributes(x,{'logical'}));
 p.addParameter('plotroc',@(x) validateattributes(x,{'logical'}));
 p.addParameter('hiddenNumOptimization',@(x) validateattributes(x,{'logical'}));
 p.addParameter('hLayerNumOptimization',@(x) validateattributes(x,{'logical'}));
+p.addParameter('plotMSE',@(x) validateattributes(x,{'logical'}));
+p.addParameter('plotFitness',@(x) validateattributes(x,{'logical'}));
 
 p.parse(XTrain, TTrain, XTest, TTest, type, varargin{:});
 % %报错：因为varargin是cell类型的，而合法的类型只能是字符串标量或者字符向量
