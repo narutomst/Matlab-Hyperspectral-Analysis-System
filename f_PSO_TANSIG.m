@@ -240,11 +240,13 @@ acc2 = [];
 	end
 
 	%% 结果分析
-	figure
-	plot(yy)
-	title(['适应度曲线' '终止代数＝' num2str(length(yy))],'fontsize',12);
-	xlabel('进化代数','fontsize',12);
-	ylabel('适应度','fontsize',12);
+    if str2num(Var.plotFitness)
+        figure()
+        plot(yy)
+        title(['适应度曲线' '终止代数＝' num2str(length(yy))],'fontsize',12);
+        xlabel('进化代数','fontsize',12);
+        ylabel('适应度','fontsize',12);
+    end
 
 	%% 把最优初始阀值权值赋予网络预测
 	% 对群体最优个体Gbest进行解码
