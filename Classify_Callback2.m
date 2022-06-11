@@ -937,13 +937,16 @@ end
                     %    paraTable_c.startLayerNum;
                     %    paraTable_c.stopLayerNum;
                     %end
+					
+					% 以hiddenLayerNum和stopLayerNum来决定寻优层数
+					% 即隐含层层数总是从1层到stopLayerNum+1层
+					stopNum = paraTable_c.stopLayerNum+1;
                     time_Layer(1) = tic(timerVal_1);
                     for i = 1:iteration
                         % 隐含层节点数为Nh_min*i;
                         hiddenNum = Nh_min*i;
                         % 更新输入变量paraTable_c
-                        
-                        for iLayer = 1:5
+                        for iLayer = 1:stopNum
                             paraTable_c.hiddenLayerNum = iLayer;
                             paraTable_c.hiddenNum = hiddenNum;
                             if iLayer>1
@@ -1030,8 +1033,37 @@ end
             OATable = array2table([OA_detail; OA_avg; std(OA_detail)], 'VariableNames', VariableNames);
             OATable.Properties.RowNames = RowNames2;
             writetable(OATable,filename,'Sheet',2,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);  
-
             %# 隐含层层数寻优结果保存完毕
+            
+            %# 网络信息保存
+            %% 保存有关分类结果及网络配置的详细信息到附加Sheet中
+            % 保存降维及分类参数设置paraTable_c到Sheet 3中，
+            % 主要是startNum和stopNum, startLayerNum 和stopLayerNum
+            paraTable_c.startNum = Nh_min;
+            paraTable_c.stopNum = Nh_max;
+            writetable(paraTable_c, filename, 'Sheet',3,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
+
+            %# 保存数据集信息hmenu4_1.UserData到Sheet(iset+1)
+            info_1 = hmenu4_1.UserData;
+            info_1.x3 = [];
+            info_1.lbs2 = [];
+            info_1.x2 = [];
+            info_1.lbs = [];
+            info_1.cmap = [];
+            info_1.Nh_min = Nh_min;
+            info_1.Nh_max = Nh_max;
+            % info_1.elapsedTimec = toc(timerVal_1)-time1; % 保存分类消耗时间
+            info_1 = struct2table(info_1, 'AsArray',true);
+            writetable(info_1, filename, 'Sheet',3,'Range','A3', 'WriteRowNames',true, 'WriteVariableNames', true);
+            %# 单独处理cmap
+            info_cmap = hmenu4_1.UserData.cmap;
+            VariableNames = ["R","G","B"]; %VariableNames属性为字符向量元胞数组{'R','G','B'}。
+            % 如需指定多个变量名称，请在字符串数组["R","G","B"]或字符向量元胞数组{'R','G','B'}中指定这些名称。
+            % 创建行的名称 RowNames，格式为字符串数组["1","2","3"]或字符向量元胞数组{'1','2','3'}；
+            RowNames = string(1:size(info_cmap,1)); % ；
+            info_cmap = array2table(info_cmap, 'VariableNames', VariableNames);
+            info_cmap.Properties.RowNames = RowNames;
+            writetable(info_cmap,filename,'Sheet',3,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);     
         end
             
     %% 如果加载数据完毕，未选择[执行降维]而直接选择[执行分类]，则询问是否启动classificationLearner
