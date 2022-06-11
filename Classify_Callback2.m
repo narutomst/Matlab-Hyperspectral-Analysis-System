@@ -199,7 +199,7 @@ end
 % 这种方法并不见得就有好的效果，例如单隐层huston.mat数据集上0.2的训练集，1~100的寻优结果为85
 % 这个效果会好于双隐层，每层只有40个节点的网络吗？不一定。因为通常而言，窄而深的网络分类效果更好。
 % 而在单层优化时，节点越多效果越好。
-% 所以单层的结论和可能不适用于多层。
+% 所以单层的结论有可能不适用于多层。
         if paraTable_c.hiddenNumOptimization
             % 询问是否要进行黄金分割法来寻找隐含层节点数的最优值
             quest = {'\fontsize{10} 是否要使用黄金分割法来寻找隐含层节点数的最优值？'};
@@ -405,7 +405,7 @@ end
                             % 输出2个列向量，20次分类结果的平均值avgResult_20iter, 和20次分类结果的OA值，OA_20iter
                             [avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate, type, var);                                     
                             acc_avg{iLayer} = [acc_avg{iLayer}, avgResult_20iter];
-                            OA_detail{iLayer} = [OA_detail{iLayer}, OA_20iter]; 
+                            OA_detail{iLayer} = [OA_detail{iLayer}, OA_20iter];
                         end
                         OA_avg{iLayer} = [OA_avg{iLayer}, mean(OA_20iter)];
                         gold_point{iLayer} = [gold_point{iLayer}, x];
@@ -430,7 +430,7 @@ end
             
         end
        
-        t = table2cell(paraTable_c);   
+        t = table2cell(paraTable_c);
         % t =
         %   1×28 cell 数组
         %     {[1]}    {[0.2000]}    {[3]}    {[20]}    {["trainscg"]}    {[20]}    {["tansig"]}    {[0]}    {[0]}
@@ -896,10 +896,142 @@ end
                                         
             % Handle response
             switch answer
-                case '是' 
-                    %# 
+                case '是'
+                    %# 首先确定隐含层神经元数量
+                    time_1 = toc(timerVal_1);
+                    [Ni, Ns] = size(XTrain); % XTrain每一列为一个样本，则行数为降维数，即输入层节点数。列数为训练集样本数
+                    % 输入向量的维数等于输入层的节点数。
+                    N = hmenu4_1.UserData.M-1;     % 类别总数
+                    No = N; %输出层节点数记为No
+                    % Botswana, round(3248*0.2)=650
+                    a = [2, 10]; % 系数a通常取2~10
+                    % 隐含层节点数计算公式 Nh = Ns/(a*(Ni+No));  %隐含层节点数记为Nh
+                    Nh = Ns/(a*(Ni+No));
+                    % 当Ni=5;No=14;Ns=650时，Nh=[17.1, 3.4]
+                    % 则隐含层的神经元取值下界值可定为floor(Nh(2))=3，
+                    % 上界值可定为ceil(Nh(1)/floor(Nh(2)))*floor(Nh(2))，循环次数为ceil(Nh(1)/floor(Nh(2)))
+                    iteration = ceil(Nh(1)/floor(Nh(2)));
+                    Nh_min = floor(Nh(2));
+                    Nh_max = ceil(Nh(1)/floor(Nh(2)))*floor(Nh(2));
+                    
+                    %# 初始化分类结果保存变量
+                    % 对于隐含层节点数为Nh = [18,3]这个例子中，一个固定的隐含层节点数在1~5层隐含层的情况下进行遍历，则可以得到5列分类结果
+                    % 则总共6个隐含层节点数，可以得到5×6=30列分类结果
+                    % 如果每个sheet只保存一个固定的隐含层节点数在1~5层隐含层的情况下进行遍历的5列结果的话，则需要保存至少6个sheet
+                    % 这样还是太浪费了，所以将30列分类结果保存到同一个sheet中
+                    % 第二个sheet保存OA_20iter，与第一个sheet中的列一一对应。
+                    % errTable先不保存了，一个固定的隐含层节点数在隐含层的层数固定的情况下，就可以获得n=20个err_perf数据
+                    % 则6个隐含层节点数在5个隐含层层数下，将有20×5×6=600个数据，太多了不好保存
+                    iColomn = (paraTable_c.hiddenLayerNum+1)*iteration;
+                    acc_avg = zeros(N+3, iColomn);   
+                    % acc表示包含各类别分类准确率、OA、AA、Kappa在内的完整分类准确率数据，
+                    % acc_avg表示20次重复计算得到的完整分类准确率的平均值
+                    OA_detail = zeros(n, iColomn); %记录在黄金分割点上重复计算20次获得的20个OA值
+                    OA_avg = zeros(1, iColomn); % 记录mean(OA_detail)
+                    time_Layer = zeros(1, iColomn); %记录每一个节点数在不同层数时所消耗的时间
+                    %# 对照在ParametersForDimReduceClassify中设定的上下界进行修正
+                    % 只要计算出的下界值大于等于设定的下界值，且计算出的上界值小于等于设定的上界值。就算满足要求
+                    %if floor(Nh(2))<=paraTable_c.startLayerNum && ceil(Nh(1)/floor(Nh(2)))*floor(Nh(2))<=paraTable_c.stopLayerNum
+                    %    disp('开始进行隐含层层数优化');
+                    %elseif floor(Nh(2))>paraTable_c.startLayerNum                        
+                    %    paraTable_c.startLayerNum;
+                    %    paraTable_c.stopLayerNum;
+                    %end
+                    time_Layer(1) = tic(timerVal_1);
+                    for i = 1:iteration
+                        % 隐含层节点数为Nh_min*i;
+                        hiddenNum = Nh_min*i;
+                        % 更新输入变量paraTable_c
+                        
+                        for iLayer = 1:5
+                            paraTable_c.hiddenLayerNum = iLayer;
+                            paraTable_c.hiddenNum = hiddenNum;
+                            if iLayer>1
+                                for j = 1:iLayer-1
+                                    estr = ['paraTable_c.hiddenNum',num2str(j),' = hiddenNum;'];
+                                    eval(estr);
+                                end
+                            end
+                            t = table2cell(paraTable_c);   
+                            % t =
+                            %   1×28 cell 数组
+                            %     {[1]}    {[0.2000]}    {[3]}    {[20]}    {["trainscg"]}    {[20]}    {["tansig"]}    {[0]}    {[0]}
+                            %     {[0]}    {[0]}    {[0]}    {[0]}    {[2]}    {[20]}    {["tansig"]}    {[20]}    {["tansig"]}    {[20]}
+                            %     {["tansig"]}    {[20]}    {["tansig"]}    {[1]}    {[1]}    {[100]}  {[1]}    {[1]}    {[4]}
+                            k = numel(t);                        % 28
+                            para = cell(1,2*k);                 % 1×56 cell 数组
+                            for iPara = 1:k
+                                para{2*iPara-1} = paraTable_c.Properties.VariableNames{iPara};
+                                para{2*iPara} = t{iPara};            
+                            end
+                            % para =
+                            %   1×56 cell 数组
+                            %   列 1 至 8
+                            %     {'dimReduce'}    {[1]}    {'rate'}    {[0.2000]}    {'app'}    {[3]}    {'executionTimes'}    {[20]}    
+                            %   列 9 至 50
+                            %     {'trainFcn'}  {["trainscg"]}    {'hiddenNum'}    {[20]}    {'transferFcn'}    {["tansig"]}    {'showWindow'}    {[0]}
+                            %     {'plotperform'}    {[0]}    {'plottrainstate'}    {[0]}    {'ploterrhist'}    {[0]}    {'plotconfusion'}    {[0]}
+                            %     {'plotroc'}    {[0]}    {'hiddenLayerNum'}    {[2]}    {'hiddenNum1'}    {[20]}    {'transferFcn1'}    {["tansig"]}
+                            %     {'hiddenNum2'}    {[20]}    {'transferFcn2'}    {["tansig"]}    {'hiddenNum3'}    {[20]}    {'transferFcn3'}
+                            %     {["tansig"]}    {'hiddenNum4'}    {[20]}    {'transferFcn4'}    {["tansig"]}    
+                            %     {'hiddenNumOptimi…'}    {[1]}    {'startNum'}    {[1]}    {'stopNum'}    {[100]} 
+                            %     {'hLayerNumOptimi…'}    {[1]}    {'startLayerNum'}    {[1]}    {'stopLayerNum'}    {[4]} 
+                            var = cellfun(@string, para(9:end)); %对cell array中的每一个cell应用string
+                            % var = 
+                            %   1×48 string 数组
+                            %     "trainFcn"    "trainscg"    "hiddenNum"    "20"    "transferFcn"    "tansig"    "showWindow"    "false"
+                            %     "plotperform"    "false"    "plottrainstate"    "false"    "ploterrhist"    "false"    "plotconfusion"    "false"
+                            %     "plotroc"    "false"    "hiddenLayerNum"    "2"    "hiddenNum1"    "20"    "transferFcn1"    "tansig"    "hiddenNum2"
+                            %     "20"    "transferFcn2"    "tansig"    "hiddenNum3"    "20"    "transferFcn3"    "tansig"    "hiddenNum4"    "20"
+                            %     "transferFcn4"    "tansig"    "hiddenNumOptimiza…"    "true"    "startNum"    "1"    "stopNum"    "100"
+                            %     "hLayerNumOptimiza…"    "true"    "startLayerNum"    "1"    "stopLayerNum"    "4"    
+
+                            % 输出2个列向量，20次分类结果的平均值avgResult_20iter, 和20次分类结果的OA值，OA_20iter
+                            [avgResult_20iter, OA_20iter, ~] = fcn2(n, N, setsNum, mappedA, lbs, rate, type, var);
+                            acc_avg(:, (iteration-1)*5+iLayer) = avgResult_20iter;
+                            OA_detail(:, (iteration-1)*5+iLayer) = OA_20iter;    
+                            OA_avg(:, (iteration-1)*5+iLayer) = mean(OA_20iter);
+                            time_Layer((iteration-1)*5+iLayer) = toc(timerVal_1) - time_Layer(end);                           
+                        end
+                    end
+                                      
             end
-                % 隐含层层数寻优结果保存完毕                    
+            %## 保存隐含层层数寻优结果
+            %# 为cell的每一列创建列名称 VariableNames
+            % hNum1hLayer1~hNum1hLayer5, hNum2hLayer1~hNum2hLayer5, ……，hNum6hLayer1~hNum6hLayer5
+            VariableNames = cell(1, iColomn);
+            for i = 1:iteration
+                for iLayer = 1:5
+                    VariableNames{i}= ['hNum',num2str(i),'hLayer',num2str(iLayer)];
+                end
+            end
+            %# 创建行的名称 RowNames1，必须是字符元胞数组或者字符串数组；
+            [size_1, size_2] = size([acc_avg; time_Layer]);
+            RowNames1(1:size_1-4) = "class_"+string(1:(size_1-4)); 
+            RowNames1(size_1-3) = "OA";
+            RowNames1(size_1-2) = "AA";
+            RowNames1(size_1-1) = "Kappa";
+            RowNames1(size_1) = "time_Layer"; % 每一层计算所消耗的时间
+            %# 创建行的名称 RowNames2，必须是字符元胞数组或者字符串数组； 
+            [size_3, size_4] = size(OA_detail);
+            RowNames2 = "iter_"+string(1:size_3); 
+            RowNames2(size_3+1) = "average";
+            RowNames2(size_3+2) = "std";
+            % path已经有了，filename重新生成
+            filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'_hLayerOptimization','.xlsx'];
+            filename = fullfile(path, filename);
+            accTable = array2table([acc_avg; time_Layer], 'VariableNames', VariableNames);
+            accTable.Properties.RowNames = RowNames1;
+            % Sheet 1保存优化30列（6个隐含层节点与5个隐含层）分类结果acc_avg。
+            % 每一列都是20次重复计算的分类准确率的平均值，包括各类别的分类准确率，以及OA, AA, Kappa
+            writetable(accTable,filename,'Sheet',1,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
+            % Sheet 2保存优化30列（6个隐含层节点与5个隐含层）分类结果OA_detail。   
+            % 每一列是20次重复计算获得的20个OA值
+            OATable = array2table([OA_detail; OA_avg; std(OA_detail)], 'VariableNames', VariableNames);
+            OATable.Properties.RowNames = RowNames2;
+            writetable(OATable,filename,'Sheet',2,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);  
+
+            %# 隐含层层数寻优结果保存完毕
         end
             
     %% 如果加载数据完毕，未选择[执行降维]而直接选择[执行分类]，则询问是否启动classificationLearner
@@ -1631,4 +1763,117 @@ function [avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate,
     % 返回结果，优化后的c中的average一列，以及OA
 	avgResult_20iter = c(:,size3+1,end);   % 返回c中的average一列
 	OA_20iter = c(size2+1,1:n,end)'; % 返回c中的OA一行
+end
+
+%% 子函数（用于在固定隐含层节点数的情况下计算不同层数的分类准确率）
+function [avgResult_20iter, OA_20iter, errTable] = fcn2(n, N, setsNum, mappedA, lbs, rate, type, var)
+
+	%# n,N,sets这三个参数主要用于保存分类结果的各个变量的初始化
+	acc_best = zeros(setsNum, setsNum); % 记录n次迭代下的最高准确率OA的值
+	% acc_best(1,1)保存优化前的最高acc值; acc_best(2, 2)保存优化后的最高acc值
+	% acc_best(1,2)保存优化前的最高acc值对应的网络在优化后的准确率值
+	% acc_best(2,1)保存优化后的最高acc值对应的网络在优化前的准确率值
+	net_best = cell(setsNum, setsNum); % 记录最高准确率下训练好的网络（用于绘制GT图）
+	% net_best{1,1}保存优化前具有最高acc值的网络; net_best{2, 2}保存优化后具有最高acc值的网络
+	% net_best{1,2}保存优化前具有最高acc值的网络在优化后的网络
+	% net_best{2,1}保存优化后具有最高acc值的网络在优化前的网络
+
+	tTest_best = cell(1, setsNum);
+	% tTest_best也可以初始化为cell(setsNum, setsNum)，考虑到会极大消耗存储空间，
+	% 于是将其初始化为cell(1, setsNum)。
+	% tTest_best{1,1}保存优化前具有最高acc值的网络预测向量结果; 
+	% tTest_best{1,2}保存优化后具有最高acc值的网络预测向量结果；
+	cmNormalizedValues1 = zeros(N, N, n, setsNum); %保存正常顺序的混淆矩阵
+	% cmNormalizedValues1(:, :, k, 1)保存第k次迭代计算优化前的网络性能的混淆矩阵;
+	% cmNormalizedValues1(:, :, k, 2)保存第k次迭代计算优化后的网络性能的混淆矩阵;
+	acc = zeros(n, setsNum);
+	% acc(k,1)保存第k次迭代计算优化前的准确率；acc(k,2)保存第k次迭代计算优化后的准确率；
+			
+	racc = zeros(n, setsNum);        % 即混淆矩阵返回值中的第一个值c，误分率，等于1-acc
+	err_perf = zeros(n, setsNum);   % （即trainRecord.best_perf）
+	err_vperf = zeros(n, setsNum); %（即trainRecord.best_vperf）
+	err_tperf = zeros(n, setsNum); %（即trainRecord.best_tperf） 
+	
+	for i = 1:n
+    % 划分数据
+		[mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
+		XTrain = table2array(mA1(:, 1:end-1))';   %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
+		TTrain = ind2vec(double(mA1.Class)');
+		%%有时候会出现警告使用稀疏矩阵形式的输入数据训练网络将会导致内存占用太大！所以还是换成下面的向量形式的TTrain?
+		% 这样的话最后使用网络net(XTest)获得的outputs也是一个向量形式，这个向量不符合confusion(targets,outputs)
+		% 对多分类输入数据的形式要求，所以不能直接输入到confusion(targets,outputs)。
+		% confusion()要求多分类的targets必须是S×Q的矩阵形式，且每一列必须是one-hot-vector，outputs也必须是S×Q的矩阵形式
+		% outputs的元素值大小位于[0,1]之间，且每一列的最大值对应其所属的S类中的一个。
+		% 而且，当对outputs向量进行转换成系数矩阵时会报错。
+		% 所以不得不继续使用稀疏矩阵形式的TTrain来作为训练网络的输入数据。
+		% 至少在未开并行计算的情况下是没有出现过警告的。
+		XTest = table2array(mA2(:, 1:end-1))';     %XTest每一列为一个样本
+		TTest = ind2vec(double(mA2.Class)');     %TTest每一列为一个类别标签                            
+		disp(['第',num2str(k),'次计算']);
+		[netTrained, trainRecord, predictedVector, misclassRate, cmt] = classDemo(XTrain, TTrain, XTest, TTest, type, var);%前3个为必需参数，后面为可选参数
+		%这个函数能给出的有价值的计算结果是： [net tr tTest c cm],     
+            % 每计算一次，保存一次准确率及混淆矩阵
+		acc(k, :) = cellfun(@(x) 1-x, misclassRate);
+		racc(k, :) = 1-acc(k, :);                                % racc 误分率，即混淆矩阵返回值中的第一个值c, 其值为1-acc
+		err_perf(k, :) = cellfun(@(x) x.best_perf, trainRecord);     %trainRecord.best_perf 训练集最佳性能（蓝色曲线）
+		err_vperf(k, :) = cellfun(@(x) x.best_vperf, trainRecord);  %trainRecord.best_vperf 验证集最佳性能（绿色曲线）
+		err_tperf(k, :) = cellfun(@(x) x.best_tperf, trainRecord);   %trainRecord.best_tperf 测试集最佳性能（红色曲线）  
+		
+		for iset = 1:setsNum
+			cmNormalizedValues1(:, :, k, iset) = cmt{iset};
+			% 如何找到最优网络net，及预测向量等结果？是找优化前的最高准确率还是找优化后的最高准确率？
+			% 记录一个优化前的最高值，记录一个优化后的最高值。
+			% 如果优化前后的两个最高准确率不是发生同一次（第k次）怎么办？
+			% 记录优化前和优化后的最优值
+			if acc(k, iset) > acc_best(iset, iset)    
+				% acc_best(1,1)保存优化前的最高acc值; acc_best(2, 2)保存优化后的最高acc值
+				% acc_best(1,2)保存优化前的最高acc值对应的网络在优化后的准确率值
+				% acc_best(2,1)保存优化后的最高acc值对应的网络在优化前的准确率值
+				acc_best(iset, :)=acc(k, :);
+				net_best(iset, :)=netTrained;
+				tTest_best(1, iset)=predictedVector(iset);
+				% tTest_best{1,1}保存优化前具有最高acc值的网络的预测向量结果；
+				% tTest_best{1,2}保存优化后具有最高acc值的网络的预测向量结果。                  
+			end
+		end
+	end
+	info_1 = hmenu4_1.UserData;
+	info_1.cElapsedTime = toc(timerVal_1)-time1; % 保存分类消耗时间
+
+	%% 计算分类结果（根据混淆矩阵cmNormalizedValues1，计算OA, AA, Kappa）
+	[size1, size2, size3, size4] = size(cmNormalizedValues1);  % 16×16×20×2 double
+	cmt = cmNormalizedValues1;
+	% load('工程测试\20220517\cmNormalizedValues1.mat','cmt'); %用于测试
+	% [size1, size2, size3, size4] = size(cmt);   % huston.mat数据集的混淆矩阵尺寸：15×15×20×2
+	
+	%# 先计算TPR
+	Ns = sum(sum(cmt(:, :, 1, 1)));   %测试集样本总数
+	p_o = sum(squeeze(sum(cmt.*repmat(eye(size1),1,1,size3, size4), 2)))/Ns; % 1×20×2
+	p_e = sum( squeeze(sum(cmt)).*squeeze(sum(cmt,2)) )/Ns^2; % 1×20×2
+	Kappa = (p_o - p_e)./(1 - p_e);% 1×20×2
+	OA = single(p_o);            %1×20×2
+	TPR = single(squeeze( sum(cmt.*repmat(eye(size1),1,1,size3,size4), 2)./sum(cmt, 2) ));%15×20×2
+	AA = mean(TPR);  %1×20×2
+	% 这种情况是20列，想要得到平均值，应该对TPR、OA、 AA、Kappa的行求平均，即mean(TPR, 2);
+	c = zeros(size2+3, size3+2, size4,'single');
+	% size2+3表示在上方向上增加了OA、 AA、Kappa三行数据。
+	% size3+2表示在列方向上增加了average、std两列。
+	c(1 : size2, 1:size3, :) = TPR; 
+	c(size2+1, 1:size3, :) = OA; 
+	c(size2+2, 1:size3, :) = AA; 
+	c(size2+3, 1:size3, :) = Kappa;
+	c(:, size3+1, :) = mean(c(:, 1:size3, :), 2);
+	c(:, size3+2, :) = std(c(:, 1:size3, :), 0, 2); %对矩阵的行求标准差，等价于% std(permute(c(:, 1:size3, :),[2,1,3]));
+	% c的最终尺寸为18×22×2    
+    
+    % 返回分类结果，优化后的c中的average一列，以及OA
+	avgResult_20iter = c(:,size3+1,end);   % 返回c中的average一列
+	OA_20iter = c(size2+1,1:n,end)'; % 返回c中的OA一行
+	% 返回训练性能数据 T1
+	T1 = createTableForWrite(err_perf, err_vperf, err_tperf, racc);
+	errTable = [T1.Variables; mean(T1.Variables); std(T1.Variables)];  % T1.Variables 是20×8 double
+	errTable = array2table(errTable, 'VariableNames', T1.Properties.VariableNames);
+	errTable.Properties.RowNames = [T1.Properties.RowNames; {'average'}; {'std'}]; %新增2行的行名称	
+	errTable = T1;
+	% 
 end
