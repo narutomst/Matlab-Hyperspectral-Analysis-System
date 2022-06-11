@@ -176,7 +176,7 @@ cmt{1} = cm;
     end
 	%%
 	% 4. 绘制适应度函数变化
-    if str2num(Var.plotMSE)
+    if str2num(Var.plotFitness)
         figure()
         plot(trace(:,1),trace(:,3),'r-', trace(:,1),trace(:,2),'b--');
         legend('均值','最优值');%legend('avrg','best');
