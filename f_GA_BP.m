@@ -164,22 +164,26 @@ cmt{1} = cm;
 							   'normGeomSelect',[0.09],['arithXover'],[2],'nonUnifMutation',[2 gen 3]);
 	%%
 	% 3. 绘均方误差变化曲线
-	figure
-	plot(trace(:,1),1./trace(:,3),'r-', trace(:,1),1./trace(:,2),'b--');
-	legend('均值','最优值');%legend('avrg','best');
-	xlabel('代际');%xlabel('Generation');
-	ylabel('均方误差');%ylabel('Sum-Squared Error');
-	string1 = '均方误差曲线';%string1 = 'Sum-Squared Error Curve';
-	title(string1);
+    if str2num(Var.plotMSE)
+        figure()
+        plot(trace(:,1),1./trace(:,3),'r-', trace(:,1),1./trace(:,2),'b--');
+        legend('均值','最优值');%legend('avrg','best');
+        xlabel('代际');%xlabel('Generation');
+        ylabel('均方误差');%ylabel('Sum-Squared Error');
+        string1 = '均方误差曲线';%string1 = 'Sum-Squared Error Curve';
+        title(string1);
+    end
 	%%
 	% 4. 绘制适应度函数变化
-	figure
-	plot(trace(:,1),trace(:,3),'r-', trace(:,1),trace(:,2),'b--');
-	legend('均值','最优值');%legend('avrg','best');
-	xlabel('代际');%xlabel('Generation');
-	ylabel('适应度');%ylabel('Fittness');
-	string2 = '适应度函数值曲线';%string2 = 'Fitness Function Value Curve';
-	title(string2);
+    if str2num(Var.plotMSE)
+        figure()
+        plot(trace(:,1),trace(:,3),'r-', trace(:,1),trace(:,2),'b--');
+        legend('均值','最优值');%legend('avrg','best');
+        xlabel('代际');%xlabel('Generation');
+        ylabel('适应度');%ylabel('Fittness');
+        string2 = '适应度函数值曲线';%string2 = 'Fitness Function Value Curve';
+        title(string2);
+    end
 
 %% VIII. 解码最优解并赋值
 %%
