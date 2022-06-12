@@ -605,7 +605,7 @@ end
         writetable(info_cmap,filename,'Sheet',iset+1,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);
         %# 保存time_goldSection
         if exist('time_goldSection','var')==1
-            VariableNames = "iLayer_"+string(1:hiddenLayerNum);
+            VariableNames = ["iLayer_"+string(1:paraTable_c.hiddenLayerNum)];
             RowNames = "colapsedTime";
             timeTable = array2table(time_goldSection, 'VariableNames', VariableNames);
             timeTable.Properties.RowNames = RowNames;
@@ -617,7 +617,7 @@ end
         errTable = [T1.Variables; mean(T1.Variables); std(T1.Variables)];  % T1.Variables 是20×8 double
         errTable = array2table(errTable, 'VariableNames', T1.Properties.VariableNames);
         errTable.Properties.RowNames = [T1.Properties.RowNames; {'average'}; {'std'}]; %新增2行的行名称
-        filename = "C:\Matlab练习\Project20191002\工程测试\2022-06-04 19-45-16\Botswana\LDA\GA_TANSIG\Botswana_LDA_GA_TANSIG.xlsx";
+        %filename = "C:\Matlab练习\Project20191002\工程测试\2022-06-04 19-45-16\Botswana\LDA\GA_TANSIG\Botswana_LDA_GA_TANSIG.xlsx";
         errTable.Properties.Description = '保存训练过程中的性能数据err_perf, err_vperf, err_tperf, racc';
         writetable(errTable,filename,'Sheet',iset+2,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true); 
 
@@ -657,11 +657,11 @@ end
                 RowNames{1} = ['goldPoint{iLayer=',num2str(iLayer),'}'];
                 RowNames{2} = 'goldPoint_sorted';
                 for i = 1+2 : size_1-3+2              % acc_avg最后3行分别是OA、AA、kappa
-                    RowNames{i} = ['class_',num2str(i)];
+                    RowNames{i} = ['class_',num2str(i-2)];
                 end
                 RowNames(i+1 : i+3) = {'OA', 'AA', 'Kappa'};
                 i = i+3;
-                RowNames{i+1: i+size_3} = cellstr(string(1:size_3));
+                RowNames(i+1: i+size_3) = cellstr(string(1:size_3));
                 i = i+size_3;
                 RowNames(i+1 : i+2)  = {'average', 'std'};
                 % path，filename都已经有了
@@ -910,23 +910,27 @@ end
 
                     a = [2, 10]; % 系数a通常取2~10
                     % 隐含层节点数计算公式 Nh = Ns/(a*(Ni+No));  %隐含层节点数记为Nh
-                    Nh = Ns/(a*(Ni+No));
-                    % 当Ni=5;No=14;Ns=650时，Nh=[17.1, 3.4]
+                    Nhd = Ns./(a*(Ni+No));
+                    % 当Ni=5;No=14;Ns=650时，Nhd=[17.1, 3.4];
+                    % Ni=10时，No=14;Ns=650时，Nhd=[13.6, 2.7];
                     % 则隐含层的神经元取值下界值可定为floor(Nh(2))=3，
                     % 上界值可定为ceil(Nh(1)/floor(Nh(2)))*floor(Nh(2))，循环次数为ceil(Nh(1)/floor(Nh(2)))
-                    iteration = ceil(Nh(1)/floor(Nh(2)));
-                    Nh_min = floor(Nh(2));
-                    Nh_max = ceil(Nh(1)/floor(Nh(2)))*floor(Nh(2));
+                    iteration = ceil(Nhd(1)/floor(Nhd(2)));
+                    Nhd_min = floor(Nhd(2));
+                    Nhd_max = ceil(Nhd(1)/floor(Nhd(2)))*floor(Nhd(2));
                     
                     %# 初始化分类结果保存变量
-                    % 对于隐含层节点数为Nh = [18,3]这个例子中，一个固定的隐含层节点数在1~5层隐含层的情况下进行遍历，则可以得到5列分类结果
+                    % 对于隐含层节点数为Nhd = [18,3]这个例子中，一个固定的隐含层节点数在1~5层隐含层的情况下进行遍历，则可以得到5列分类结果
                     % 则总共6个隐含层节点数，可以得到5×6=30列分类结果
                     % 如果每个sheet只保存一个固定的隐含层节点数在1~5层隐含层的情况下进行遍历的5列结果的话，则需要保存至少6个sheet
                     % 这样还是太浪费了，所以将30列分类结果保存到同一个sheet中
                     % 第二个sheet保存OA_20iter，与第一个sheet中的列一一对应。
                     % errTable先不保存了，一个固定的隐含层节点数在隐含层的层数固定的情况下，就可以获得n=20个err_perf数据
                     % 则6个隐含层节点数在5个隐含层层数下，将有20×5×6=600个数据，太多了不好保存
-                    iColomn = (paraTable_c.hiddenLayerNum+1)*iteration;
+                    % 隐含层层数总是从1层到stopLayerNum+1层
+                    stopNum = paraTable_c.stopLayerNum+1;
+                    iColomn = stopNum*iteration;
+                    %iColomn = 5*iteration;
                     acc_avg = zeros(N+3, iColomn);   
                     % acc表示包含各类别分类准确率、OA、AA、Kappa在内的完整分类准确率数据，
                     % acc_avg表示20次重复计算得到的完整分类准确率的平均值
@@ -935,20 +939,20 @@ end
                     time_Layer = zeros(1, iColomn); %记录每一个节点数在不同层数时所消耗的时间
                     %# 对照在ParametersForDimReduceClassify中设定的上下界进行修正
                     % 只要计算出的下界值大于等于设定的下界值，且计算出的上界值小于等于设定的上界值。就算满足要求
-                    %if floor(Nh(2))<=paraTable_c.startLayerNum && ceil(Nh(1)/floor(Nh(2)))*floor(Nh(2))<=paraTable_c.stopLayerNum
+                    %if floor(Nhd(2))<=paraTable_c.startLayerNum && ceil(Nhd(1)/floor(Nhd(2)))*floor(Nhd(2))<=paraTable_c.stopLayerNum
                     %    disp('开始进行隐含层层数优化');
-                    %elseif floor(Nh(2))>paraTable_c.startLayerNum                        
+                    %elseif floor(Nhd(2))>paraTable_c.startLayerNum                        
                     %    paraTable_c.startLayerNum;
                     %    paraTable_c.stopLayerNum;
                     %end
 					
 					% 以hiddenLayerNum和stopLayerNum来决定寻优层数
 					% 即隐含层层数总是从1层到stopLayerNum+1层
-					stopNum = paraTable_c.stopLayerNum+1;
-                    time_Layer(1) = tic(timerVal_1);
+					
+                    time_Layer(1) = toc(timerVal_1);
                     for i = 1:iteration
-                        % 隐含层节点数为Nh_min*i;
-                        hiddenNum = Nh_min*i;
+                        % 隐含层节点数为Nhd_min*i;
+                        hiddenNum = Nhd_min*i;
                         % 更新输入变量paraTable_c
                         for iLayer = 1:stopNum
                             paraTable_c.hiddenLayerNum = iLayer;
@@ -1043,8 +1047,8 @@ end
             %% 保存有关分类结果及网络配置的详细信息到附加Sheet中
             % 保存降维及分类参数设置paraTable_c到Sheet 3中，
             % 主要是startNum和stopNum, startLayerNum 和stopLayerNum
-            paraTable_c.startNum = Nh_min;
-            paraTable_c.stopNum = Nh_max;
+            paraTable_c.startNum = Nhd_min;
+            paraTable_c.stopNum = Nhd_max;
             writetable(paraTable_c, filename, 'Sheet',3,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
 
             %# 保存数据集信息hmenu4_1.UserData到Sheet(iset+1)
@@ -1054,8 +1058,8 @@ end
             info_1.x2 = [];
             info_1.lbs = [];
             info_1.cmap = [];
-            info_1.Nh_min = Nh_min;
-            info_1.Nh_max = Nh_max;
+            info_1.Nhd_min = Nhd_min;
+            info_1.Nhd_max = Nhd_max;
             % info_1.elapsedTimec = toc(timerVal_1)-time1; % 保存分类消耗时间
             info_1 = struct2table(info_1, 'AsArray',true);
             writetable(info_1, filename, 'Sheet',3,'Range','A3', 'WriteRowNames',true, 'WriteVariableNames', true);
