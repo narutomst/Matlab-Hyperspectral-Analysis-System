@@ -656,7 +656,8 @@ end
                 OA_detail_sorted{iLayer} = OA_detail{iLayer}(:, I);
                 %# 将排序之后的第iLayer隐含层的分类准确率整理成table格式
                 [size_1, size_2] = size(acc_avg{iLayer});
-                accData = [gold_point{iLayer}; gold_point_sorted{iLayer}; acc_avg_sorted{iLayer}; OA_detail_sorted{iLayer}; mean(OA_detail{iLayer}); std(OA_detail{iLayer})];
+                accData = [gold_point{iLayer}; gold_point_sorted{iLayer}; acc_avg_sorted{iLayer};...
+                    OA_detail_sorted{iLayer}; mean(OA_detail_sorted{iLayer}); std(OA_detail_sorted{iLayer})];
                 % 为cell的每一列创建列名称 VariableNames
                 VariableNames = cell(1,size_2);
                 for i = 1:size_2
