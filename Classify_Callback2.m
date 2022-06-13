@@ -466,6 +466,7 @@ end
         %     "20"    "transferFcn2"    "tansig"    "hiddenNum3"    "20"    "transferFcn3"    "tansig"    "hiddenNum4"    "20"
         %     "transferFcn4"    "tansig"    "hiddenNumOptimiza…"    "true"    "startNum"    "1"    "stopNum"    "100"
         %     "hLayerNumOptimiza…"    "true"    "startLayerNum"    "1"    "stopLayerNum"    "4" 
+ if 0       
         for k = 1 : n
             [mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
             XTrain = table2array(mA1(:, 1:end-1))';  %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
@@ -883,8 +884,10 @@ end
         disp(['分类结果详细数据保存于',filename]);
         
         %delete(MyPar) %计算完成后关闭并行处理池
-        
+ end        
         %% 网络隐含层层数的优化 询问是否要执行隐含层层数（即网络深度）优化
+        [mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
+        XTrain = table2array(mA1(:, 1:end-1))';  %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
         if paraTable_c.hLayerNumOptimization
             % 询问是否要进行神经网络隐含层层数的最优值搜索
             quest = {'\fontsize{10} 是否要执行网络隐含层层数优化来寻找隐含层层数的最优值？'};
@@ -900,38 +903,71 @@ end
             % Handle response
             switch answer
                 case '是'
-                    %# 首先确定隐含层神经元数量
-                    time_1 = toc(timerVal_1);
-                    [Ni, Ns] = size(XTrain); % XTrain每一列为一个样本，则行数为降维数，即输入层节点数。列数为训练集样本数
-                    % 输入向量的维数等于输入层的节点数。
-                    N = hmenu4_1.UserData.M-1;     % 类别总数
-                    No = N; %输出层节点数记为No
-                    % Botswana, round(3248*0.2)=650,No=14, 650./(a*(10+14))=[13.5417 2.7083]
+                    % %## 首先确定隐含层神经元数量，可以采用公式来计算，也可以手动指定
+                    % time_1 = toc(timerVal_1);
+                    % [Ni, Ns] = size(XTrain); % XTrain每一列为一个样本，则行数为降维数，即输入层节点数。列数为训练集样本数
+                    % % 输入向量的维数等于输入层的节点数。
+                    % N = hmenu4_1.UserData.M-1;     % 类别总数
+                    % No = N; %输出层节点数记为No
+                    % % Botswana, round(3248*0.2)=650,No=14, 650./(a*(10+14))=[13.5417 2.7083]
 
-                    a = [2, 10]; % 系数a通常取2~10
-                    % 隐含层节点数计算公式 Nh = Ns/(a*(Ni+No));  %隐含层节点数记为Nh
-                    Nhd = Ns./(a*(Ni+No));
-                    % 当Ni=5;No=14;Ns=650时，Nhd=[17.1, 3.4];
-                    % Ni=10时，No=14;Ns=650时，Nhd=[13.6, 2.7];
-                    % 则隐含层的神经元取值下界值可定为floor(Nh(2))=3，
-                    % 上界值可定为ceil(Nh(1)/floor(Nh(2)))*floor(Nh(2))，循环次数为ceil(Nh(1)/floor(Nh(2)))
-                    iteration = ceil(Nhd(1)/floor(Nhd(2)));
-                    Nhd_min = floor(Nhd(2));
-                    Nhd_max = ceil(Nhd(1)/floor(Nhd(2)))*floor(Nhd(2));
+                    % a = [2, 10]; % 系数a通常取2~10
+                    % % 隐含层节点数计算公式 Nh = Ns/(a*(Ni+No));  %隐含层节点数记为Nh
+                    % Nhd = Ns./(a*(Ni+No));
+                    % % 当Ni=5;No=14;Ns=650时，Nhd=[17.1, 3.4];
+                    % % Ni=10时，No=14;Ns=650时，Nhd=[13.6, 2.7];
+                    % % 则隐含层的神经元取值下界值可定为floor(Nh(2))=3，
+                    % % 上界值可定为ceil(Nh(1)/floor(Nh(2)))*floor(Nh(2))，循环次数为ceil(Nh(1)/floor(Nh(2)))
+                    % iteration = ceil(Nhd(1)/floor(Nhd(2)));
+                    % Nhd_min = floor(Nhd(2));
+                    % Nhd_max = ceil(Nhd(1)/floor(Nhd(2)))*floor(Nhd(2));
                     
-                    %# 初始化分类结果保存变量
-                    % 对于隐含层节点数为Nhd = [18,3]这个例子中，一个固定的隐含层节点数在1~5层隐含层的情况下进行遍历，则可以得到5列分类结果
-                    % 则总共6个隐含层节点数，可以得到5×6=30列分类结果
-                    % 如果每个sheet只保存一个固定的隐含层节点数在1~5层隐含层的情况下进行遍历的5列结果的话，则需要保存至少6个sheet
-                    % 这样还是太浪费了，所以将30列分类结果保存到同一个sheet中
-                    % 第二个sheet保存OA_20iter，与第一个sheet中的列一一对应。
-                    % errTable先不保存了，一个固定的隐含层节点数在隐含层的层数固定的情况下，就可以获得n=20个err_perf数据
-                    % 则6个隐含层节点数在5个隐含层层数下，将有20×5×6=600个数据，太多了不好保存
-                    % 隐含层层数总是从1层到stopLayerNum+1层
+                    % %# 初始化分类结果保存变量
+                    % % 对于隐含层节点数为Nhd = [18,3]这个例子中，一个固定的隐含层节点数在1~5层隐含层的情况下进行遍历，则可以得到5列分类结果
+                    % % 则总共6个隐含层节点数，可以得到5×6=30列分类结果
+                    % % 如果每个sheet只保存一个固定的隐含层节点数在1~5层隐含层的情况下进行遍历的5列结果的话，则需要保存至少6个sheet
+                    % % 这样还是太浪费了，所以将30列分类结果保存到同一个sheet中
+                    % % 第二个sheet保存OA_20iter，与第一个sheet中的列一一对应。
+                    % % errTable先不保存了，一个固定的隐含层节点数在隐含层的层数固定的情况下，就可以获得n=20个err_perf数据
+                    % % 则6个隐含层节点数在5个隐含层层数下，将有20×5×6=600个数据，太多了不好保存
+                    % % 隐含层层数总是从1层到stopLayerNum+1层
+					
+					%## 手动指定要遍历的隐含层节点数
+                    % hiddenNum = [105, 110, 115, 120, 125, 130, 135, 140, 145, 150];
+                    % hiddenNum = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+                    hiddenNum = [55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
+                    if ~exist('Nhd_min', 'var')
+                        if exist('hiddenNum', 'var')
+                            if hiddenNum(:)~=0
+                                Nhd_min=min(hiddenNum);
+                            else
+                                disp(['Nhd_min不存在，且min(hiddenNum)为0，无法赋值给Nhd_min']);
+                            end
+                        else
+                            disp(['Nhd_min不存在，且hiddenNum不存在，无法赋值给Nhd_min']);
+                        end
+                    end
+                    if ~exist('Nhd_max', 'var')
+                        if exist('hiddenNum', 'var')
+                            if hiddenNum(:)~=0
+                                Nhd_max=max(hiddenNum);
+                            else
+                                disp(['hiddenNum中有部分元素值为0，无法赋值给Nhd_min']);
+                            end
+                        else
+                            disp(['Nhd_max不存在，且hiddenNum不存在，无法赋值给Nhd_max']);
+                        end
+                    end                   
+                    iteration = numel(hiddenNum);
                     stopNum = paraTable_c.stopLayerNum+1;
                     iColomn = stopNum*iteration;
                     %iColomn = 5*iteration;
-                    acc_avg = zeros(N+3, iColomn);   
+                    acc_avg = zeros(N+3, iColomn);
+                    if ismember(type, {'GA_TANSIG','GA_RBF','PSO_TANSIG','PSO_RBF'})
+                        err_avg = zeros(8, iColomn);
+                    elseif ismember(type, {'TANSIG','RBF'})
+                        err_avg = zeros(4, iColomn);
+                    end
                     % acc表示包含各类别分类准确率、OA、AA、Kappa在内的完整分类准确率数据，
                     % acc_avg表示20次重复计算得到的完整分类准确率的平均值
                     OA_detail = zeros(n, iColomn); %记录在黄金分割点上重复计算20次获得的20个OA值
@@ -948,18 +984,18 @@ end
 					
 					% 以hiddenLayerNum和stopLayerNum来决定寻优层数
 					% 即隐含层层数总是从1层到stopLayerNum+1层
-					
-                    time_Layer(1) = toc(timerVal_1);
-                    for i = 1:iteration
+					% hiddenNum = zeros(1,iteration);
+                    time_start = toc(timerVal_1);
+                    for i = 1: iteration
                         % 隐含层节点数为Nhd_min*i;
-                        hiddenNum = Nhd_min*i;
+                        %hiddenNum(i) = Nhd_min*i + 14;
                         % 更新输入变量paraTable_c
                         for iLayer = 1:stopNum
                             paraTable_c.hiddenLayerNum = iLayer;
-                            paraTable_c.hiddenNum = hiddenNum;
+                            paraTable_c.hiddenNum = hiddenNum(i);
                             if iLayer>1
                                 for j = 1:iLayer-1
-                                    estr = ['paraTable_c.hiddenNum',num2str(j),' = hiddenNum;'];
+                                    estr = ['paraTable_c.hiddenNum',num2str(j),' = ', num2str(hiddenNum(i)),';'];
                                     eval(estr);
                                 end
                             end
@@ -998,26 +1034,31 @@ end
                             %     "hLayerNumOptimiza…"    "true"    "startLayerNum"    "1"    "stopLayerNum"    "4"    
 
                             % 输出2个列向量，20次分类结果的平均值avgResult_20iter, 和20次分类结果的OA值，OA_20iter
-                            [avgResult_20iter, OA_20iter, ~] = fcn2(n, N, setsNum, mappedA, lbs, rate, type, var);
-                            acc_avg(:, (iteration-1)*5+iLayer) = avgResult_20iter;
-                            OA_detail(:, (iteration-1)*5+iLayer) = OA_20iter;    
-                            OA_avg(:, (iteration-1)*5+iLayer) = mean(OA_20iter);
-                            time_Layer((iteration-1)*5+iLayer) = toc(timerVal_1) - time_Layer(end);                           
+                            [avgResult_20iter, OA_20iter, avgError_20iter] = fcn2(n, N, setsNum, mappedA, lbs, rate, type, var);
+                            acc_avg(:, (i-1)*stopNum+iLayer) = avgResult_20iter;
+                            OA_detail(:, (i-1)*stopNum+iLayer) = OA_20iter;    
+                            OA_avg(:, (i-1)*stopNum+iLayer) = mean(OA_20iter);
+                            err_avg(:, (i-1)*stopNum+iLayer) = avgError_20iter;
+                            time_Layer((i-1)*stopNum+iLayer) = toc(timerVal_1) - time_start;
                         end
                     end
-                                      
+                    timeLayer = zeros(1, numel(time_Layer));
+                    for i = 2:numel(time_Layer)
+                        timeLayer(i) = time_Layer(i)-time_Layer(i-1);
+                    end
+                    timeLayer(1) = time_Layer(1);
             end
             %## 保存隐含层层数寻优结果
             %# 为cell的每一列创建列名称 VariableNames
             % hNum1hLayer1~hNum1hLayer5, hNum2hLayer1~hNum2hLayer5, ……，hNum6hLayer1~hNum6hLayer5
             VariableNames = cell(1, iColomn);
             for i = 1:iteration
-                for iLayer = 1:5
-                    VariableNames{i}= ['hNum',num2str(i),'hLayer',num2str(iLayer)];
+                for iLayer = 1:stopNum
+                    VariableNames{(i-1)*stopNum+iLayer}= ['hNum=',num2str(hiddenNum(i)),' hLayer=',num2str(iLayer)];
                 end
             end
             %# 创建行的名称 RowNames1，必须是字符元胞数组或者字符串数组；
-            [size_1, size_2] = size([acc_avg; time_Layer]);
+            [size_1, size_2] = size([acc_avg; timeLayer]);
             RowNames1(1:size_1-4) = "class_"+string(1:(size_1-4)); 
             RowNames1(size_1-3) = "OA";
             RowNames1(size_1-2) = "AA";
@@ -1028,10 +1069,22 @@ end
             RowNames2 = "iter_"+string(1:size_3); 
             RowNames2(size_3+1) = "average";
             RowNames2(size_3+2) = "std";
+            
+            %# 生成Excel文件保存地址
+            % 生成文件夹名称
+            path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
+            try
+                path = fullfile(path, hmenu4_1.UserData.datasetName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
+            catch
+            end
+            % 如果生成的文件夹名称不存在，则先创建文件夹
+            if ~exist(path, 'dir')
+                [status,msg,msgID] = mkdir(path);
+            end
             % path已经有了，filename重新生成
             filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'_hLayerOptimization','.xlsx'];
             filename = fullfile(path, filename);
-            accTable = array2table([acc_avg; time_Layer], 'VariableNames', VariableNames);
+            accTable = array2table([acc_avg; timeLayer], 'VariableNames', VariableNames);
             accTable.Properties.RowNames = RowNames1;
             % Sheet 1保存优化30列（6个隐含层节点与5个隐含层）分类结果acc_avg。
             % 每一列都是20次重复计算的分类准确率的平均值，包括各类别的分类准确率，以及OA, AA, Kappa
@@ -1041,7 +1094,6 @@ end
             OATable = array2table([OA_detail; OA_avg; std(OA_detail)], 'VariableNames', VariableNames);
             OATable.Properties.RowNames = RowNames2;
             writetable(OATable,filename,'Sheet',2,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);  
-            %# 隐含层层数寻优结果保存完毕
             
             %# 网络信息保存
             %% 保存有关分类结果及网络配置的详细信息到附加Sheet中
@@ -1065,13 +1117,141 @@ end
             writetable(info_1, filename, 'Sheet',3,'Range','A3', 'WriteRowNames',true, 'WriteVariableNames', true);
             %# 单独处理cmap
             info_cmap = hmenu4_1.UserData.cmap;
-            VariableNames = ["R","G","B"]; %VariableNames属性为字符向量元胞数组{'R','G','B'}。
+            variableNames = ["R","G","B"]; %VariableNames属性为字符向量元胞数组{'R','G','B'}。
             % 如需指定多个变量名称，请在字符串数组["R","G","B"]或字符向量元胞数组{'R','G','B'}中指定这些名称。
-            % 创建行的名称 RowNames，格式为字符串数组["1","2","3"]或字符向量元胞数组{'1','2','3'}；
-            RowNames = string(1:size(info_cmap,1)); % ；
-            info_cmap = array2table(info_cmap, 'VariableNames', VariableNames);
-            info_cmap.Properties.RowNames = RowNames;
-            writetable(info_cmap,filename,'Sheet',3,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);     
+            % 创建行的名称 RowNames3，格式为字符串数组["1","2","3"]或字符向量元胞数组{'1','2','3'}；
+            RowNames3 = string(1:size(info_cmap,1)); % ；
+            info_cmap = array2table(info_cmap, 'VariableNames', variableNames);
+            info_cmap.Properties.RowNames = RowNames3;
+            writetable(info_cmap,filename,'Sheet',3,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);
+
+            %# 创建行的名称 RowNames4，必须是字符元胞数组或者字符串数组；
+            [size_5, size_6] = size(err_avg);
+            if size_5==8
+                RowNames4 = {'err_perf1','err_perf2','err_vperf1','err_vperf2','err_tperf1','err_tperf2','racc1','racc2'};
+            elseif size_5==4
+                RowNames4 = {'err_perf','err_vperf','err_tperf','racc'};
+            end
+            errTable = array2table(err_avg, 'VariableNames', VariableNames);
+            errTable.Properties.RowNames = RowNames4;
+            % Sheet 3保存优化30列（6个隐含层节点与5个隐含层）训练性能数据err_avg。
+            % 每一列都是20次重复计算的训练性能数据的平均值，包括各类别的分类准确率，以及OA, AA, Kappa
+            writetable(errTable,filename,'Sheet',4,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);            
+            %# 隐含层层数寻优结果保存完毕
+            
+            %% 绘制性能曲线（在训练集、验证集、测试集上的性能）       
+            %# 绘制错误率曲线
+            % path = "C:\Matlab练习\Project20191002\工程测试\2022-06-13 00-57-38\Botswana\PCA\GA_TANSIG";
+            % excelPath = "C:\Matlab练习\Project20191002\工程测试\2022-06-13 00-57-38\Botswana\PCA\GA_TANSIG\Botswana_PCA_GA_TANSIG_hLayerOptimization.xlsx";
+            % errTable = readtable(excelPath,'Sheet',4, 'ReadRowNames',true);
+            % 使用第一个维度名称访问行名称, errTable.Row
+            % 使用第二个维度名称访问数据, T.Variables 此语法等效于 T{:, :}。
+            errArray = errTable.Variables;
+            [s1, s2] = size(errArray);     % 8×50 double
+            hiddenLayerNum = 5;
+            setsNum = s1/4;
+            iteration = s2/hiddenLayerNum;
+            for i = 1:iteration
+                errData = errArray(:, 1+(i-1)*hiddenLayerNum : i*hiddenLayerNum)';
+                err_perf = errData(:, 1:setsNum);
+                err_vperf = errData(:, 1+setsNum:setsNum*2);
+                err_tperf = errData(:, 1+setsNum*2:setsNum*3); 
+                racc = errData(:, 1+setsNum*3:setsNum*4);
+                [size_1, size_2] = size(err_perf);
+
+                %## 绘制误差率曲线
+                % plotErr(err_perf, err_vperf, err_tperf, racc, 4);
+                p = figure();
+                plot((1:size_1)',[err_perf, err_vperf, err_tperf], 'LineWidth',1.5);
+                title(['训练性能误差率曲线(hiddenNum=',num2str(hiddenNum(i)),')'],'Interpreter','none');
+                xlabel('层数');
+                ylabel('误差率');
+                    %racc 误分率，错误率
+                    %err_perf 训练集最佳性能（蓝色曲线）
+                    %err_vperf 验证集最佳性能（绿色曲线）
+                    %err_tperf 测试集最佳性能（红色曲线）
+                    %tTest 为预测的类别标签列向量
+                try %若err有两列，即优化前后的数据各占一列，则下面的语句会继续处理第2列数据
+                    legend('err_perf1','err_perf2','err_vperf1','err_vperf2','err_tperf1','err_tperf2','Interpreter','none','Location','best');  
+                    %1表示优化前的数据，2表示优化后的数据
+                catch%若err仅含有一列数据，则按照一列的情形设置图例
+                    legend('err_perf','err_vperf','err_tperf','Interpreter','none','Location','best');  
+                end
+                xticks((1:size_1));  % 将x轴上的刻度设置为整数
+                filename_2 = fullfile(path, ['不同层数隐含层的神经网络的训练性能曲线_误差率', '(hiddenNum=',num2str(hiddenNum(i)),')']); %拼接路径
+                saveas(gcf, filename_2);        % 保存为fig
+                saveas(gcf, filename_2,'jpg'); %保存为jpg
+
+                %## 绘制准确率曲线       
+                %plotAcc(1-err_perf, 1-err_vperf, 1-err_tperf);
+                p=figure();
+                plot((1:size_1)',[1-err_perf, 1-err_vperf, 1-err_tperf], 'LineWidth',1.5);
+                title(['训练性能准确率曲线','(hiddenNum=',num2str(hiddenNum(i)),')'],'Interpreter','none');
+                xlabel('层数');
+                ylabel('准确率');
+                    %racc 误分率，错误率
+                    %err_perf 训练集最佳性能（蓝色曲线）
+                    %err_vperf 验证集最佳性能（绿色曲线）
+                    %err_tperf 测试集最佳性能（红色曲线）               
+                try %若acc有两列，即优化前后的数据各占一列，则下面的语句会继续处理第2列数据
+                    legend('acc_perf1','acc_perf2','acc_vperf1','acc_vperf2','acc_tperf1','acc_tperf2','Interpreter','none','Location','best');  
+                    %1表示优化前的数据，2表示优化后的数据
+                catch%若acc仅含有一列数据，则按照一列的情形设置图例
+                    legend('acc_perf','acc_vperf','acc_tperf','Interpreter','none','Location','best');  
+                end
+                xticks((1:size_1));  % 将x轴上的刻度设置为整数
+                filename_2 = fullfile(path, ['不同层数隐含层的神经网络的训练性能曲线_准确率', '(hiddenNum=',num2str(hiddenNum(i)),')']); %拼接路径
+                saveas(gcf, filename_2);        % 保存为fig
+                saveas(gcf, filename_2,'jpg'); %保存为jpg
+            end
+            
+            %% 整理出acc_matrix并绘制曲线
+            % 找到'OA'所在的行索引
+            [Lia,Locb] = ismember('OA', accTable.Row);
+            % 输出结果：Lia = logical 1，Locb = 15。而N=14, 'OA'恰好位于第N+1行
+            if Lia
+                size_row = numel(hiddenNum);
+                size_col = stopNum;
+                %## 
+                % acc_avg(N+1, 1+(i-1)*5:5*i)
+                % 先将acc_avg按照acc_avg(N+1, 1+(i-1)*5:5*i)取出来，每一次作为一列。整理成5行numel(hiddenNum)列的矩阵acc_matrix。
+                % 1. 现在的绘图方式是，将隐含层节点数固定，研究隐含层的层数从1层增加到5层所导致的网络分类准确率的变化。
+                % 如果将每一列绘制成一条曲线。纵坐标为准确率，横坐标为隐含层层数。legend为隐含层节点数。
+                % 则可以说明网络分类准确率与隐含层节点数直接的关系。
+                acc_matrix = reshape(accTable{Locb,:}, stopNum, []); %5行10列，每一列都是同一个隐含层节点数在1~5层隐含层的情况下的分类准确率
+                figure()
+                plot((1:stopNum)', acc_matrix, 'LineWidth',1.5);
+                title(['不同隐含层节点数的准确率曲线'],'Interpreter','none');
+                ylabel('准确率');
+                xlabel('隐含层层数');
+                % legend(labels), labels使用字符向量元胞数组、字符串数组
+                legend(["隐含层节点数="+string(hiddenNum(1):hiddenNum(2)-hiddenNum(1):hiddenNum(end))],'Interpreter','none','Location','best');
+                xticks((1:size_1));  % 将x轴上的刻度设置为整数
+                
+                filename_2 = ['不同节点数隐含层的神经网络的准确率','(hiddenNum=',num2str(hiddenNum(1)),'-',num2str(hiddenNum(2)-hiddenNum(1)),'-',num2str(hiddenNum(end)),')'];
+                filename_2 = fullfile(path, filename_2); %拼接路径
+                saveas(gcf, filename_2);        % 保存为fig
+                saveas(gcf, filename_2,'jpg'); %保存为jpg
+                %##
+                % 2. 另外一种绘图方式可以是，在隐含层层数固定的情况下，绘制出隐含层节点数与网络分类准确率的关系曲线。
+                % 这样当隐含层的层数从1层增加到5层时，就能绘制出5条曲线。
+                % 这5条曲线放在一起比分类准确率的高低，就能说明网络深度与分类准确率的关系。
+                % 绘制acc_matrix的转置矩阵。 
+                figure()
+                %plot((1:numel(hiddenNum))', acc_matrix');
+                plot(hiddenNum', acc_matrix', 'LineWidth',1.5);
+                title(['不同隐含层层数的准确率曲线'],'Interpreter','none');
+                ylabel('准确率')
+                xlabel('隐含层节点数')
+                legend(["隐含层层数="+string(1:stopNum)],'Interpreter','none','Location','best');
+                xticks(hiddenNum);  % 将x轴上的刻度设置为整数
+                xlim([hiddenNum(1) hiddenNum(end)]);
+                % 优化前的5条绘制一幅图，优化后的5条绘制一幅图？fcn2()仅返回优化后的分类准确率，舍弃掉了优化前的分类准确率
+                filename_2 = ['不同层数隐含层的神经网络的准确率','(hLayerNum=1-1-',num2str(stopNum),')'];
+                filename_2 = fullfile(path, filename_2); %拼接路径
+                saveas(gcf, filename_2);        % 保存为fig
+                saveas(gcf, filename_2,'jpg'); %保存为jpg
+            end
         end
             
     %% 如果加载数据完毕，未选择[执行降维]而直接选择[执行分类]，则询问是否启动classificationLearner
@@ -1804,19 +1984,19 @@ function [avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate,
 end
 
 %% 子函数（用于在固定隐含层节点数的情况下计算不同层数的分类准确率）
-function [avgResult_20iter, OA_20iter, errTable] = fcn2(n, N, setsNum, mappedA, lbs, rate, type, var)
+function [avgResult_20iter, OA_20iter, avgError_20iter] = fcn2(n, N, setsNum, mappedA, lbs, rate, type, var)
 
-	%# n,N,sets这三个参数主要用于保存分类结果的各个变量的初始化
-	acc_best = zeros(setsNum, setsNum); % 记录n次迭代下的最高准确率OA的值
-	% acc_best(1,1)保存优化前的最高acc值; acc_best(2, 2)保存优化后的最高acc值
-	% acc_best(1,2)保存优化前的最高acc值对应的网络在优化后的准确率值
-	% acc_best(2,1)保存优化后的最高acc值对应的网络在优化前的准确率值
-	net_best = cell(setsNum, setsNum); % 记录最高准确率下训练好的网络（用于绘制GT图）
-	% net_best{1,1}保存优化前具有最高acc值的网络; net_best{2, 2}保存优化后具有最高acc值的网络
-	% net_best{1,2}保存优化前具有最高acc值的网络在优化后的网络
-	% net_best{2,1}保存优化后具有最高acc值的网络在优化前的网络
+	% %# n,N,sets这三个参数主要用于保存分类结果的各个变量的初始化
+	% acc_best = zeros(setsNum, setsNum); % 记录n次迭代下的最高准确率OA的值
+	% % acc_best(1,1)保存优化前的最高acc值; acc_best(2, 2)保存优化后的最高acc值
+	% % acc_best(1,2)保存优化前的最高acc值对应的网络在优化后的准确率值
+	% % acc_best(2,1)保存优化后的最高acc值对应的网络在优化前的准确率值
+	% net_best = cell(setsNum, setsNum); % 记录最高准确率下训练好的网络（用于绘制GT图）
+	% % net_best{1,1}保存优化前具有最高acc值的网络; net_best{2, 2}保存优化后具有最高acc值的网络
+	% % net_best{1,2}保存优化前具有最高acc值的网络在优化后的网络
+	% % net_best{2,1}保存优化后具有最高acc值的网络在优化前的网络
 
-	tTest_best = cell(1, setsNum);
+	% tTest_best = cell(1, setsNum);
 	% tTest_best也可以初始化为cell(setsNum, setsNum)，考虑到会极大消耗存储空间，
 	% 于是将其初始化为cell(1, setsNum)。
 	% tTest_best{1,1}保存优化前具有最高acc值的网络预测向量结果; 
@@ -1863,16 +2043,16 @@ function [avgResult_20iter, OA_20iter, errTable] = fcn2(n, N, setsNum, mappedA, 
 			% 记录一个优化前的最高值，记录一个优化后的最高值。
 			% 如果优化前后的两个最高准确率不是发生同一次（第k次）怎么办？
 			% 记录优化前和优化后的最优值
-            if acc(k, iset) > acc_best(iset, iset)    
-				% acc_best(1,1)保存优化前的最高acc值; acc_best(2, 2)保存优化后的最高acc值
-				% acc_best(1,2)保存优化前的最高acc值对应的网络在优化后的准确率值
-				% acc_best(2,1)保存优化后的最高acc值对应的网络在优化前的准确率值
-				acc_best(iset, :)=acc(k, :);
-				net_best(iset, :)=netTrained;
-				tTest_best(1, iset)=predictedVector(iset);
-				% tTest_best{1,1}保存优化前具有最高acc值的网络的预测向量结果；
-				% tTest_best{1,2}保存优化后具有最高acc值的网络的预测向量结果。                  
-            end
+            % if acc(k, iset) > acc_best(iset, iset)    
+				% % acc_best(1,1)保存优化前的最高acc值; acc_best(2, 2)保存优化后的最高acc值
+				% % acc_best(1,2)保存优化前的最高acc值对应的网络在优化后的准确率值
+				% % acc_best(2,1)保存优化后的最高acc值对应的网络在优化前的准确率值
+				% acc_best(iset, :)=acc(k, :);
+				% net_best(iset, :)=netTrained;
+				% tTest_best(1, iset)=predictedVector(iset);
+				% % tTest_best{1,1}保存优化前具有最高acc值的网络的预测向量结果；
+				% % tTest_best{1,2}保存优化后具有最高acc值的网络的预测向量结果。                  
+            % end
         end
     end
 
@@ -1907,9 +2087,10 @@ function [avgResult_20iter, OA_20iter, errTable] = fcn2(n, N, setsNum, mappedA, 
 	OA_20iter = c(size2+1,1:n,end)'; % 返回c中的OA一行
 	% 返回训练性能数据 T1
 	T1 = createTableForWrite(err_perf, err_vperf, err_tperf, racc);
-	errTable = [T1.Variables; mean(T1.Variables); std(T1.Variables)];  % T1.Variables 是20×8 double
-	errTable = array2table(errTable, 'VariableNames', T1.Properties.VariableNames);
-	errTable.Properties.RowNames = [T1.Properties.RowNames; {'average'}; {'std'}]; %新增2行的行名称	
-	errTable = T1;
+	avgError_20iter = mean(T1.Variables)';
+	% errTable = [T1.Variables; mean(T1.Variables); std(T1.Variables)];  % T1.Variables 是20×8 double
+	% errTable = array2table(errTable, 'VariableNames', T1.Properties.VariableNames);
+	% errTable.Properties.RowNames = [T1.Properties.RowNames; {'average'}; {'std'}]; %新增2行的行名称	
+	% errTable = T1;
 	% 
 end
