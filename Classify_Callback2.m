@@ -195,11 +195,21 @@ end
         err_vperf = zeros(n, setsNum); %（即trainRecord.best_vperf）
         err_tperf = zeros(n, setsNum); %（即trainRecord.best_tperf）       
 %% 利用黄金分割搜索法来寻找各个隐藏层神经元的最佳个数
-% 这里仅针对单个隐层进行寻优，以说明寻找最佳隐含层节点数的过程，但是对于多个隐含层的情况，
-% 这种方法并不见得就有好的效果，例如单隐层huston.mat数据集上0.2的训练集，1~100的寻优结果为85
-% 这个效果会好于双隐层，每层只有40个节点的网络吗？不一定。因为通常而言，窄而深的网络分类效果更好。
-% 而在单层优化时，节点越多效果越好。
-% 所以单层的结论有可能不适用于多层。
+
+% 数据位于filename = "C:\Matlab练习\Project20191002\工程测试\2022-06-12 14-07-04\Botswana\PCA\GA_TANSIG\Botswana_PCA_GA_TANSIG.xlsx";
+% 该数据为2层隐含层的网络，且逐层累积迭代寻优的结果，
+% 即在第一层节点数优化时，第二层（以及其他）隐含层的节点数使用的是默认的20。
+% 当第一层最后一个黄金分割点被代入到var中的hiddenNum参数中，并计算出分类准确率后，
+% 第一层寻优就完成了，程序就进入了第二层（即iLayer从1变为2），var中的第一层隐含层节点数参数hiddenNum就不再被改动了
+% 同理，当第二层最后一个黄金分割点被代入到var中的hiddenNum1参数中，并计算出分类准确率后，
+% 第二层寻优就完成了，程序就进入了第三层（即iLayer从2变为3），
+% var中的第一层和第二层隐含层节点数参数hiddenNum和hiddenNum1就不再被改动了
+% 所以，Classify_Callback2.m中这个264~420行的代码块，特别适合从第一层隐含层开始，中间不跳层，到第N层隐含层的逐层累积迭代寻优
+
+% 但是目前上述excel文件sheet 5 中获得的第一隐含层的黄金分割点，到最后面竟然出现了左右横跳的情况，
+% 比如第15~20个黄金分割点是[97, 95, 99, 94, 96, 98]
+% 所以，对最终黄金分割点的确定，代码还需要改进，这是第一个问题
+
         if paraTable_c.hiddenNumOptimization
             % 询问是否要进行黄金分割法来寻找隐含层节点数的最优值
             quest = {'\fontsize{10} 是否要使用黄金分割法来寻找隐含层节点数的最优值？'};
@@ -219,8 +229,6 @@ end
                     Ni = size(hmenu4_3.UserData.drData, 2); %输入层节点数记为Ni，10249x5 double
                     No = N; %输出层节点数记为No
                     Nh = []; %隐含层节点数记为Nh
-                    a = paraTable_c.startNum; % 区间下界；向零取整，以免遗漏任何一个可能的节点数
-                    b = paraTable_c.stopNum; %区间上界；         
                     gold_point = cell(1,paraTable_c.hiddenLayerNum);%记录黄金分割点
                     acc_avg = cell(1,paraTable_c.hiddenLayerNum);   
                     % acc表示包含各类别分类准确率、OA、AA、Kappa在内的完整分类准确率数据，
@@ -265,6 +273,8 @@ end
                     %     "hLayerNumOptimiza…"    "true"    "startLayerNum"    "1"    "stopLayerNum"    "4" 
                     for iLayer=1 : paraTable_c.hiddenLayerNum  % 每个隐藏层一个大循环
                         N_1 = n; %每个黄金分割点上的计算次数就按照ParametersForDimReduceClassify.xlsx中设定的迭代次数executionTimes来吧。
+                        a = paraTable_c.startNum; % 区间下界；向零取整，以免遗漏任何一个可能的节点数
+                        b = paraTable_c.stopNum; %区间上界；
                         acc_avg{iLayer} = [];    %  用于迭代保存多个列数据，每一列代表在一个黄金分割点上20次重复计算得到的分类结果
                                                                 %（即对20次分类结果的[各类别的准确率，OA,AA,kappa]取平均所得到的一列数据）
                         OA_detail{iLayer} = []; %  用于迭代保存多个列数据，每一列代表在一个黄金分割点上20次重复计算得到的20个OA值
