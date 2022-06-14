@@ -673,7 +673,7 @@ end
                 end
                 RowNames(i+1 : i+3) = {'OA', 'AA', 'Kappa'};
                 i = i+3;
-                RowNames(i+1: i+size_3) = cellstr(string(1:size_3));
+                RowNames(i+1: i+size_3) = cellstr("iter_"+string(1:size_3));
                 i = i+size_3;
                 RowNames(i+1 : i+2)  = {'average', 'std'};
                 % path，filename都已经有了
@@ -944,9 +944,9 @@ end
                     % % 隐含层层数总是从1层到stopLayerNum+1层
 					
 					%## 手动指定要遍历的隐含层节点数
-                    % hiddenNum = [105, 110, 115, 120, 125, 130, 135, 140, 145, 150];
+                    hiddenNum = [150]; %, 120, 125, 130, 135, 140, 145, 150];
                     % hiddenNum = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
-                    hiddenNum = [55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
+                    % hiddenNum = [55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
                     if ~exist('Nhd_min', 'var')
                         if exist('hiddenNum', 'var')
                             if hiddenNum(:)~=0
@@ -1236,10 +1236,18 @@ end
                 ylabel('准确率');
                 xlabel('隐含层层数');
                 % legend(labels), labels使用字符向量元胞数组、字符串数组
-                legend(["隐含层节点数="+string(hiddenNum(1):hiddenNum(2)-hiddenNum(1):hiddenNum(end))],'Interpreter','none','Location','best');
+                try
+                    legend(["隐含层节点数="+string(hiddenNum(1):hiddenNum(2)-hiddenNum(1):hiddenNum(end))],'Interpreter','none','Location','best');
+                catch
+                    legend("隐含层节点数="+string(hiddenNum(1)),'Interpreter','none','Location','best');
+                end
                 xticks((1:size_1));  % 将x轴上的刻度设置为整数
                 
-                filename_2 = ['不同节点数隐含层的神经网络的准确率','(hiddenNum=',num2str(hiddenNum(1)),'-',num2str(hiddenNum(2)-hiddenNum(1)),'-',num2str(hiddenNum(end)),')'];
+                try
+                    filename_2 = ['不同节点数隐含层的神经网络的准确率','(hiddenNum=',num2str(hiddenNum(1)),'-',num2str(hiddenNum(2)-hiddenNum(1)),'-',num2str(hiddenNum(end)),')'];
+                catch
+                    filename_2 = ['不同节点数隐含层的神经网络的准确率','(hiddenNum=',num2str(hiddenNum(1)),')'];
+                end   
                 filename_2 = fullfile(path, filename_2); %拼接路径
                 saveas(gcf, filename_2);        % 保存为fig
                 saveas(gcf, filename_2,'jpg'); %保存为jpg
@@ -1256,7 +1264,10 @@ end
                 xlabel('隐含层节点数')
                 legend(["隐含层层数="+string(1:stopNum)],'Interpreter','none','Location','best');
                 xticks(hiddenNum);  % 将x轴上的刻度设置为整数
-                xlim([hiddenNum(1) hiddenNum(end)]);
+                try
+                    xlim([hiddenNum(1) hiddenNum(end)]);
+                catch
+                end
                 % 优化前的5条绘制一幅图，优化后的5条绘制一幅图？fcn2()仅返回优化后的分类准确率，舍弃掉了优化前的分类准确率
                 filename_2 = ['不同层数隐含层的神经网络的准确率','(hLayerNum=1-1-',num2str(stopNum),')'];
                 filename_2 = fullfile(path, filename_2); %拼接路径
