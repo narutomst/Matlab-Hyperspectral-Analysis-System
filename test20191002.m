@@ -973,15 +973,19 @@ hmenu4_1.UserData.drDims = para{2};
 %     disp([type, para,'执行降维..........']);
     
     try
-%     [mappedA, mapping] = compute_mapping(A, type, para{2}, para(3:end));
-%     以这种Name-Value参数输入方式的是不行的，因为在查看tsne.m文件时，发现其参数要求是：仅限值输入
-% ydata = tsne(X, labels, no_dims, initial_dims, perplexity)
-% 错误示例
-% [mappedA, mapping] = compute_mapping(A, type, para{2}, 'perplexity',[10], 'initial_dims',[30], 'eig_impl', "JDQR")
-% 正确示例
-% [mappedA, mapping] = compute_mapping(A, type, para{2}, 10, 30, "JDQR");
+        %     [mappedA, mapping] = compute_mapping(A, type, para{2}, para(3:end));
+        %     以这种Name-Value参数输入方式的是不行的，因为在查看tsne.m文件时，发现其参数要求是：仅限值输入
+        % ydata = tsne(X, labels, no_dims, initial_dims, perplexity)
+        % 错误示例
+        % [mappedA, mapping] = compute_mapping(A, type, para{2}, 'perplexity',[10], 'initial_dims',[30], 'eig_impl', "JDQR")
+        % 正确示例
+        % [mappedA, mapping] = compute_mapping(A, type, para{2}, 10, 30, "JDQR");
 
         [mappedA, mapping] = compute_mapping(A, type, para{2}, t{2:end});
+        % 要求：1. 输入矩阵A中的每一行数据是一个样本；
+        % 2. 对于有监督的降维技术（'LDA', 'GDA', 'NCA', 'MCML', and 'LMNN'），
+        % 实例的标签应该在A的第一列（使用数字标签numeric labels）中指定。
+        % 输出mappedA的每一行数据为一个样本
     catch
         [mappedA, mapping] = compute_mapping(A, type, para{2});
     end
