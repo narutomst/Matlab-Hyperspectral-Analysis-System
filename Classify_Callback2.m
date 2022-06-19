@@ -7,7 +7,7 @@ hmenu4_1 = findobj(handles,'Label','加载数据');
 hmenu4_3 = findobj(handles,'Label','执行降维');
 
 if isempty(hmenu4_3.UserData) || ~isfield(hmenu4_3.UserData, 'drData') || isempty(hmenu4_3.UserData.drData)
-    mappedA = hmenu4_1.UserData.x2;         %若数据未做降维，从【加载数据】对象取数据
+    mappedA = double(hmenu4_1.UserData.x2);         %若数据未做降维，从【加载数据】对象取数据
     disp('注意：数据未做降维处理，直接分类可能需要消耗更多时间！');
 else
     mappedA = hmenu4_3.UserData.drData;  %若数据已经做了降维，从【执行降维】对象取数据
