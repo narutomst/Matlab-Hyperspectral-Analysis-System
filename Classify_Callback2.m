@@ -477,7 +477,7 @@ end
         %     "20"    "transferFcn2"    "tansig"    "hiddenNum3"    "20"    "transferFcn3"    "tansig"    "hiddenNum4"    "20"
         %     "transferFcn4"    "tansig"    "hiddenNumOptimiza…"    "true"    "startNum"    "1"    "stopNum"    "100"
         %     "hLayerNumOptimiza…"    "true"    "startLayerNum"    "1"    "stopLayerNum"    "4" 
- if 1       
+ if 1  %# 按照ParametersForDimReduceClassify中设定的参数进行常规分类    
         for k = 1 : n
             [mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
             XTrain = table2array(mA1(:, 1:end-1))';  %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
@@ -1298,7 +1298,7 @@ end
         answer = questdlg(quest, dlgtitle, btn1, btn2, btn3, opts);
                                         
         % Handle response
-        switch answer
+		switch answer
             case 'Clssification Learner'
                 disp([answer ' 开启.'])
                 %dessert = 1;
@@ -1377,7 +1377,7 @@ end
                 % 这个效果会好于双隐层，每层只有40个节点的网络吗？不一定。因为通常而言，窄而深的网络分类效果更好。
                 % 而在单层优化时，节点越多效果越好。
                 % 所以单层的结论和可能不适用于多层。
-                if paraTable_c.hiddenNumOptimization
+				if paraTable_c.hiddenNumOptimization
                     % 询问是否要进行黄金分割法来寻找隐含层节点数的最优值
                     quest = {'\fontsize{10} 是否要使用黄金分割法来寻找隐含层节点数的最优值？'};
                              % \fontsize{10}：字体大小修饰符，作用是使其后面的字符大小都为10磅；
@@ -1390,153 +1390,190 @@ end
                     answer_hiddenNumOptimization = questdlg(quest, dlgtitle, btn1, btn2, opts);
 
                     % Handle response
-                    switch answer_hiddenNumOptimization
-                        case '是'
-                            time_1 = toc(timerVal_1);
-                            Ni = size(hmenu4_3.UserData.drData, 2); %输入层节点数记为Ni，10249x5 double
-                            No = N; %输出层节点数记为No
-                            Nh = []; %隐含层节点数记为Nh
-                            a = paraTable_c.startNum; % 区间下界；向零取整，以免遗漏任何一个可能的节点数
-                            b = paraTable_c.stopNum; %区间上界；         
-                            gold_point = cell(1,paraTable_c.hiddenLayerNum);%记录黄金分割点
-                            acc_avg = cell(1,paraTable_c.hiddenLayerNum);%记录分割点对应的准确率
+					switch answer_hiddenNumOptimization
+						
+						case '是'
+							time_1 = toc(timerVal_1);
+							Ni = size(hmenu4_3.UserData.drData, 2); %输入层节点数记为Ni，10249x5 double
+							No = N; %输出层节点数记为No
+							Nh = []; %隐含层节点数记为Nh        
+							gold_point = cell(1,paraTable_c.hiddenLayerNum);%记录黄金分割点
+							acc_avg = cell(1,paraTable_c.hiddenLayerNum);%记录分割点对应的准确率
+							OA_detail = cell(1,paraTable_c.hiddenLayerNum); %记录在黄金分割点上重复计算20次获得的20个OA值
+							%# 生成首次隐含层节点优化时的var，作为classDemo()函数的输入参数
+							OA_avg = cell(1,paraTable_c.hiddenLayerNum); % 记录mean(OA_detail{iLayer})
+							time_goldSection = zeros(1,paraTable_c.hiddenLayerNum); %记录每一层节点数优化所消耗的时间
 
-                            for iLayer=1 : paraTable_c.hiddenLayerNum  % 每个隐藏层一个大循环
-                                N_1 = 20; %每个黄金分割点上的计算次数。
-                                flag=1;
+							t = table2cell(paraTable_c);                             
+							k = numel(t);                        % 28
+							para = cell(1,2*k);                 % 1×56 cell 数组
+							for i = 1:k
+								para{2*i-1} = paraTable_c.Properties.VariableNames{i};
+								para{2*i} = t{i};            
+							end                            
+							var = cellfun(@string, para(9:end)); 
+							for iLayer=1 : paraTable_c.hiddenLayerNum  % 每个隐藏层一个大循环
+								N_1 = n; %每个黄金分割点上的计算次数。
+								a = paraTable_c.startNum; % 区间下界；向零取整，以免遗漏任何一个可能的节点数
+								b = paraTable_c.stopNum; %区间上界； 
+								acc_avg{iLayer} = [];    %  用于迭代保存多个列数据，每一列代表在一个黄金分割点上20次重复计算得到的分类结果
+																		%（即对20次分类结果的[各类别的准确率，OA,AA,kappa]取平均所得到的一列数据）
+								OA_detail{iLayer} = []; %  用于迭代保存多个列数据，每一列代表在一个黄金分割点上20次重复计算得到的20个OA值
+								OA_avg{iLayer} = []; % 记录mean(OA_detail{iLayer})
+								% 找到var中需要更新的参数的序号，即更新var中的第LayerNum个隐含层的节点数为x(i), hiddenNumLayerNum
+								TF = contains(var, 'hiddenNum');
+								if iLayer>1
+									TF = contains(var, ['hiddenNum', num2str(iLayer)]);
+								end
+								str_idx = find(TF);
 
-                                while(flag)
-                                    x_1 = a + 0.382*(b-a); %x_1和x_2总是位于区间中间
-                                    x_2 = a + 0.618*(b-a); %所以为了不漏掉可能的点，x_1的整数值应该尽量向左端点约值，x_2的整数值应该尽量向右端点约值
-                                    x = [floor(x_1), ceil(x_2)];              %每次取两个黄金分割点
+								flag=1;
+								while(flag)
+									x_1 = a + 0.382*(b-a); %x_1和x_2总是位于区间中间
+									x_2 = a + 0.618*(b-a); %所以为了不漏掉可能的点，x_1的整数值应该尽量向左端点约值，x_2的整数值应该尽量向右端点约值
+									x = [floor(x_1), ceil(x_2)];              %每次取两个黄金分割点
 
-                                    [Lia, Locb] = ismember(x, gold_point{iLayer}); %
-                                    % Lia = 1x2 logical array, 可能的值：[0,0] [1,0] [0,1] [1,1]
-                                    % Locb = 1xnumel(gold_point{iLayer})，可能的值（假定numel(gold_point{iLayer})=5）为：
-                                    % [0 0 0 0 0], [0 0 1 0 0], [0 0 0 0 1], [0 1 0 1 0]
-                                    % 
-                                    % Lia=[0,0]，表示x中的两个值在gold_point{iLayer}中没有查询到重复的情况,
-                                    % 这时的Locb = [0 0 0 0 0]
-                                    % Lia=[1,0],
-                                    % 表示x中第一个值与gold_point{iLayer}中的某个值重复，假设此时Locb=[0 0 1 0 0]
-                                    % 则说明重复在gold_point{iLayer}中的第三个数，这个数在gold_point{iLayer}中只有一个
-                                    % 其最小索引为1.
-                                    % Lia=[1,1] 表示x中的两个值与gold_point{iLayer}中的值重复，假设此时Locb=[0 1 0 1 0]
-                                    % 则说明重复在gold_point{iLayer}中的第二个数和第四个数，这两个数在gold_point{iLayer}中只出现了一次
-                                    % 因此最小最小索引都为1.
+									[Lia, Locb] = ismember(x, gold_point{iLayer}); %
+									% Lia = 1x2 logical array, 可能的值：[0,0] [1,0] [0,1] [1,1]
+									% Locb = 1xnumel(gold_point{iLayer})，可能的值（假定numel(gold_point{iLayer})=5）为：
+									% [0 0 0 0 0], [0 0 1 0 0], [0 0 0 0 1], [0 1 0 1 0]
+									% 
+									% Lia=[0,0]，表示x中的两个值在gold_point{iLayer}中没有查询到重复的情况,
+									% 这时的Locb = [0 0 0 0 0]
+									% Lia=[1,0],
+									% 表示x中第一个值与gold_point{iLayer}中的某个值重复，假设此时Locb=[0 0 1 0 0]
+									% 则说明重复在gold_point{iLayer}中的第三个数，这个数在gold_point{iLayer}中只有一个
+									% 其最小索引为1.
+									% Lia=[1,1] 表示x中的两个值与gold_point{iLayer}中的值重复，假设此时Locb=[0 1 0 1 0]
+									% 则说明重复在gold_point{iLayer}中的第二个数和第四个数，这两个数在gold_point{iLayer}中只出现了一次
+									% 因此最小最小索引都为1.
 
-                                    switch Lia(1)*2+Lia(2)
+									switch Lia(1)*2+Lia(2)
 
-                                        case 0 % 若x中两个数字都和gold_point中没有重复，则两个黄金分割点都计算，保存
-                                            acc = {[],[]}; %记录两个黄金分割点各20次的准确率
-                                            OA_avg = [0,0];%记录两个黄金分割点的平均准确率
-                                            for i = 1 : 2
-                                                for j = 1 : N_1
-                                                    c = fcn1(mappedA, lbs, rate, x(i), 'trainscg');
-                                                    % 这里为什么选择用fcn1()而不是别的具体的分类函数？比如f_TANSIG，f_GA_TANSIG,
-                                                    % f_PSO_TANSIG, f_RBF, f_GA_RBF, f_PSO_RBF
-                                                    acc{i} = [acc{i}, 1-c];
-                                                end
-                                                OA_avg(i) = mean(acc{i});
-                                            end
+										case 0 % 若x中两个数字都和gold_point中没有重复，则两个黄金分割点都计算，保存
 
-                                            if OA_avg(1) >= OA_avg(2)
-                                                b = ceil(x_2);
-                                            else
-                                                a = floor(x_1);
-                                            end
-                                            gold_point{iLayer} = [gold_point{iLayer}, x]
-                                            acc_avg{iLayer} = [acc_avg{iLayer}, OA_avg]
+											for i = 1 : 2
+												var(str_idx+1) = string(x(i));
+												% 输入参数 (n, N, setsNum, mappedA, lbs, rate, type, var)
+												% 输出2个列向量，20次分类结果的平均值avgResult_20iter, 和20次分类结果的OA值，OA_20iter
+												[avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate, type, var);                                     
+												acc_avg{iLayer} = [acc_avg{iLayer}, avgResult_20iter];
+												OA_detail{iLayer} = [OA_detail{iLayer}, OA_20iter]; 
+												OA_avg{iLayer} = [OA_avg{iLayer}, mean(OA_20iter)];
+											end
 
-                                        case 1 % 若x中第二个数与gold_point中的点重复，则只计算第一个，保存第一个
-                                            acc = []; %记录x中第一个黄金分割点各20次的准确率
-                                            OA_avg = [0];%记录x中第一个黄金分割点的平均准确率		
-                                            for j = 1 : N_1
-                                                [c, net] = fcn1(mappedA, lbs, rate, x(1), 'trainscg');
-                                                acc = [acc, 1-c];
-                                            end
-                                            OA_avg = mean(acc);
+											if OA_avg{iLayer}(end-1) >= OA_avg{iLayer}(end)
+												b = ceil(x_2);
+											else
+												a = floor(x_1);
+											end
+											gold_point{iLayer} = [gold_point{iLayer}, x];
 
-                                            if OA_avg >= acc_avg{iLayer}(nonzeros(Locb))
-                                                b = ceil(x_2);
-                                            else
-                                                a = floor(x_1);
-                                            end
+										case 1 % 若x中第二个数与gold_point中的点重复，则只计算第一个，保存第一个
+											% Lia=[0,1]，
+											% 表示x中第二个值与gold_point{iLayer}中的某个值重复，假设此时Locb=[0 0 1 0 0]
+											% 则说明重复在gold_point{iLayer}中的第三个数，这个数在gold_point{iLayer}中只有一个
+											% 其最小索引为1.
+											% 若x中第二个数与gold_point中的点重复，则只计算第一个，保存第一个
 
-                                            gold_point{iLayer} = [gold_point{iLayer}, x(1)]
-                                            acc_avg{iLayer} = [acc_avg{iLayer}, OA_avg]
+											%记录两个黄金分割点作为第LayerNum隐含层节点数时的分类准确率中的OA值20次平均准确率
+											var(str_idx+1) = string(x(1));
+											% 输入参数 (n, N, setsNum, mappedA, lbs, rate, type, var)
+											% 输出2个列向量，20次分类结果的平均值avgResult_20iter, 和20次分类结果的OA值，OA_20iter
+											[avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate, type, var);                                     
+											acc_avg{iLayer} = [acc_avg{iLayer}, avgResult_20iter];
+											OA_detail{iLayer} = [OA_detail{iLayer}, OA_20iter]; 
 
-                                        case 2 % 若x中第一个数与gold_point中的点重复，则只计算第二个，保存第二个
-                                            acc = []; %记录x中第二个黄金分割点各20次的准确率
-                                            OA_avg = [0];%记录x中第二个黄金分割点的平均准确率		
-                                            for j = 1 : N_1
-                                                [c, net] = fcn1(mappedA, lbs, rate, x(2), 'trainscg');
-                                                acc = [acc, 1-c];
-                                            end
-                                            OA_avg = mean(acc);
+											if mean(OA_20iter) >= OA_avg{iLayer}(nonzeros(Locb))
+												b = ceil(x_2);
+											else
+												a = floor(x_1);
+											end
+											OA_avg{iLayer} = [OA_avg{iLayer}, mean(OA_20iter)];
+											gold_point{iLayer} = [gold_point{iLayer}, x(1)];
 
-                                            if acc_avg{iLayer}(nonzeros(Locb)) >= OA_avg%第2个点的准确率与acc_avg(Locb)做比较
-                                                b = ceil(x_2);
-                                            else
-                                                a = floor(x_1);
-                                            end
+										case 2 % 若x中第一个数与gold_point中的点重复，则只计算第二个，保存第二个
+											% Lia=[1,0],
+											% 表示x中第一个值与gold_point{iLayer}中的某个值重复，假设此时Locb=[0 0 1 0 0]
+											% 则说明重复在gold_point{iLayer}中的第三个数，这个数在gold_point{iLayer}中只有一个
+											% 其最小索引为1.                                    
+											% 若x中第一个数与gold_point中的点重复，则只计算第二个，保存第二个	
 
-                                            gold_point{iLayer} = [gold_point{iLayer}, x(2)]
-                                            acc_avg{iLayer} = [acc_avg{iLayer}, OA_avg]		 	 		
-                                        % 若x中两个数字都和gold_point重复，则结束switch
-                                    end
+											var(str_idx+1) = string(x(2));
+											% 输入参数 (n, N, setsNum, mappedA, lbs, rate, type, var)
+											% 输出2个列向量，20次分类结果的平均值avgResult_20iter, 和20次分类结果的OA值，OA_20iter
+											[avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate, type, var);                                     
+											acc_avg{iLayer} = [acc_avg{iLayer}, avgResult_20iter];
+											OA_detail{iLayer} = [OA_detail{iLayer}, OA_20iter];                                   
 
-                                    % 当round(x_1) == round(x_2)时，以round(x_1)为隐含层节点数建立网络
-                                    % 计算完成后再停止while()循环
-                                    if round(x_1) == round(x_2)
-                                        flag = 0;
-                                    end
+											if OA_avg{iLayer}(nonzeros(Locb)) >= mean(OA_20iter)%第2个点的准确率与acc_avg(Locb)做比较
+												b = ceil(x_2);
+											else
+												a = floor(x_1);
+											end
+											OA_avg{iLayer} = [OA_avg{iLayer}, mean(OA_20iter)];
+											gold_point{iLayer} = [gold_point{iLayer}, x(2)];
+										otherwise
+										% 若x中两个数字都和gold_point重复，则结束switch
+									end
 
-                                end
-                                Nh = [Nh, x(1)];
-                            end
-                        % 黄金分割法寻优结束。
-                        % 保存结果       
-                        hiddenNumInfor = struct();
-                        hiddenNumInfor.dataset = hmenu4_1.UserData.matPath;    % 所使用的数据集名称
-                        hiddenNumInfor.rate = paraTable_c.rate;                             % 所使用的训练集占比
-                        hiddenNumInfor.drAlgorithmName = hmenu4_1.UserData.drAlgorithm;  % 降维算法名称
-                        hiddenNumInfor.drDimesion = size(hmenu4_3.UserData.drData, 2);          % 降维维数
-                        hiddenNumInfor.cAlgorithmName = hmenu4_1.UserData.cAlgorithm;      % 分类算法名称
-                        hiddenNumInfor.hiddenLayerNum = paraTable_c.hiddenLayerNum;         % 隐含层的层数
-                        % 各个隐含层的所使用的传递函数名称
-                        hiddenLayerName = [paraTable_c.transferFcn]; %transferFcn, transferFcn1, transferFcn2, transferFcn3, transferFcn4
-                        for i =1:paraTable_c.hiddenLayerNum-1
-                            estr = ['hiddenLayerName = [hiddenLayerName, paraTable_c.transferFcn', num2str(i),'];'];
-                            eval(estr);
-                        end
-                        hiddenNumInfor.hiddenLayerName = hiddenLayerName; 
+									% 当round(x_1) == round(x_2)时，以round(x_1)为隐含层节点数建立网络
+									% 计算完成后再停止while()循环
+									if round(x_1) == round(x_2)
+										flag = 0;
+									end
+								end
+								%# 保存第iLayer隐含层的最佳节点数
+								Nh = [Nh, x(1)];
+								%# 将startNum和stopNum作为第LayerNum隐含层节点数的计算结果也添加进acc_avg和OA_detail中来
+								% 这样第LayerNum隐含层节点数（即网络宽度）与分类准确率的关系将更加完整
+								if paraTable_c.startNum==1 %若startNum==1，则令startNum=2，作为第LayerNum隐含层节点数进行计算
+									startNum = 2;
+								else
+									startNum = paraTable_c.startNum;
+								end
+								stopNum = paraTable_c.stopNum;
+								x = [startNum, stopNum];
+								for i = 1 : 2
+									%# 更新var中的第LayerNum个隐含层的节点数为x(i), hiddenNumLayerNum
+									%TF = contains(str,pattern)
+									var(str_idx+1) = string(x(i));
+									% 输入参数 (n, N, setsNum, mappedA, lbs, rate, type, var)
+									% 输出2个列向量，20次分类结果的平均值avgResult_20iter, 和20次分类结果的OA值，OA_20iter
+									[avgResult_20iter, OA_20iter] = fcn1(n, N, setsNum, mappedA, lbs, rate, type, var);                                     
+									acc_avg{iLayer} = [acc_avg{iLayer}, avgResult_20iter];
+									OA_detail{iLayer} = [OA_detail{iLayer}, OA_20iter];
+								end
+								OA_avg{iLayer} = [OA_avg{iLayer}, mean(OA_20iter)];
+								gold_point{iLayer} = [gold_point{iLayer}, x];
+								%# 保存第LayerNum隐含层节点数取黄金分割点时的分类结果
+								% gold_point{iLayer}，acc_avg{iLayer}, OA_detail{iLayer}, OA_avg{iLayer}
+								% 或者等所有hiddenLayerNum个隐含层节点数全部优化完之后再保存
+								d = time_goldSection(end);
+								time_goldSection(iLayer) = toc(timerVal_1) - time_1 - d;                                
+							end
+							% 黄金分割法寻优结束。
 
-                        hiddenNumInfor.startNum = paraTable_c.startNum;
-                        hiddenNumInfor.stopNum = paraTable_c.startNum;
-                        % 将寻找到的最优网络net与gold_point, acc_avg,寻优信息hiddenNumInfo一起保存为mat数据。
-                        filename = fullfile('C:\Matlab练习\Project20191002\工程测试\', ['net_optim ', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS'), '.mat']); %将时间信息加入到文件名中
-                        save(filename, 'hiddenNumInfor', 'gold_point', 'acc_avg');
-
-                        % 将找到的各个隐层节点数的最优值赋值给paraTable_c中的相应变量(这里只考虑单隐层的情况)
-                        if paraTable_c.hiddenLayerNum==1
-                            paraTable_c.hiddenNum=Nh(1);
-                            for i = 1:paraTable_c.hiddenLayerNum-1
-                                estr = ['paraTable_c.hiddenNum', num2str(i), '=Nh(',num2str(i+1),');' ];
-                                eval(estr);
-                            end
-                        end
-                        % 黄金分割法寻优结果保存完毕                    
-                    end
-                end
+							% 将找到的各个隐层节点数的最优值赋值给paraTable_c中的相应变量(这里只考虑单隐层的情况)
+							if paraTable_c.hiddenLayerNum==1
+								paraTable_c.hiddenNum=Nh(1);
+								for i = 1:paraTable_c.hiddenLayerNum-1
+									estr = ['paraTable_c.hiddenNum', num2str(i), '=Nh(',num2str(i+1),');' ];
+									eval(estr);
+								end
+							end
+							% 黄金分割法寻优结果保存完毕
+						case '否'
+					end
+				end
 
                 t = table2cell(paraTable_c);
-                ss = table2struct(paraTable_c);
+                
                 k = numel(t); 
                 para = cell(1,2*k);
                 for i = 1:k
-                    para{2*i} = t{i};
                     para{2*i-1} = paraTable_c.Properties.VariableNames{i};
+                    para{2*i} = t{i};
                 end
                 var = cellfun(@string, para(9:end)); %对cell array中的所有cell应用string
         
@@ -1656,7 +1693,7 @@ end
                 writetable(paraTable_c, filename, 'Sheet',iset+1,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
 
                 %# 保存数据集信息hmenu4_1.UserData到Sheet(iset+1)
-                %info_1 = hmenu4_1.UserData;
+                info_1 = hmenu4_1.UserData;
                 info_1.x3 = [];
                 info_1.lbs2 = [];
                 info_1.x2 = [];
@@ -1674,7 +1711,14 @@ end
                 info_cmap = array2table(info_cmap, 'VariableNames', VariableNames);
                 info_cmap.Properties.RowNames = RowNames;
                 writetable(info_cmap,filename,'Sheet',iset+1,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);
-
+                %# 保存time_goldSection
+                if exist('time_goldSection','var')==1
+                    VariableNames = ["iLayer_"+string(1:paraTable_c.hiddenLayerNum)];
+                    RowNames = "colapsedTime";
+                    timeTable = array2table(time_goldSection, 'VariableNames', VariableNames);
+                    timeTable.Properties.RowNames = RowNames;
+                    writetable(timeTable,filename,'Sheet',iset+1,'Range','A27', 'WriteRowNames',true, 'WriteVariableNames', true);
+                end
                 %% 保存训练过程中的性能数据err_perf, err_vperf, err_tperf, racc到Excel中Sheet
                 T1 = createTableForWrite(err_perf, err_vperf, err_tperf, racc);
                 errTable = [T1.Variables; mean(T1.Variables); std(T1.Variables)];  % T1.Variables 是20×8 double
@@ -1684,6 +1728,62 @@ end
                 errTable.Properties.Description = '保存训练过程中的性能数据err_perf, err_vperf, err_tperf, racc';
                 writetable(errTable,filename,'Sheet',iset+2,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);  
 
+                %% 保存神经网络隐含层节点数的优化结果
+                % 将寻找到的最优网络net与gold_point, acc_avg, OA_detail，寻优信息hiddenNumInfo一起保存为mat数据。
+                % 之所以放到这里是因为有两个原因
+                % 1. 如果直接在前面【神经网络隐含层节点数寻优】代码块中生成带时间的文件夹名的话，时间会过于早于Excel的写入时间。
+                % 2. 神经网络隐含层节点数寻优的结果与数据集、降维算法、分类算法都有关系，这里的path包含了上述的几个关键信息，
+                %     所以直接用这里的path作为[保存神经网络隐含层节点数的优化结果]是更合理的。
+                if paraTable_c.hiddenNumOptimization && strcmp(answer_hiddenNumOptimization, '是')
+                    gold_point_sorted = cell(1,paraTable_c.hiddenLayerNum);
+                    acc_avg_sorted = cell(1,paraTable_c.hiddenLayerNum);
+                    OA_detail_sorted = cell(1,paraTable_c.hiddenLayerNum);
+                    %## 每一隐含层的计算结果保存到一个sheet中
+                    for iLayer = 1:paraTable_c.hiddenLayerNum
+                        %# 对第iLayer隐含层的分类准确率gold_point{iLayer}, acc_avg{iLayer}, OA_detail{iLayer}在列维度上调整顺序
+                        % 利用sort()函数对gold_point{iLayer}中的数按从小到大排序，结果保存到gold_point_sorted{iLayer}中，
+                        % 同时还得到了排序索引I
+                        % 继而利用排序索引I, 在列维度上对acc_avg{iLayer},OA_detail{iLayer}排序
+                        % 结果保存到acc_avg_sorted{iLayer}，OA_detail_sorted{iLayer}
+
+                        [B, I] = sort(gold_point{iLayer});
+                        gold_point_sorted{iLayer} = B;
+                        acc_avg_sorted{iLayer} = acc_avg{iLayer}(:, I);
+                        OA_detail_sorted{iLayer} = OA_detail{iLayer}(:, I);
+                        %# 将排序之后的第iLayer隐含层的分类准确率整理成table格式
+                        [size_1, size_2] = size(acc_avg{iLayer});
+                        accData = [gold_point{iLayer}; gold_point_sorted{iLayer}; acc_avg_sorted{iLayer};...
+                            OA_detail_sorted{iLayer}; mean(OA_detail_sorted{iLayer}); std(OA_detail_sorted{iLayer})];
+                        % 为cell的每一列创建列名称 VariableNames
+                        VariableNames = cell(1,size_2);
+                        for i = 1:size_2
+                            VariableNames{i}= ['goldPoint_',num2str(i)];
+                        end
+                        %# 创建行的名称 RowNames，必须是字符元胞数组 即1×(2+size_1+size_3+2) cell；
+                        [size_3, size_4] = size(OA_detail{iLayer});
+                        RowNames = cell(1, 2+size_1+size_3+2); 
+                        RowNames{1} = ['goldPoint{iLayer=',num2str(iLayer),'}'];
+                        RowNames{2} = 'goldPoint_sorted';
+                        for i = 1+2 : size_1-3+2              % acc_avg最后3行分别是OA、AA、kappa
+                            RowNames{i} = ['class_',num2str(i-2)];
+                        end
+                        RowNames(i+1 : i+3) = {'OA', 'AA', 'Kappa'};
+                        i = i+3;
+                        RowNames(i+1: i+size_3) = cellstr("iter_"+string(1:size_3));
+                        i = i+size_3;
+                        RowNames(i+1 : i+2)  = {'average', 'std'};
+                        % path，filename都已经有了
+                        accTable = array2table(accData, 'VariableNames', VariableNames);
+                        accTable.Properties.RowNames = RowNames;
+                        % Sheet 1保存优化之前的分类结果，Sheet 2保存优化之后的分类结果。
+                        % Sheet 3保存执行分类任务的网络相关信息，Sheet 4保存训练性能信息。
+                        % Sheet iLayer+4可以保存第iLayer隐含层的分类准确率信息，
+                        writetable(accTable,filename,'Sheet',iLayer + iset+2,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);                
+
+                    end
+                end
+
+                %% 保存各种图像结果                
                 %## 保存view(net)图像，详细参看C:\Matlab练习\Project20191002\save_view(net).m
                 jframe = view(net_best{1,1});
                 jframe_properties = get(jframe);
@@ -1888,11 +1988,10 @@ end
                 % filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
                 % filename = fullfile(path, filename);
                 disp({[hmenu4_1.UserData.matPath, ' 分类完毕! 历时',num2str(time2-time1),'秒.']});
-                disp(['分类结果详细数据保存于',filename]);
-
-                
+                disp(['分类结果详细数据保存于',filename]);               
                 delete(MyPar) %计算完成后关闭并行处理池
-%% 网络隐含层层数的优化 询问是否要执行隐含层层数（即网络深度）优化
+                
+                %% 网络隐含层层数的优化 询问是否要执行隐含层层数（即网络深度）优化
                 [mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
                 XTrain = table2array(mA1(:, 1:end-1))';  %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
 				if paraTable_c.hLayerNumOptimization
@@ -1908,250 +2007,250 @@ end
                     answer_hLayerNumOptimization = questdlg(quest, dlgtitle, btn1, btn2, opts);
 
                     % Handle response
-                    switch answer_hLayerNumOptimization
-                        case '是'
-                            % %## 首先确定隐含层神经元数量，可以采用公式来计算，也可以手动指定
-                            % time_1 = toc(timerVal_1);
-                            % [Ni, Ns] = size(XTrain); % XTrain每一列为一个样本，则行数为降维数，即输入层节点数。列数为训练集样本数
-                            % % 输入向量的维数等于输入层的节点数。
-                            % N = hmenu4_1.UserData.M-1;     % 类别总数
-                            % No = N; %输出层节点数记为No
-                            % % Botswana, round(3248*0.2)=650,No=14, 650./(a*(10+14))=[13.5417 2.7083]
+					switch answer_hLayerNumOptimization
+						case '是'
+							% %## 首先确定隐含层神经元数量，可以采用公式来计算，也可以手动指定
+							% time_1 = toc(timerVal_1);
+							% [Ni, Ns] = size(XTrain); % XTrain每一列为一个样本，则行数为降维数，即输入层节点数。列数为训练集样本数
+							% % 输入向量的维数等于输入层的节点数。
+							% N = hmenu4_1.UserData.M-1;     % 类别总数
+							% No = N; %输出层节点数记为No
+							% % Botswana, round(3248*0.2)=650,No=14, 650./(a*(10+14))=[13.5417 2.7083]
 
-                            % a = [2, 10]; % 系数a通常取2~10
-                            % % 隐含层节点数计算公式 Nh = Ns/(a*(Ni+No));  %隐含层节点数记为Nh
-                            % Nhd = Ns./(a*(Ni+No));
-                            % % 当Ni=5;No=14;Ns=650时，Nhd=[17.1, 3.4];
-                            % % Ni=10时，No=14;Ns=650时，Nhd=[13.6, 2.7];
-                            % % 则隐含层的神经元取值下界值可定为floor(Nh(2))=3，
-                            % % 上界值可定为ceil(Nh(1)/floor(Nh(2)))*floor(Nh(2))，循环次数为ceil(Nh(1)/floor(Nh(2)))
-                            % iteration = ceil(Nhd(1)/floor(Nhd(2)));
-                            % Nhd_min = floor(Nhd(2));
-                            % Nhd_max = ceil(Nhd(1)/floor(Nhd(2)))*floor(Nhd(2));
+							% a = [2, 10]; % 系数a通常取2~10
+							% % 隐含层节点数计算公式 Nh = Ns/(a*(Ni+No));  %隐含层节点数记为Nh
+							% Nhd = Ns./(a*(Ni+No));
+							% % 当Ni=5;No=14;Ns=650时，Nhd=[17.1, 3.4];
+							% % Ni=10时，No=14;Ns=650时，Nhd=[13.6, 2.7];
+							% % 则隐含层的神经元取值下界值可定为floor(Nh(2))=3，
+							% % 上界值可定为ceil(Nh(1)/floor(Nh(2)))*floor(Nh(2))，循环次数为ceil(Nh(1)/floor(Nh(2)))
+							% iteration = ceil(Nhd(1)/floor(Nhd(2)));
+							% Nhd_min = floor(Nhd(2));
+							% Nhd_max = ceil(Nhd(1)/floor(Nhd(2)))*floor(Nhd(2));
 
-                            % %# 初始化分类结果保存变量
-                            % % 对于隐含层节点数为Nhd = [18,3]这个例子中，一个固定的隐含层节点数在1~5层隐含层的情况下进行遍历，则可以得到5列分类结果
-                            % % 则总共6个隐含层节点数，可以得到5×6=30列分类结果
-                            % % 如果每个sheet只保存一个固定的隐含层节点数在1~5层隐含层的情况下进行遍历的5列结果的话，则需要保存至少6个sheet
-                            % % 这样还是太浪费了，所以将30列分类结果保存到同一个sheet中
-                            % % 第二个sheet保存OA_20iter，与第一个sheet中的列一一对应。
-                            % % errTable先不保存了，一个固定的隐含层节点数在隐含层的层数固定的情况下，就可以获得n=20个err_perf数据
-                            % % 则6个隐含层节点数在5个隐含层层数下，将有20×5×6=600个数据，太多了不好保存
-                            % % 隐含层层数总是从1层到stopLayerNum+1层
+							% %# 初始化分类结果保存变量
+							% % 对于隐含层节点数为Nhd = [18,3]这个例子中，一个固定的隐含层节点数在1~5层隐含层的情况下进行遍历，则可以得到5列分类结果
+							% % 则总共6个隐含层节点数，可以得到5×6=30列分类结果
+							% % 如果每个sheet只保存一个固定的隐含层节点数在1~5层隐含层的情况下进行遍历的5列结果的话，则需要保存至少6个sheet
+							% % 这样还是太浪费了，所以将30列分类结果保存到同一个sheet中
+							% % 第二个sheet保存OA_20iter，与第一个sheet中的列一一对应。
+							% % errTable先不保存了，一个固定的隐含层节点数在隐含层的层数固定的情况下，就可以获得n=20个err_perf数据
+							% % 则6个隐含层节点数在5个隐含层层数下，将有20×5×6=600个数据，太多了不好保存
+							% % 隐含层层数总是从1层到stopLayerNum+1层
 
-                            %## 手动指定要遍历的隐含层节点数
-                            hiddenNum = [150]; %, 120, 125, 130, 135, 140, 145, 150];
-                            % hiddenNum = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
-                            % hiddenNum = [55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
-                            if ~exist('Nhd_min', 'var')
-                                if exist('hiddenNum', 'var')
-                                    if hiddenNum(:)~=0
-                                        Nhd_min=min(hiddenNum);
-                                    else
-                                        disp(['Nhd_min不存在，且min(hiddenNum)为0，无法赋值给Nhd_min']);
-                                    end
-                                else
-                                    disp(['Nhd_min不存在，且hiddenNum不存在，无法赋值给Nhd_min']);
-                                end
-                            end
-                            if ~exist('Nhd_max', 'var')
-                                if exist('hiddenNum', 'var')
-                                    if hiddenNum(:)~=0
-                                        Nhd_max=max(hiddenNum);
-                                    else
-                                        disp(['hiddenNum中有部分元素值为0，无法赋值给Nhd_min']);
-                                    end
-                                else
-                                    disp(['Nhd_max不存在，且hiddenNum不存在，无法赋值给Nhd_max']);
-                                end
-                            end                   
-                            iteration = numel(hiddenNum);
-                            stopNum = paraTable_c.stopLayerNum+1;
-                            iColomn = stopNum*iteration;
-                            %iColomn = 5*iteration;
-                            acc_avg = zeros(N+3, iColomn);
-                            if ismember(type, {'GA_TANSIG','GA_RBF','PSO_TANSIG','PSO_RBF'})
-                                err_avg = zeros(8, iColomn);
-                            elseif ismember(type, {'TANSIG','RBF'})
-                                err_avg = zeros(4, iColomn);
-                            end
-                            % acc表示包含各类别分类准确率、OA、AA、Kappa在内的完整分类准确率数据，
-                            % acc_avg表示20次重复计算得到的完整分类准确率的平均值
-                            OA_detail = zeros(n, iColomn); %记录在黄金分割点上重复计算20次获得的20个OA值
-                            OA_avg = zeros(1, iColomn); % 记录mean(OA_detail)
-                            time_Layer = zeros(1, iColomn); %记录每一个节点数在不同层数时所消耗的时间
-                            %# 对照在ParametersForDimReduceClassify中设定的上下界进行修正
-                            % 只要计算出的下界值大于等于设定的下界值，且计算出的上界值小于等于设定的上界值。就算满足要求
-                            %if floor(Nhd(2))<=paraTable_c.startLayerNum && ceil(Nhd(1)/floor(Nhd(2)))*floor(Nhd(2))<=paraTable_c.stopLayerNum
-                            %    disp('开始进行隐含层层数优化');
-                            %elseif floor(Nhd(2))>paraTable_c.startLayerNum                        
-                            %    paraTable_c.startLayerNum;
-                            %    paraTable_c.stopLayerNum;
-                            %end
+							%## 手动指定要遍历的隐含层节点数
+							hiddenNum = [150]; %, 120, 125, 130, 135, 140, 145, 150];
+							% hiddenNum = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+							% hiddenNum = [55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
+							if ~exist('Nhd_min', 'var')
+								if exist('hiddenNum', 'var')
+									if hiddenNum(:)~=0
+										Nhd_min=min(hiddenNum);
+									else
+										disp(['Nhd_min不存在，且min(hiddenNum)为0，无法赋值给Nhd_min']);
+									end
+								else
+									disp(['Nhd_min不存在，且hiddenNum不存在，无法赋值给Nhd_min']);
+								end
+							end
+							if ~exist('Nhd_max', 'var')
+								if exist('hiddenNum', 'var')
+									if hiddenNum(:)~=0
+										Nhd_max=max(hiddenNum);
+									else
+										disp(['hiddenNum中有部分元素值为0，无法赋值给Nhd_min']);
+									end
+								else
+									disp(['Nhd_max不存在，且hiddenNum不存在，无法赋值给Nhd_max']);
+								end
+							end                   
+							iteration = numel(hiddenNum);
+							stopNum = paraTable_c.stopLayerNum+1;
+							iColomn = stopNum*iteration;
+							%iColomn = 5*iteration;
+							acc_avg = zeros(N+3, iColomn);
+							if ismember(type, {'GA_TANSIG','GA_RBF','PSO_TANSIG','PSO_RBF'})
+								err_avg = zeros(8, iColomn);
+							elseif ismember(type, {'TANSIG','RBF'})
+								err_avg = zeros(4, iColomn);
+							end
+							% acc表示包含各类别分类准确率、OA、AA、Kappa在内的完整分类准确率数据，
+							% acc_avg表示20次重复计算得到的完整分类准确率的平均值
+							OA_detail = zeros(n, iColomn); %记录在黄金分割点上重复计算20次获得的20个OA值
+							OA_avg = zeros(1, iColomn); % 记录mean(OA_detail)
+							time_Layer = zeros(1, iColomn); %记录每一个节点数在不同层数时所消耗的时间
+							%# 对照在ParametersForDimReduceClassify中设定的上下界进行修正
+							% 只要计算出的下界值大于等于设定的下界值，且计算出的上界值小于等于设定的上界值。就算满足要求
+							%if floor(Nhd(2))<=paraTable_c.startLayerNum && ceil(Nhd(1)/floor(Nhd(2)))*floor(Nhd(2))<=paraTable_c.stopLayerNum
+							%    disp('开始进行隐含层层数优化');
+							%elseif floor(Nhd(2))>paraTable_c.startLayerNum                        
+							%    paraTable_c.startLayerNum;
+							%    paraTable_c.stopLayerNum;
+							%end
 
-                            % 以hiddenLayerNum和stopLayerNum来决定寻优层数
-                            % 即隐含层层数总是从1层到stopLayerNum+1层
-                            % hiddenNum = zeros(1,iteration);
-                            time_start = toc(timerVal_1);
-                            for i = 1: iteration
-                                % 隐含层节点数为Nhd_min*i;
-                                %hiddenNum(i) = Nhd_min*i + 14;
-                                % 更新输入变量paraTable_c
-                                for iLayer = 1:stopNum
-                                    paraTable_c.hiddenLayerNum = iLayer;
-                                    paraTable_c.hiddenNum = hiddenNum(i);
-                                    if iLayer>1
-                                        for j = 1:iLayer-1
-                                            estr = ['paraTable_c.hiddenNum',num2str(j),' = ', num2str(hiddenNum(i)),';'];
-                                            eval(estr);
-                                        end
-                                    end
-                                    t = table2cell(paraTable_c);   
-                                    % t =
-                                    %   1×28 cell 数组
-                                    %     {[1]}    {[0.2000]}    {[3]}    {[20]}    {["trainscg"]}    {[20]}    {["tansig"]}    {[0]}    {[0]}
-                                    %     {[0]}    {[0]}    {[0]}    {[0]}    {[2]}    {[20]}    {["tansig"]}    {[20]}    {["tansig"]}    {[20]}
-                                    %     {["tansig"]}    {[20]}    {["tansig"]}    {[1]}    {[1]}    {[100]}  {[1]}    {[1]}    {[4]}
-                                    k = numel(t);                        % 28
-                                    para = cell(1,2*k);                 % 1×56 cell 数组
-                                    for iPara = 1:k
-                                        para{2*iPara-1} = paraTable_c.Properties.VariableNames{iPara};
-                                        para{2*iPara} = t{iPara};            
-                                    end
-                                    % para =
-                                    %   1×56 cell 数组
-                                    %   列 1 至 8
-                                    %     {'dimReduce'}    {[1]}    {'rate'}    {[0.2000]}    {'app'}    {[3]}    {'executionTimes'}    {[20]}    
-                                    %   列 9 至 50
-                                    %     {'trainFcn'}  {["trainscg"]}    {'hiddenNum'}    {[20]}    {'transferFcn'}    {["tansig"]}    {'showWindow'}    {[0]}
-                                    %     {'plotperform'}    {[0]}    {'plottrainstate'}    {[0]}    {'ploterrhist'}    {[0]}    {'plotconfusion'}    {[0]}
-                                    %     {'plotroc'}    {[0]}    {'hiddenLayerNum'}    {[2]}    {'hiddenNum1'}    {[20]}    {'transferFcn1'}    {["tansig"]}
-                                    %     {'hiddenNum2'}    {[20]}    {'transferFcn2'}    {["tansig"]}    {'hiddenNum3'}    {[20]}    {'transferFcn3'}
-                                    %     {["tansig"]}    {'hiddenNum4'}    {[20]}    {'transferFcn4'}    {["tansig"]}    
-                                    %     {'hiddenNumOptimi…'}    {[1]}    {'startNum'}    {[1]}    {'stopNum'}    {[100]} 
-                                    %     {'hLayerNumOptimi…'}    {[1]}    {'startLayerNum'}    {[1]}    {'stopLayerNum'}    {[4]} 
-                                    var = cellfun(@string, para(9:end)); %对cell array中的每一个cell应用string
-                                    % var = 
-                                    %   1×48 string 数组
-                                    %     "trainFcn"    "trainscg"    "hiddenNum"    "20"    "transferFcn"    "tansig"    "showWindow"    "false"
-                                    %     "plotperform"    "false"    "plottrainstate"    "false"    "ploterrhist"    "false"    "plotconfusion"    "false"
-                                    %     "plotroc"    "false"    "hiddenLayerNum"    "2"    "hiddenNum1"    "20"    "transferFcn1"    "tansig"    "hiddenNum2"
-                                    %     "20"    "transferFcn2"    "tansig"    "hiddenNum3"    "20"    "transferFcn3"    "tansig"    "hiddenNum4"    "20"
-                                    %     "transferFcn4"    "tansig"    "hiddenNumOptimiza…"    "true"    "startNum"    "1"    "stopNum"    "100"
-                                    %     "hLayerNumOptimiza…"    "true"    "startLayerNum"    "1"    "stopLayerNum"    "4"    
+							% 以hiddenLayerNum和stopLayerNum来决定寻优层数
+							% 即隐含层层数总是从1层到stopLayerNum+1层
+							% hiddenNum = zeros(1,iteration);
+							time_start = toc(timerVal_1);
+							for i = 1: iteration
+								% 隐含层节点数为Nhd_min*i;
+								%hiddenNum(i) = Nhd_min*i + 14;
+								% 更新输入变量paraTable_c
+								for iLayer = 1:stopNum
+									paraTable_c.hiddenLayerNum = iLayer;
+									paraTable_c.hiddenNum = hiddenNum(i);
+									if iLayer>1
+										for j = 1:iLayer-1
+											estr = ['paraTable_c.hiddenNum',num2str(j),' = ', num2str(hiddenNum(i)),';'];
+											eval(estr);
+										end
+									end
+									t = table2cell(paraTable_c);   
+									% t =
+									%   1×28 cell 数组
+									%     {[1]}    {[0.2000]}    {[3]}    {[20]}    {["trainscg"]}    {[20]}    {["tansig"]}    {[0]}    {[0]}
+									%     {[0]}    {[0]}    {[0]}    {[0]}    {[2]}    {[20]}    {["tansig"]}    {[20]}    {["tansig"]}    {[20]}
+									%     {["tansig"]}    {[20]}    {["tansig"]}    {[1]}    {[1]}    {[100]}  {[1]}    {[1]}    {[4]}
+									k = numel(t);                        % 28
+									para = cell(1,2*k);                 % 1×56 cell 数组
+									for iPara = 1:k
+										para{2*iPara-1} = paraTable_c.Properties.VariableNames{iPara};
+										para{2*iPara} = t{iPara};            
+									end
+									% para =
+									%   1×56 cell 数组
+									%   列 1 至 8
+									%     {'dimReduce'}    {[1]}    {'rate'}    {[0.2000]}    {'app'}    {[3]}    {'executionTimes'}    {[20]}    
+									%   列 9 至 50
+									%     {'trainFcn'}  {["trainscg"]}    {'hiddenNum'}    {[20]}    {'transferFcn'}    {["tansig"]}    {'showWindow'}    {[0]}
+									%     {'plotperform'}    {[0]}    {'plottrainstate'}    {[0]}    {'ploterrhist'}    {[0]}    {'plotconfusion'}    {[0]}
+									%     {'plotroc'}    {[0]}    {'hiddenLayerNum'}    {[2]}    {'hiddenNum1'}    {[20]}    {'transferFcn1'}    {["tansig"]}
+									%     {'hiddenNum2'}    {[20]}    {'transferFcn2'}    {["tansig"]}    {'hiddenNum3'}    {[20]}    {'transferFcn3'}
+									%     {["tansig"]}    {'hiddenNum4'}    {[20]}    {'transferFcn4'}    {["tansig"]}    
+									%     {'hiddenNumOptimi…'}    {[1]}    {'startNum'}    {[1]}    {'stopNum'}    {[100]} 
+									%     {'hLayerNumOptimi…'}    {[1]}    {'startLayerNum'}    {[1]}    {'stopLayerNum'}    {[4]} 
+									var = cellfun(@string, para(9:end)); %对cell array中的每一个cell应用string
+									% var = 
+									%   1×48 string 数组
+									%     "trainFcn"    "trainscg"    "hiddenNum"    "20"    "transferFcn"    "tansig"    "showWindow"    "false"
+									%     "plotperform"    "false"    "plottrainstate"    "false"    "ploterrhist"    "false"    "plotconfusion"    "false"
+									%     "plotroc"    "false"    "hiddenLayerNum"    "2"    "hiddenNum1"    "20"    "transferFcn1"    "tansig"    "hiddenNum2"
+									%     "20"    "transferFcn2"    "tansig"    "hiddenNum3"    "20"    "transferFcn3"    "tansig"    "hiddenNum4"    "20"
+									%     "transferFcn4"    "tansig"    "hiddenNumOptimiza…"    "true"    "startNum"    "1"    "stopNum"    "100"
+									%     "hLayerNumOptimiza…"    "true"    "startLayerNum"    "1"    "stopLayerNum"    "4"    
 
-                                    % 输出2个列向量，20次分类结果的平均值avgResult_20iter, 和20次分类结果的OA值，OA_20iter
-                                    [avgResult_20iter, OA_20iter, avgError_20iter] = fcn2(n, N, setsNum, mappedA, lbs, rate, type, var);
-                                    acc_avg(:, (i-1)*stopNum+iLayer) = avgResult_20iter;
-                                    OA_detail(:, (i-1)*stopNum+iLayer) = OA_20iter;    
-                                    OA_avg(:, (i-1)*stopNum+iLayer) = mean(OA_20iter);
-                                    err_avg(:, (i-1)*stopNum+iLayer) = avgError_20iter;
-                                    time_Layer((i-1)*stopNum+iLayer) = toc(timerVal_1) - time_start;
-                                end
-                            end
-                            timeLayer = zeros(1, numel(time_Layer));
-                            for i = 2:numel(time_Layer)
-                                timeLayer(i) = time_Layer(i)-time_Layer(i-1);
-                            end
-                            timeLayer(1) = time_Layer(1);
+									% 输出2个列向量，20次分类结果的平均值avgResult_20iter, 和20次分类结果的OA值，OA_20iter
+									[avgResult_20iter, OA_20iter, avgError_20iter] = fcn2(n, N, setsNum, mappedA, lbs, rate, type, var);
+									acc_avg(:, (i-1)*stopNum+iLayer) = avgResult_20iter;
+									OA_detail(:, (i-1)*stopNum+iLayer) = OA_20iter;    
+									OA_avg(:, (i-1)*stopNum+iLayer) = mean(OA_20iter);
+									err_avg(:, (i-1)*stopNum+iLayer) = avgError_20iter;
+									time_Layer((i-1)*stopNum+iLayer) = toc(timerVal_1) - time_start;
+								end
+							end
+							timeLayer = zeros(1, numel(time_Layer));
+							for i = 2:numel(time_Layer)
+								timeLayer(i) = time_Layer(i)-time_Layer(i-1);
+							end
+							timeLayer(1) = time_Layer(1);
 
-                            %## 保存隐含层层数寻优结果
-                            %# 为cell的每一列创建列名称 VariableNames
-                            % hNum1hLayer1~hNum1hLayer5, hNum2hLayer1~hNum2hLayer5, ……，hNum6hLayer1~hNum6hLayer5
-                            VariableNames = cell(1, iColomn);
-                            for i = 1:iteration
-                                for iLayer = 1:stopNum
-                                    VariableNames{(i-1)*stopNum+iLayer}= ['hNum=',num2str(hiddenNum(i)),' hLayer=',num2str(iLayer)];
-                                end
-                            end
-                            %# 创建行的名称 RowNames1，必须是字符元胞数组或者字符串数组；
-                            [size_1, size_2] = size([acc_avg; timeLayer]);
-                            RowNames1(1:size_1-4) = "class_"+string(1:(size_1-4)); 
-                            RowNames1(size_1-3) = "OA";
-                            RowNames1(size_1-2) = "AA";
-                            RowNames1(size_1-1) = "Kappa";
-                            RowNames1(size_1) = "time_Layer"; % 每一层计算所消耗的时间
-                            %# 创建行的名称 RowNames2，必须是字符元胞数组或者字符串数组； 
-                            [size_3, size_4] = size(OA_detail);
-                            RowNames2 = "iter_"+string(1:size_3); 
-                            RowNames2(size_3+1) = "average";
-                            RowNames2(size_3+2) = "std";
+							%## 保存隐含层层数寻优结果
+							%# 为cell的每一列创建列名称 VariableNames
+							% hNum1hLayer1~hNum1hLayer5, hNum2hLayer1~hNum2hLayer5, ……，hNum6hLayer1~hNum6hLayer5
+							VariableNames = cell(1, iColomn);
+							for i = 1:iteration
+								for iLayer = 1:stopNum
+									VariableNames{(i-1)*stopNum+iLayer}= ['hNum=',num2str(hiddenNum(i)),' hLayer=',num2str(iLayer)];
+								end
+							end
+							%# 创建行的名称 RowNames1，必须是字符元胞数组或者字符串数组；
+							[size_1, size_2] = size([acc_avg; timeLayer]);
+							RowNames1(1:size_1-4) = "class_"+string(1:(size_1-4)); 
+							RowNames1(size_1-3) = "OA";
+							RowNames1(size_1-2) = "AA";
+							RowNames1(size_1-1) = "Kappa";
+							RowNames1(size_1) = "time_Layer"; % 每一层计算所消耗的时间
+							%# 创建行的名称 RowNames2，必须是字符元胞数组或者字符串数组； 
+							[size_3, size_4] = size(OA_detail);
+							RowNames2 = "iter_"+string(1:size_3); 
+							RowNames2(size_3+1) = "average";
+							RowNames2(size_3+2) = "std";
 
-                            %# 生成Excel文件保存地址
-                            % 生成文件夹名称
-                            path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
-                            try
-                                path = fullfile(path, hmenu4_1.UserData.datasetName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
-                            catch
-                            end
-                            % 如果生成的文件夹名称不存在，则先创建文件夹
-                            if ~exist(path, 'dir')
-                                [status,msg,msgID] = mkdir(path);
-                            end
-                            % path已经有了，filename重新生成
-                            filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'_hLayerOptimization','.xlsx'];
-                            filename = fullfile(path, filename);
-                            accTable = array2table([acc_avg; timeLayer], 'VariableNames', VariableNames);
-                            accTable.Properties.RowNames = RowNames1;
-                            % Sheet 1保存优化30列（6个隐含层节点与5个隐含层）分类结果acc_avg。
-                            % 每一列都是20次重复计算的分类准确率的平均值，包括各类别的分类准确率，以及OA, AA, Kappa
-                            writetable(accTable,filename,'Sheet',1,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
-                            % Sheet 2保存优化30列（6个隐含层节点与5个隐含层）分类结果OA_detail。   
-                            % 每一列是20次重复计算获得的20个OA值
-                            OATable = array2table([OA_detail; OA_avg; std(OA_detail)], 'VariableNames', VariableNames);
-                            OATable.Properties.RowNames = RowNames2;
-                            writetable(OATable,filename,'Sheet',2,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);  
+							%# 生成Excel文件保存地址
+							% 生成文件夹名称
+							path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
+							try
+								path = fullfile(path, hmenu4_1.UserData.datasetName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
+							catch
+							end
+							% 如果生成的文件夹名称不存在，则先创建文件夹
+							if ~exist(path, 'dir')
+								[status,msg,msgID] = mkdir(path);
+							end
+							% path已经有了，filename重新生成
+							filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'_hLayerOptimization','.xlsx'];
+							filename = fullfile(path, filename);
+							accTable = array2table([acc_avg; timeLayer], 'VariableNames', VariableNames);
+							accTable.Properties.RowNames = RowNames1;
+							% Sheet 1保存优化30列（6个隐含层节点与5个隐含层）分类结果acc_avg。
+							% 每一列都是20次重复计算的分类准确率的平均值，包括各类别的分类准确率，以及OA, AA, Kappa
+							writetable(accTable,filename,'Sheet',1,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
+							% Sheet 2保存优化30列（6个隐含层节点与5个隐含层）分类结果OA_detail。   
+							% 每一列是20次重复计算获得的20个OA值
+							OATable = array2table([OA_detail; OA_avg; std(OA_detail)], 'VariableNames', VariableNames);
+							OATable.Properties.RowNames = RowNames2;
+							writetable(OATable,filename,'Sheet',2,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);  
 
-                            %# 网络信息保存
-                            %% 保存有关分类结果及网络配置的详细信息到附加Sheet中
-                            % 保存降维及分类参数设置paraTable_c到Sheet 3中，
-                            % 主要是startNum和stopNum, startLayerNum 和stopLayerNum
-                            paraTable_c.startNum = Nhd_min;
-                            paraTable_c.stopNum = Nhd_max;
-                            writetable(paraTable_c, filename, 'Sheet',3,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
+							%# 网络信息保存
+							%% 保存有关分类结果及网络配置的详细信息到附加Sheet中
+							% 保存降维及分类参数设置paraTable_c到Sheet 3中，
+							% 主要是startNum和stopNum, startLayerNum 和stopLayerNum
+							paraTable_c.startNum = Nhd_min;
+							paraTable_c.stopNum = Nhd_max;
+							writetable(paraTable_c, filename, 'Sheet',3,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
 
-                            %# 保存数据集信息hmenu4_1.UserData到Sheet(iset+1)
-                            info_1 = hmenu4_1.UserData;
-                            info_1.x3 = [];
-                            info_1.lbs2 = [];
-                            info_1.x2 = [];
-                            info_1.lbs = [];
-                            info_1.cmap = [];
-                            info_1.Nhd_min = Nhd_min;
-                            info_1.Nhd_max = Nhd_max;
-                            % info_1.elapsedTimec = toc(timerVal_1)-time1; % 保存分类消耗时间
-                            info_1 = struct2table(info_1, 'AsArray',true);
-                            writetable(info_1, filename, 'Sheet',3,'Range','A3', 'WriteRowNames',true, 'WriteVariableNames', true);
-                            %# 单独处理cmap
-                            info_cmap = hmenu4_1.UserData.cmap;
-                            variableNames = ["R","G","B"]; %VariableNames属性为字符向量元胞数组{'R','G','B'}。
-                            % 如需指定多个变量名称，请在字符串数组["R","G","B"]或字符向量元胞数组{'R','G','B'}中指定这些名称。
-                            % 创建行的名称 RowNames3，格式为字符串数组["1","2","3"]或字符向量元胞数组{'1','2','3'}；
-                            RowNames3 = string(1:size(info_cmap,1)); % ；
-                            info_cmap = array2table(info_cmap, 'VariableNames', variableNames);
-                            info_cmap.Properties.RowNames = RowNames3;
-                            writetable(info_cmap,filename,'Sheet',3,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);
+							%# 保存数据集信息hmenu4_1.UserData到Sheet(iset+1)
+							info_1 = hmenu4_1.UserData;
+							info_1.x3 = [];
+							info_1.lbs2 = [];
+							info_1.x2 = [];
+							info_1.lbs = [];
+							info_1.cmap = [];
+							info_1.Nhd_min = Nhd_min;
+							info_1.Nhd_max = Nhd_max;
+							% info_1.elapsedTimec = toc(timerVal_1)-time1; % 保存分类消耗时间
+							info_1 = struct2table(info_1, 'AsArray',true);
+							writetable(info_1, filename, 'Sheet',3,'Range','A3', 'WriteRowNames',true, 'WriteVariableNames', true);
+							%# 单独处理cmap
+							info_cmap = hmenu4_1.UserData.cmap;
+							variableNames = ["R","G","B"]; %VariableNames属性为字符向量元胞数组{'R','G','B'}。
+							% 如需指定多个变量名称，请在字符串数组["R","G","B"]或字符向量元胞数组{'R','G','B'}中指定这些名称。
+							% 创建行的名称 RowNames3，格式为字符串数组["1","2","3"]或字符向量元胞数组{'1','2','3'}；
+							RowNames3 = string(1:size(info_cmap,1)); % ；
+							info_cmap = array2table(info_cmap, 'VariableNames', variableNames);
+							info_cmap.Properties.RowNames = RowNames3;
+							writetable(info_cmap,filename,'Sheet',3,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);
 
-                            %# 创建行的名称 RowNames4，必须是字符元胞数组或者字符串数组；
-                            [size_5, size_6] = size(err_avg);
-                            if size_5==8
-                                RowNames4 = {'err_perf1','err_perf2','err_vperf1','err_vperf2','err_tperf1','err_tperf2','racc1','racc2'};
-                            elseif size_5==4
-                                RowNames4 = {'err_perf','err_vperf','err_tperf','racc'};
-                            end
-                            errTable = array2table(err_avg, 'VariableNames', VariableNames);
-                            errTable.Properties.RowNames = RowNames4;
-                            % Sheet 3保存优化30列（6个隐含层节点与5个隐含层）训练性能数据err_avg。
-                            % 每一列都是20次重复计算的训练性能数据的平均值，包括各类别的分类准确率，以及OA, AA, Kappa
-                            writetable(errTable,filename,'Sheet',4,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);            
-                            %# 隐含层层数寻优结果保存完毕 
+							%# 创建行的名称 RowNames4，必须是字符元胞数组或者字符串数组；
+							[size_5, size_6] = size(err_avg);
+							if size_5==8
+								RowNames4 = {'err_perf1','err_perf2','err_vperf1','err_vperf2','err_tperf1','err_tperf2','racc1','racc2'};
+							elseif size_5==4
+								RowNames4 = {'err_perf','err_vperf','err_tperf','racc'};
+							end
+							errTable = array2table(err_avg, 'VariableNames', VariableNames);
+							errTable.Properties.RowNames = RowNames4;
+							% Sheet 3保存优化30列（6个隐含层节点与5个隐含层）训练性能数据err_avg。
+							% 每一列都是20次重复计算的训练性能数据的平均值，包括各类别的分类准确率，以及OA, AA, Kappa
+							writetable(errTable,filename,'Sheet',4,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);            
+							%# 隐含层层数寻优结果保存完毕 
 						case '否'
 					end
 				end
             case 'exit'
                 disp('ClassDemo已经退出.')
                 %dessert = 0;
-        end    
+		end    
        
     end
     %     path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
