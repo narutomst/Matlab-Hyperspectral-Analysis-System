@@ -755,26 +755,27 @@ end
 		saveas(gcf, filename_2);        % 原始混淆矩阵保存为fig
 
 		%# 这里，我们需要处理的范围是i=1:14,j=1:14，将每一个格子中的百分数去掉
+        M = hmenu4_1.UserData.M;
 		N = hmenu4_1.UserData.M-1;     % 类别总数
 		for i = 1:N
 			for j = 1:N
 				%for k = 1:2
-				idx_1 = 2+(15-j)*15*3+(15-i) *3+1;
+				idx_1 = 2+(M-j)*M*3+(M-i) *3+1;
 				% 将每一个格子中的百分数去掉
 				f.Children(2).Children(idx_1).String='';
 				% 将每一个格子中的整数位置调整到格子正中间 
-				idx_2 = 2+(15-j)*15*3+(15-i) *3+2;
+				idx_2 = 2+(M-j)*M*3+(M-i) *3+2;
 				f.Children(2).Children(idx_2).VerticalAlignment = 'middle';
 				% 将每一个格子的颜色修改为其他颜色,比如品红色[0.8529 0.4686  0.6765 ]
 				% confusion matrix默认的格子底色1 浅红色 [0.9765 0.7686 0.7529]; 
 				% confusion matrix默认的格子底色2 浅绿色 [0.7373 0.9020 0.7686];  
-				idx_3 = 2+(15-j)*15*3+(15-i) *3+3;
+				idx_3 = 2+(M-j)*M*3+(M-i) *3+3;
 				f.Children(2).Children(idx_3).FaceColor = [0.8529 0.4686  0.6765];
 			end
 		end
 		% 将混淆矩阵对角线上的每个格子的颜色设置为浅蓝色[0.6686 0.8529 0.9765 ]
 		for i = 1:N
-			idx_3 = 2+(15-i)*15*3+(15-i) *3+3;
+			idx_3 = 2+(M-i)*M*3+(M-i) *3+3;
 			f.Children(2).Children(idx_3).FaceColor = [0.6686 0.8529 0.9765];
 		end
 		% 修改最右边一列和最下面一行的字体的颜色
@@ -782,18 +783,18 @@ end
 		% confusion matrix默认的字体颜色2 绿色Color: [0.1333 0.6745 0.2353]
 		for i=1:N
 			%for j = N+1
-			idx_1 = 2+(15-i) *3+1;
+			idx_1 = 2+(M-i) *3+1;
 			f.Children(2).Children(idx_1).Color = [0.75 0.01  0.01];
-			idx_2 = 2+(15-i) *3+2;
+			idx_2 = 2+(M-i) *3+2;
 			f.Children(2).Children(idx_2).Color = [0 0 1];            
 		end
 		for j=1:N   %for i = N+1
-			idx_1 = 2+(15-j)*15*3+1;
+			idx_1 = 2+(M-j)*M*3+1;
 			f.Children(2).Children(idx_1).Color = [0.75 0.01  0.01];
-			idx_2 = 2+(15-j)*15*3+2;
+			idx_2 = 2+(M-j)*M*3+2;
 			f.Children(2).Children(idx_2).Color = [0 0 1];            
 		end
-		% i=15,j=15
+		% i=M,j=M
 		f.Children(2).Children(2+1).Color = [0.75 0.01  0.01];
 		f.Children(2).Children(2+2).Color = [0 0  0];
 
@@ -1378,20 +1379,19 @@ end
                 % 而在单层优化时，节点越多效果越好。
                 % 所以单层的结论和可能不适用于多层。
 				if paraTable_c.hiddenNumOptimization
-                    % 询问是否要进行黄金分割法来寻找隐含层节点数的最优值
-                    quest = {'\fontsize{10} 是否要使用黄金分割法来寻找隐含层节点数的最优值？'};
-                             % \fontsize{10}：字体大小修饰符，作用是使其后面的字符大小都为10磅；
-                    dlgtitle = '隐含层节点数优化';         
-                    btn1 = '是';
-                    btn2 = '否';
-                    opts.Default = btn2;
-                    opts.Interpreter = 'tex';
-                    % answer = questdlg(quest,dlgtitle,btn1,btn2,defbtn);
-                    answer_hiddenNumOptimization = questdlg(quest, dlgtitle, btn1, btn2, opts);
+					% 询问是否要进行黄金分割法来寻找隐含层节点数的最优值
+					quest = {'\fontsize{10} 是否要使用黄金分割法来寻找隐含层节点数的最优值？'};
+							 % \fontsize{10}：字体大小修饰符，作用是使其后面的字符大小都为10磅；
+					dlgtitle = '隐含层节点数优化';         
+					btn1 = '是';
+					btn2 = '否';
+					opts.Default = btn2;
+					opts.Interpreter = 'tex';
+					% answer = questdlg(quest,dlgtitle,btn1,btn2,defbtn);
+					answer_hiddenNumOptimization = questdlg(quest, dlgtitle, btn1, btn2, opts);
 
-                    % Handle response
-					switch answer_hiddenNumOptimization
-						
+					% Handle response
+					switch answer_hiddenNumOptimization	
 						case '是'
 							time_1 = toc(timerVal_1);
 							Ni = size(hmenu4_3.UserData.drData, 2); %输入层节点数记为Ni，10249x5 double
@@ -1721,7 +1721,7 @@ end
                 end
                 %% 保存训练过程中的性能数据err_perf, err_vperf, err_tperf, racc到Excel中Sheet
                 T1 = createTableForWrite(err_perf, err_vperf, err_tperf, racc);
-                errTable = [T1.Variables; mean(T1.Variables); std(T1.Variables)];  % T1.Variables 是20×8 double
+                errTable = [T1.Variables; mean(T1.Variables,1); std(T1.Variables,0,1)];  % T1.Variables 是20×8 double
                 errTable = array2table(errTable, 'VariableNames', T1.Properties.VariableNames);
                 errTable.Properties.RowNames = [T1.Properties.RowNames; {'average'}; {'std'}]; %新增2行的行名称
                 %filename = "C:\Matlab练习\Project20191002\工程测试\2022-06-04 19-45-16\Botswana\LDA\GA_TANSIG\Botswana_LDA_GA_TANSIG.xlsx";
@@ -1850,26 +1850,27 @@ end
                 saveas(gcf, filename_2);        % 原始混淆矩阵保存为fig
 
                 %# 这里，我们需要处理的范围是i=1:14,j=1:14，将每一个格子中的百分数去掉
-                N = hmenu4_1.UserData.M-1;     % 类别总数
+                M = hmenu4_1.UserData.M;
+                N = hmenu4_1.UserData.M-1;     % 类别总数   
                 for i = 1:N
                     for j = 1:N
                         %for k = 1:2
-                        idx_1 = 2+(15-j)*15*3+(15-i) *3+1;
+                        idx_1 = 2+(M-j)*M*3+(M-i) *3+1;
                         % 将每一个格子中的百分数去掉
                         f.Children(2).Children(idx_1).String='';
                         % 将每一个格子中的整数位置调整到格子正中间 
-                        idx_2 = 2+(15-j)*15*3+(15-i) *3+2;
+                        idx_2 = 2+(M-j)*M*3+(M-i) *3+2;
                         f.Children(2).Children(idx_2).VerticalAlignment = 'middle';
                         % 将每一个格子的颜色修改为其他颜色,比如品红色[0.8529 0.4686  0.6765 ]
                         % confusion matrix默认的格子底色1 浅红色 [0.9765 0.7686 0.7529]; 
                         % confusion matrix默认的格子底色2 浅绿色 [0.7373 0.9020 0.7686];  
-                        idx_3 = 2+(15-j)*15*3+(15-i) *3+3;
+                        idx_3 = 2+(M-j)*M*3+(M-i) *3+3;
                         f.Children(2).Children(idx_3).FaceColor = [0.8529 0.4686  0.6765];
                     end
                 end
                 % 将混淆矩阵对角线上的每个格子的颜色设置为浅蓝色[0.6686 0.8529 0.9765 ]
                 for i = 1:N
-                    idx_3 = 2+(15-i)*15*3+(15-i) *3+3;
+                    idx_3 = 2+(M-i)*M*3+(M-i) *3+3;
                     f.Children(2).Children(idx_3).FaceColor = [0.6686 0.8529 0.9765];
                 end
                 % 修改最右边一列和最下面一行的字体的颜色
@@ -1877,18 +1878,18 @@ end
                 % confusion matrix默认的字体颜色2 绿色Color: [0.1333 0.6745 0.2353]
                 for i=1:N
                     %for j = N+1
-                    idx_1 = 2+(15-i) *3+1;
+                    idx_1 = 2+(M-i) *3+1;
                     f.Children(2).Children(idx_1).Color = [0.75 0.01  0.01];
-                    idx_2 = 2+(15-i) *3+2;
+                    idx_2 = 2+(M-i) *3+2;
                     f.Children(2).Children(idx_2).Color = [0 0 1];            
                 end
                 for j=1:N   %for i = N+1
-                    idx_1 = 2+(15-j)*15*3+1;
+                    idx_1 = 2+(M-j)*M*3+1;
                     f.Children(2).Children(idx_1).Color = [0.75 0.01  0.01];
-                    idx_2 = 2+(15-j)*15*3+2;
+                    idx_2 = 2+(M-j)*M*3+2;
                     f.Children(2).Children(idx_2).Color = [0 0 1];            
                 end
-                % i=15,j=15
+                % i=M,j=M
                 f.Children(2).Children(2+1).Color = [0.75 0.01  0.01];
                 f.Children(2).Children(2+2).Color = [0 0  0];
 
@@ -1988,9 +1989,10 @@ end
                 % filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
                 % filename = fullfile(path, filename);
                 disp({[hmenu4_1.UserData.matPath, ' 分类完毕! 历时',num2str(time2-time1),'秒.']});
-                disp(['分类结果详细数据保存于',filename]);               
-                delete(MyPar) %计算完成后关闭并行处理池
-                
+                disp(['分类结果详细数据保存于',filename]); 
+                if exist('MyPar', 'var')
+                    delete(MyPar) %计算完成后关闭并行处理池
+                end
                 %% 网络隐含层层数的优化 询问是否要执行隐含层层数（即网络深度）优化
                 [mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
                 XTrain = table2array(mA1(:, 1:end-1))';  %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
