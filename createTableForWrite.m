@@ -12,9 +12,9 @@ function T = createTableForWrite(varargin)
     % 变量调用部分由  best_perf, best_vperf, best_tperf, racc，变成
     % {'best_perf(:,1),'} {'best_perf(:,2),'} {'best_vperf(:,1),'} {'best_vperf(:,2),'} {'best_tperf(:,1),'} {'best_tperf(:,2),'} {'racc(:,1),'} {'racc(:,2),'}
     
-    varargin
-    inputname(1)  %char
-    inputname(nargin)
+    %varargin
+    inputname(1);  %char
+    inputname(nargin);
     [nn, mm] = size(varargin{1});
     VN = {};
     vn = {};
@@ -47,7 +47,7 @@ function T = createTableForWrite(varargin)
         vnString = [vnString, vn1{i}];
     end
     %vnString
-    vnString = ['T = table(' vnString(1:end-1) ')'];
+    vnString = ['T = table(' vnString(1:end-1) ');'];
     %T = table(varargin{1},varargin{2},varargin{3},varargin{4});%这样语法正确，但是只有4个变量
     %T = table(varargin{1}(:,1), varargin{1}(:,2), varargin{2}(:,1), varargin{2}(:,2), varargin{3}(:,1), varargin{3}(:,2), varargin{4}(:, 1), varargin{4}(:, 2));
     % 这个也是语法正确的
