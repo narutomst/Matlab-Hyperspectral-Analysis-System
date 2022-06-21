@@ -2235,7 +2235,8 @@ end
 							% Sheet 3保存优化30列（6个隐含层节点与5个隐含层）训练性能数据err_avg。
 							% 每一列都是20次重复计算的训练性能数据的平均值，包括各类别的分类准确率，以及OA, AA, Kappa
 							writetable(errTable,filename,'Sheet',4,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);            
-							%# 隐含层层数寻优结果保存完毕 
+							%# 隐含层层数寻优结果保存完毕
+                            disp('隐含层层数寻优结果保存完毕!');
 						case '否'
 					end
 				end
