@@ -1300,84 +1300,84 @@ end
                                         
         % Handle response
 		switch answer
-            case 'Clssification Learner'
-                disp([answer ' 开启.'])
-                %dessert = 1;
-                if ~exist('t0','var') || isempty(t0) || size(x2,1)~=size(t0,1)
-                    t0 = createTable(x2, lbs);
-                    [t1,t2] = createTwoTable(x2,lbs,rate);
-                    mA = createTable(mappedA, lbs);
-                    [mA1,mA2] = createTwoTable(mappedA,lbs,rate);
-                end
-                classificationLearner
+			case 'Clssification Learner'
+				disp([answer ' 开启.'])
+				%dessert = 1;
+				if ~exist('t0','var') || isempty(t0) || size(x2,1)~=size(t0,1)
+					t0 = createTable(x2, lbs);
+					[t1,t2] = createTwoTable(x2,lbs,rate);
+					mA = createTable(mappedA, lbs);
+					[mA1,mA2] = createTwoTable(mappedA,lbs,rate);
+				end
+				classificationLearner
 
-            case 'ClassDemo'
-                disp([answer ' 分类将继续执行.'])
-                %dessert = 2;
-                n = paraTable_c.executionTimes;
-                N = hmenu4_1.UserData.M-1;     % 类别总数
-                % 询问是否要打开并行池
-                quest = {'\fontsize{10} 是否要使用并行计算（Parallel Computing）？'};
-                         % \fontsize{10}：字体大小修饰符，作用是使其后面的字符大小都为10磅；
-                dlgtitle = '并行计算';         
-                btn1 = '是';
-                btn2 = '否';
-                opts.Default = btn2;
-                opts.Interpreter = 'tex';
-                % answer = questdlg(quest,dlgtitle,btn1,btn2,defbtn);
-                answer = questdlg(quest, dlgtitle, btn1, btn2, opts);
-                if strcmp(answer, '是')
-                    try
-                        MyPar = parpool; %如果并行池未开启，则打开并行处理池
-                    catch
-                        MyPar = gcp; %如果并行池已经开启，则将当前并行池赋值给MyPar
-                    end
-                end
+			case 'ClassDemo'
+				disp([answer ' 分类将继续执行.'])
+				%dessert = 2;
+				n = paraTable_c.executionTimes;
+				N = hmenu4_1.UserData.M-1;     % 类别总数
+				% 询问是否要打开并行池
+				quest = {'\fontsize{10} 是否要使用并行计算（Parallel Computing）？'};
+						 % \fontsize{10}：字体大小修饰符，作用是使其后面的字符大小都为10磅；
+				dlgtitle = '并行计算';         
+				btn1 = '是';
+				btn2 = '否';
+				opts.Default = btn2;
+				opts.Interpreter = 'tex';
+				% answer = questdlg(quest,dlgtitle,btn1,btn2,defbtn);
+				answer = questdlg(quest, dlgtitle, btn1, btn2, opts);
+				if strcmp(answer, '是')
+					try
+						MyPar = parpool; %如果并行池未开启，则打开并行处理池
+					catch
+						MyPar = gcp; %如果并行池已经开启，则将当前并行池赋值给MyPar
+					end
+				end
 
-                cAlgorithmNameSet1 = ["TANSIG", "RBF"];
-                cAlgorithmNameSet2 = ["GA_TANSIG", "GA_RBF", "PSO_TANSIG", "PSO_RBF"];
-                if sum(ismember(paraTable_c.Properties.RowNames, cAlgorithmNameSet1))
-                    % 每次迭代计算中，函数的返回值[net, tr, tTest, c, cm]只有一组值
-                    setsNum = 1; % 使用组数setsNum来进行循环计算获得TPR, OA, AA, Kappa
-                elseif sum(ismember(paraTable_c.Properties.RowNames, cAlgorithmNameSet2))
-                    % 每次迭代计算中，函数的返回值[net, tr, tTest, c, cm]具有两组值
-                    % 一组是网络参数优化之前的，另一组是网络参数优化之后的。
-                    setsNum = 2; 
-                else
-                    disp('所选择的分类算法在每次迭代计算时可能会产生超过两组结果，无法保存！');
-                end
-                acc_best = zeros(setsNum, setsNum); % 记录n次迭代下的最高准确率OA的值
-                % acc_best(1,1)保存优化前的最高acc值; acc_best(2, 2)保存优化后的最高acc值
-                % acc_best(1,2)保存优化前的最高acc值对应的网络在优化后的准确率值
-                % acc_best(2,1)保存优化后的最高acc值对应的网络在优化前的准确率值
-                net_best = cell(setsNum, setsNum); % 记录最高准确率下训练好的网络（用于绘制GT图）
-                % net_best{1,1}保存优化前具有最高acc值的网络; net_best{2, 2}保存优化后具有最高acc值的网络
-                % net_best{1,2}保存优化前具有最高acc值的网络在优化后的网络
-                % net_best{2,1}保存优化后具有最高acc值的网络在优化前的网络
+				cAlgorithmNameSet1 = ["TANSIG", "RBF"];
+				cAlgorithmNameSet2 = ["GA_TANSIG", "GA_RBF", "PSO_TANSIG", "PSO_RBF"];
+				if sum(ismember(paraTable_c.Properties.RowNames, cAlgorithmNameSet1))
+					% 每次迭代计算中，函数的返回值[net, tr, tTest, c, cm]只有一组值
+					setsNum = 1; % 使用组数setsNum来进行循环计算获得TPR, OA, AA, Kappa
+				elseif sum(ismember(paraTable_c.Properties.RowNames, cAlgorithmNameSet2))
+					% 每次迭代计算中，函数的返回值[net, tr, tTest, c, cm]具有两组值
+					% 一组是网络参数优化之前的，另一组是网络参数优化之后的。
+					setsNum = 2; 
+				else
+					disp('所选择的分类算法在每次迭代计算时可能会产生超过两组结果，无法保存！');
+				end
+				acc_best = zeros(setsNum, setsNum); % 记录n次迭代下的最高准确率OA的值
+				% acc_best(1,1)保存优化前的最高acc值; acc_best(2, 2)保存优化后的最高acc值
+				% acc_best(1,2)保存优化前的最高acc值对应的网络在优化后的准确率值
+				% acc_best(2,1)保存优化后的最高acc值对应的网络在优化前的准确率值
+				net_best = cell(setsNum, setsNum); % 记录最高准确率下训练好的网络（用于绘制GT图）
+				% net_best{1,1}保存优化前具有最高acc值的网络; net_best{2, 2}保存优化后具有最高acc值的网络
+				% net_best{1,2}保存优化前具有最高acc值的网络在优化后的网络
+				% net_best{2,1}保存优化后具有最高acc值的网络在优化前的网络
 
-                tTest_best = cell(1, setsNum);
-                % tTest_best也可以初始化为cell(setsNum, setsNum)，考虑到会极大消耗存储空间，
-                % 于是将其初始化为cell(1, setsNum)。
-                % tTest_best{1,1}保存优化前具有最高acc值的网络预测向量结果; 
-                % tTest_best{1,2}保存优化后具有最高acc值的网络预测向量结果；
-                cmNormalizedValues1 = zeros(N, N, n, setsNum); %保存正常顺序的混淆矩阵
-                % cmNormalizedValues1(:, :, k, 1)保存第k次迭代计算优化前的网络性能的混淆矩阵;
-                % cmNormalizedValues1(:, :, k, 2)保存第k次迭代计算优化后的网络性能的混淆矩阵;
-                cmNormalizedValues2 = zeros(N, N, n, setsNum); %保存调整顺序后的混淆矩阵
-                cmClassLabels2 = zeros(n, N, setsNum);
-                acc = zeros(n, setsNum);
- 
-                racc = zeros(n, setsNum);        % 即混淆矩阵返回值中的第一个值c，误分率，等于1-acc
-                err_perf = zeros(n, setsNum);   % （即trainRecord.best_perf）
-                err_vperf = zeros(n, setsNum); %（即trainRecord.best_vperf）
-                err_tperf = zeros(n, setsNum); %（即trainRecord.best_tperf）   
-                
-                %% 利用黄金分割搜索法来寻找各个隐藏层神经元的最佳个数
-                % 这里仅针对单个隐层进行寻优，以说明寻找最佳隐含层节点数的过程，但是对于多个隐含层的情况，
-                % 这种方法并不见得就有好的效果，例如单隐层huston.mat数据集上0.2的训练集，1~100的寻优结果为85
-                % 这个效果会好于双隐层，每层只有40个节点的网络吗？不一定。因为通常而言，窄而深的网络分类效果更好。
-                % 而在单层优化时，节点越多效果越好。
-                % 所以单层的结论和可能不适用于多层。
+				tTest_best = cell(1, setsNum);
+				% tTest_best也可以初始化为cell(setsNum, setsNum)，考虑到会极大消耗存储空间，
+				% 于是将其初始化为cell(1, setsNum)。
+				% tTest_best{1,1}保存优化前具有最高acc值的网络预测向量结果; 
+				% tTest_best{1,2}保存优化后具有最高acc值的网络预测向量结果；
+				cmNormalizedValues1 = zeros(N, N, n, setsNum); %保存正常顺序的混淆矩阵
+				% cmNormalizedValues1(:, :, k, 1)保存第k次迭代计算优化前的网络性能的混淆矩阵;
+				% cmNormalizedValues1(:, :, k, 2)保存第k次迭代计算优化后的网络性能的混淆矩阵;
+				cmNormalizedValues2 = zeros(N, N, n, setsNum); %保存调整顺序后的混淆矩阵
+				cmClassLabels2 = zeros(n, N, setsNum);
+				acc = zeros(n, setsNum);
+
+				racc = zeros(n, setsNum);        % 即混淆矩阵返回值中的第一个值c，误分率，等于1-acc
+				err_perf = zeros(n, setsNum);   % （即trainRecord.best_perf）
+				err_vperf = zeros(n, setsNum); %（即trainRecord.best_vperf）
+				err_tperf = zeros(n, setsNum); %（即trainRecord.best_tperf）   
+				
+				%% 利用黄金分割搜索法来寻找各个隐藏层神经元的最佳个数
+				% 这里仅针对单个隐层进行寻优，以说明寻找最佳隐含层节点数的过程，但是对于多个隐含层的情况，
+				% 这种方法并不见得就有好的效果，例如单隐层huston.mat数据集上0.2的训练集，1~100的寻优结果为85
+				% 这个效果会好于双隐层，每层只有40个节点的网络吗？不一定。因为通常而言，窄而深的网络分类效果更好。
+				% 而在单层优化时，节点越多效果越好。
+				% 所以单层的结论和可能不适用于多层。
 				if paraTable_c.hiddenNumOptimization
 					% 询问是否要进行黄金分割法来寻找隐含层节点数的最优值
 					quest = {'\fontsize{10} 是否要使用黄金分割法来寻找隐含层节点数的最优值？'};
@@ -1567,71 +1567,71 @@ end
 					end
 				end
 
-                t = table2cell(paraTable_c);
-                
-                k = numel(t); 
-                para = cell(1,2*k);
-                for i = 1:k
-                    para{2*i-1} = paraTable_c.Properties.VariableNames{i};
-                    para{2*i} = t{i};
-                end
-                var = cellfun(@string, para(9:end)); %对cell array中的所有cell应用string
-        
-                for k = 1 : n
-                    [mA1,mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate); % rate: 所使用的训练集占比
-                    XTrain = table2array(mA1(:, 1:end-1))';           %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
-                    TTrain = ind2vec(double(mA1.Class)');
-                    %%警告使用稀疏矩阵形式的输入数据训练网络将会导致内存占用太大！所以还是换成下面的向量形式的TTrain？
-                    % TTrain = double(mA1.Class)';
-                    XTest = table2array(mA2(:, 1:end-1))';             %XTest每一列为一个样本                
-                    TTest = ind2vec(double(mA2.Class)');            %TTest每一列为一个类别标签
-                    disp(['第',num2str(k),'次计算']);
-                    [netTrained, trainRecord, predictedVector, misclassRate, cmt] = classDemo(XTrain, TTrain, XTest, TTest, type, var);%前3个为必需参数，后面为可选参数
-                    %这个函数能给出的有价值的计算结果是： net tr tTest c cm 
-                    % 这里写为netTrained, trainRecord, predictedVector, misclassRate, cmt
-                    % netTrained，即net，训练好的网络
-                    % trainRecord，即tr，训练记录结构体，包含了tr.best_perf 训练集最佳性能（蓝色曲线），
-                    % tr.best_vperf 验证集最佳性能（绿色曲线），tr.best_tperf 测试集最佳性能（红色曲线）
-                    % predictedVector，即tTest，为预测的类别标签列向量
-                    % misclassRate，即混淆矩阵返回值的第一个值c, 误分率，其值等于1-acc；而1-c，即准确率OA
-                    % cmt，即cm, 混淆矩阵
-                    % 上述返回值都是cell array，对于函数f_TANSIG(), f_RBF(), f_BP()，上述返回值都是1×1 cell array；
-                    % 对于函数f_GA_TANSIG(), f_GA_RBF(), f_GA_BP()，f_PSO_TANSIG(), f_PSO_RBF(), f_PSO_BP()，
-                    % 上述返回值都是2×1 cell array；
+				t = table2cell(paraTable_c);
+				
+				k = numel(t); 
+				para = cell(1,2*k);
+				for i = 1:k
+					para{2*i-1} = paraTable_c.Properties.VariableNames{i};
+					para{2*i} = t{i};
+				end
+				var = cellfun(@string, para(9:end)); %对cell array中的所有cell应用string
 
-                    % 每计算一次，保存一次准确率及混淆矩阵
-                    acc(k, :) = cellfun(@(x) 1-x, misclassRate);
-                    racc(k, :) = 1-acc(k, :);                                % racc 误分率，即混淆矩阵返回值中的第一个值c, 其值为1-acc
-                    err_perf(k, :) = cellfun(@(x) x.best_perf, trainRecord);     %trainRecord.best_perf 训练集最佳性能（蓝色曲线）
-                    err_vperf(k, :) = cellfun(@(x) x.best_vperf, trainRecord);  %trainRecord.best_vperf 验证集最佳性能（绿色曲线）
-                    err_tperf(k, :) = cellfun(@(x) x.best_tperf, trainRecord);   %trainRecord.best_tperf 测试集最佳性能（红色曲线）
+				for k = 1 : n
+					[mA1,mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate); % rate: 所使用的训练集占比
+					XTrain = table2array(mA1(:, 1:end-1))';           %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
+					TTrain = ind2vec(double(mA1.Class)');
+					%%警告使用稀疏矩阵形式的输入数据训练网络将会导致内存占用太大！所以还是换成下面的向量形式的TTrain？
+					% TTrain = double(mA1.Class)';
+					XTest = table2array(mA2(:, 1:end-1))';             %XTest每一列为一个样本                
+					TTest = ind2vec(double(mA2.Class)');            %TTest每一列为一个类别标签
+					disp(['第',num2str(k),'次计算']);
+					[netTrained, trainRecord, predictedVector, misclassRate, cmt] = classDemo(XTrain, TTrain, XTest, TTest, type, var);%前3个为必需参数，后面为可选参数
+					%这个函数能给出的有价值的计算结果是： net tr tTest c cm 
+					% 这里写为netTrained, trainRecord, predictedVector, misclassRate, cmt
+					% netTrained，即net，训练好的网络
+					% trainRecord，即tr，训练记录结构体，包含了tr.best_perf 训练集最佳性能（蓝色曲线），
+					% tr.best_vperf 验证集最佳性能（绿色曲线），tr.best_tperf 测试集最佳性能（红色曲线）
+					% predictedVector，即tTest，为预测的类别标签列向量
+					% misclassRate，即混淆矩阵返回值的第一个值c, 误分率，其值等于1-acc；而1-c，即准确率OA
+					% cmt，即cm, 混淆矩阵
+					% 上述返回值都是cell array，对于函数f_TANSIG(), f_RBF(), f_BP()，上述返回值都是1×1 cell array；
+					% 对于函数f_GA_TANSIG(), f_GA_RBF(), f_GA_BP()，f_PSO_TANSIG(), f_PSO_RBF(), f_PSO_BP()，
+					% 上述返回值都是2×1 cell array；
 
-                    for iset = 1:setsNum
-                        cmNormalizedValues1(:, :, k, iset) = cmt{iset};
-                        % 如何找到最优网络net，及预测向量等结果？是找优化前的最高准确率还是找优化后的最高准确率？
-                        % 记录一个优化前的最高值，记录一个优化后的最高值。
-                        % 如果优化前后的两个最高准确率不是发生同一次（第k次）怎么办？
-                        % 记录优化前和优化后的最优值
-                        if acc(k, iset) > acc_best(iset, iset)    
-                            % acc_best(1,1)保存优化前的最高acc值; acc_best(2, 2)保存优化后的最高acc值
-                            % acc_best(1,2)保存优化前的最高acc值对应的网络在优化后的准确率值
-                            % acc_best(2,1)保存优化后的最高acc值对应的网络在优化前的准确率值
-                            acc_best(iset, :)=acc(k, :);
-                            net_best(iset, :)=netTrained;
-                            tTest_best(1, iset)=predictedVector(iset);
-                            % tTest_best{1,1}保存优化前具有最高acc值的网络的预测向量结果；
-                            % tTest_best{1,2}保存优化后具有最高acc值的网络的预测向量结果。                  
-                        end
-                    end
-                end
+					% 每计算一次，保存一次准确率及混淆矩阵
+					acc(k, :) = cellfun(@(x) 1-x, misclassRate);
+					racc(k, :) = 1-acc(k, :);                                % racc 误分率，即混淆矩阵返回值中的第一个值c, 其值为1-acc
+					err_perf(k, :) = cellfun(@(x) x.best_perf, trainRecord);     %trainRecord.best_perf 训练集最佳性能（蓝色曲线）
+					err_vperf(k, :) = cellfun(@(x) x.best_vperf, trainRecord);  %trainRecord.best_vperf 验证集最佳性能（绿色曲线）
+					err_tperf(k, :) = cellfun(@(x) x.best_tperf, trainRecord);   %trainRecord.best_tperf 测试集最佳性能（红色曲线）
+
+					for iset = 1:setsNum
+						cmNormalizedValues1(:, :, k, iset) = cmt{iset};
+						% 如何找到最优网络net，及预测向量等结果？是找优化前的最高准确率还是找优化后的最高准确率？
+						% 记录一个优化前的最高值，记录一个优化后的最高值。
+						% 如果优化前后的两个最高准确率不是发生同一次（第k次）怎么办？
+						% 记录优化前和优化后的最优值
+						if acc(k, iset) > acc_best(iset, iset)    
+							% acc_best(1,1)保存优化前的最高acc值; acc_best(2, 2)保存优化后的最高acc值
+							% acc_best(1,2)保存优化前的最高acc值对应的网络在优化后的准确率值
+							% acc_best(2,1)保存优化后的最高acc值对应的网络在优化前的准确率值
+							acc_best(iset, :)=acc(k, :);
+							net_best(iset, :)=netTrained;
+							tTest_best(1, iset)=predictedVector(iset);
+							% tTest_best{1,1}保存优化前具有最高acc值的网络的预测向量结果；
+							% tTest_best{1,2}保存优化后具有最高acc值的网络的预测向量结果。                  
+						end
+					end
+				end
 				info_1 = hmenu4_1.UserData;
 				info_1.cElapsedTime = toc(timerVal_1)-time1; % 保存分类消耗时间
 
 				%% 计算分类结果（根据混淆矩阵cmNormalizedValues1，计算OA, AA, Kappa）
 				[size1, size2, size3, size4] = size(cmNormalizedValues1);  % 16×16×20×2 double
 				cmt = cmNormalizedValues1;
-                % load('工程测试\20220517\cmNormalizedValues1.mat','cmt'); %用于测试
-                % [size1, size2, size3, size4] = size(cmt);   % huston.mat数据集的混淆矩阵尺寸：15×15×20×2
+				% load('工程测试\20220517\cmNormalizedValues1.mat','cmt'); %用于测试
+				% [size1, size2, size3, size4] = size(cmt);   % huston.mat数据集的混淆矩阵尺寸：15×15×20×2
 
 				%# 先计算TPR
 				Ns = sum(sum(cmt(:, :, 1, 1)));   %测试集样本总数
@@ -1653,362 +1653,362 @@ end
 				c(:, size3+2, :) = std(c(:, 1:size3, :), 0, 2); %对矩阵的行求标准差，等价于% std(permute(c(:, 1:size3, :),[2,1,3]));
 				% c的最终尺寸为18×22×2
 
-                %% 将分类结果写入Excel表格
-                %为cell的每一列创建列名称 VariableNames
-                VariableNames = cell(1,size3+2);
-                for i = 1:size3
-                    VariableNames{i}= ['iter_',num2str(i)];
-                end
-                VariableNames(size3+1 : size3+2)  = {'average', 'std'};
-                % 创建行的名称 RowNames，必须是字符元胞数组 即1×(15+3) cell；
-                RowNames = cell(1, size1+3); % 3行分别是OA、AA、kappa；
-                for i = 1:size(cmt, 1)
-                    RowNames{i} = ['class_',num2str(i)];
-                end
-                RowNames(i+1 : end) = {'OA', 'AA', 'Kappa'};
+				%% 将分类结果写入Excel表格
+				%为cell的每一列创建列名称 VariableNames
+				VariableNames = cell(1,size3+2);
+				for i = 1:size3
+					VariableNames{i}= ['iter_',num2str(i)];
+				end
+				VariableNames(size3+1 : size3+2)  = {'average', 'std'};
+				% 创建行的名称 RowNames，必须是字符元胞数组 即1×(15+3) cell；
+				RowNames = cell(1, size1+3); % 3行分别是OA、AA、kappa；
+				for i = 1:size(cmt, 1)
+					RowNames{i} = ['class_',num2str(i)];
+				end
+				RowNames(i+1 : end) = {'OA', 'AA', 'Kappa'};
 
-                %# 生成Excel文件保存地址
-                path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
-                try
-                    path = fullfile(path, hmenu4_1.UserData.datasetName, [hmenu4_1.UserData.drAlgorithm,'null'], hmenu4_1.UserData.cAlgorithm);
-                catch
-                end
-                if ~exist(path, 'dir')
-                    [status,msg,msgID] = mkdir(path);
-                end
-                    filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
-                try
-                    filename = fullfile(path,filename);%拼接路径
-                catch
-                end
+				%# 生成Excel文件保存地址
+				path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
+				try
+					path = fullfile(path, hmenu4_1.UserData.datasetName, [hmenu4_1.UserData.drAlgorithm,'null'], hmenu4_1.UserData.cAlgorithm);
+				catch
+				end
+				if ~exist(path, 'dir')
+					[status,msg,msgID] = mkdir(path);
+				end
+					filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
+				try
+					filename = fullfile(path,filename);%拼接路径
+				catch
+				end
 
-                for iset = 1:size4
-                    accTable = array2table(c(:, :, iset), 'VariableNames', VariableNames);
-                    accTable.Properties.RowNames = RowNames;
-                    % Sheet 1保存优化之前的分类结果，Sheet 2保存优化之后的分类结果。
-                    writetable(accTable,filename,'Sheet',iset,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
-                end
-                %% 保存有关分类结果及网络配置的详细信息到附加Sheet中
-                % 保存降维及分类参数设置paraTable_c到Sheet(iset+1)，即Sheet 3中
-                writetable(paraTable_c, filename, 'Sheet',iset+1,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
+				for iset = 1:size4
+					accTable = array2table(c(:, :, iset), 'VariableNames', VariableNames);
+					accTable.Properties.RowNames = RowNames;
+					% Sheet 1保存优化之前的分类结果，Sheet 2保存优化之后的分类结果。
+					writetable(accTable,filename,'Sheet',iset,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
+				end
+				%% 保存有关分类结果及网络配置的详细信息到附加Sheet中
+				% 保存降维及分类参数设置paraTable_c到Sheet(iset+1)，即Sheet 3中
+				writetable(paraTable_c, filename, 'Sheet',iset+1,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
 
-                %# 保存数据集信息hmenu4_1.UserData到Sheet(iset+1)
-                info_1 = hmenu4_1.UserData;
-                info_1.x3 = [];
-                info_1.lbs2 = [];
-                info_1.x2 = [];
-                info_1.lbs = [];
-                info_1.cmap = [];
-                % info_1.elapsedTimec = toc(timerVal_1)-time1; % 保存分类消耗时间
-                info_1 = struct2table(info_1, 'AsArray',true);
-                writetable(info_1, filename, 'Sheet',iset+1,'Range','A3', 'WriteRowNames',true, 'WriteVariableNames', true);
-                %# 单独处理cmap
-                info_cmap = hmenu4_1.UserData.cmap;
-                VariableNames = ["R","G","B"]; %VariableNames属性为字符向量元胞数组{'R','G','B'}。
-                % 如需指定多个变量名称，请在字符串数组["R","G","B"]或字符向量元胞数组{'R','G','B'}中指定这些名称。
-                % 创建行的名称 RowNames，格式为字符串数组["1","2","3"]或字符向量元胞数组{'1','2','3'}；
-                RowNames = string(1:size(info_cmap,1)); % ；
-                info_cmap = array2table(info_cmap, 'VariableNames', VariableNames);
-                info_cmap.Properties.RowNames = RowNames;
-                writetable(info_cmap,filename,'Sheet',iset+1,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);
-                %# 保存time_goldSection
-                if exist('time_goldSection','var')==1
-                    VariableNames = ["iLayer_"+string(1:paraTable_c.hiddenLayerNum)];
-                    RowNames = "colapsedTime";
-                    timeTable = array2table(time_goldSection, 'VariableNames', VariableNames);
-                    timeTable.Properties.RowNames = RowNames;
-                    writetable(timeTable,filename,'Sheet',iset+1,'Range','A27', 'WriteRowNames',true, 'WriteVariableNames', true);
-                end
-                %% 保存训练过程中的性能数据err_perf, err_vperf, err_tperf, racc到Excel中Sheet
-                T1 = createTableForWrite(err_perf, err_vperf, err_tperf, racc);
-                errTable = [T1.Variables; mean(T1.Variables,1); std(T1.Variables,0,1)];  % T1.Variables 是20×8 double
-                errTable = array2table(errTable, 'VariableNames', T1.Properties.VariableNames);
-                errTable.Properties.RowNames = [T1.Properties.RowNames; {'average'}; {'std'}]; %新增2行的行名称
-                %filename = "C:\Matlab练习\Project20191002\工程测试\2022-06-04 19-45-16\Botswana\LDA\GA_TANSIG\Botswana_LDA_GA_TANSIG.xlsx";
-                errTable.Properties.Description = '保存训练过程中的性能数据err_perf, err_vperf, err_tperf, racc';
-                writetable(errTable,filename,'Sheet',iset+2,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);  
+				%# 保存数据集信息hmenu4_1.UserData到Sheet(iset+1)
+				info_1 = hmenu4_1.UserData;
+				info_1.x3 = [];
+				info_1.lbs2 = [];
+				info_1.x2 = [];
+				info_1.lbs = [];
+				info_1.cmap = [];
+				% info_1.elapsedTimec = toc(timerVal_1)-time1; % 保存分类消耗时间
+				info_1 = struct2table(info_1, 'AsArray',true);
+				writetable(info_1, filename, 'Sheet',iset+1,'Range','A3', 'WriteRowNames',true, 'WriteVariableNames', true);
+				%# 单独处理cmap
+				info_cmap = hmenu4_1.UserData.cmap;
+				VariableNames = ["R","G","B"]; %VariableNames属性为字符向量元胞数组{'R','G','B'}。
+				% 如需指定多个变量名称，请在字符串数组["R","G","B"]或字符向量元胞数组{'R','G','B'}中指定这些名称。
+				% 创建行的名称 RowNames，格式为字符串数组["1","2","3"]或字符向量元胞数组{'1','2','3'}；
+				RowNames = string(1:size(info_cmap,1)); % ；
+				info_cmap = array2table(info_cmap, 'VariableNames', VariableNames);
+				info_cmap.Properties.RowNames = RowNames;
+				writetable(info_cmap,filename,'Sheet',iset+1,'Range','A5', 'WriteRowNames',true, 'WriteVariableNames', true);
+				%# 保存time_goldSection
+				if exist('time_goldSection','var')==1
+					VariableNames = ["iLayer_"+string(1:paraTable_c.hiddenLayerNum)];
+					RowNames = "colapsedTime";
+					timeTable = array2table(time_goldSection, 'VariableNames', VariableNames);
+					timeTable.Properties.RowNames = RowNames;
+					writetable(timeTable,filename,'Sheet',iset+1,'Range','A27', 'WriteRowNames',true, 'WriteVariableNames', true);
+				end
+				%% 保存训练过程中的性能数据err_perf, err_vperf, err_tperf, racc到Excel中Sheet
+				T1 = createTableForWrite(err_perf, err_vperf, err_tperf, racc);
+				errTable = [T1.Variables; mean(T1.Variables,1); std(T1.Variables,0,1)];  % T1.Variables 是20×8 double
+				errTable = array2table(errTable, 'VariableNames', T1.Properties.VariableNames);
+				errTable.Properties.RowNames = [T1.Properties.RowNames; {'average'}; {'std'}]; %新增2行的行名称
+				%filename = "C:\Matlab练习\Project20191002\工程测试\2022-06-04 19-45-16\Botswana\LDA\GA_TANSIG\Botswana_LDA_GA_TANSIG.xlsx";
+				errTable.Properties.Description = '保存训练过程中的性能数据err_perf, err_vperf, err_tperf, racc';
+				writetable(errTable,filename,'Sheet',iset+2,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);  
 
-                %% 保存神经网络隐含层节点数的优化结果
-                % 将寻找到的最优网络net与gold_point, acc_avg, OA_detail，寻优信息hiddenNumInfo一起保存为mat数据。
-                % 之所以放到这里是因为有两个原因
-                % 1. 如果直接在前面【神经网络隐含层节点数寻优】代码块中生成带时间的文件夹名的话，时间会过于早于Excel的写入时间。
-                % 2. 神经网络隐含层节点数寻优的结果与数据集、降维算法、分类算法都有关系，这里的path包含了上述的几个关键信息，
-                %     所以直接用这里的path作为[保存神经网络隐含层节点数的优化结果]是更合理的。
-                if paraTable_c.hiddenNumOptimization && strcmp(answer_hiddenNumOptimization, '是')
-                    gold_point_sorted = cell(1,paraTable_c.hiddenLayerNum);
-                    acc_avg_sorted = cell(1,paraTable_c.hiddenLayerNum);
-                    OA_detail_sorted = cell(1,paraTable_c.hiddenLayerNum);
-                    %## 每一隐含层的计算结果保存到一个sheet中
-                    for iLayer = 1:paraTable_c.hiddenLayerNum
-                        %# 对第iLayer隐含层的分类准确率gold_point{iLayer}, acc_avg{iLayer}, OA_detail{iLayer}在列维度上调整顺序
-                        % 利用sort()函数对gold_point{iLayer}中的数按从小到大排序，结果保存到gold_point_sorted{iLayer}中，
-                        % 同时还得到了排序索引I
-                        % 继而利用排序索引I, 在列维度上对acc_avg{iLayer},OA_detail{iLayer}排序
-                        % 结果保存到acc_avg_sorted{iLayer}，OA_detail_sorted{iLayer}
+				%% 保存神经网络隐含层节点数的优化结果
+				% 将寻找到的最优网络net与gold_point, acc_avg, OA_detail，寻优信息hiddenNumInfo一起保存为mat数据。
+				% 之所以放到这里是因为有两个原因
+				% 1. 如果直接在前面【神经网络隐含层节点数寻优】代码块中生成带时间的文件夹名的话，时间会过于早于Excel的写入时间。
+				% 2. 神经网络隐含层节点数寻优的结果与数据集、降维算法、分类算法都有关系，这里的path包含了上述的几个关键信息，
+				%     所以直接用这里的path作为[保存神经网络隐含层节点数的优化结果]是更合理的。
+				if paraTable_c.hiddenNumOptimization && strcmp(answer_hiddenNumOptimization, '是')
+					gold_point_sorted = cell(1,paraTable_c.hiddenLayerNum);
+					acc_avg_sorted = cell(1,paraTable_c.hiddenLayerNum);
+					OA_detail_sorted = cell(1,paraTable_c.hiddenLayerNum);
+					%## 每一隐含层的计算结果保存到一个sheet中
+					for iLayer = 1:paraTable_c.hiddenLayerNum
+						%# 对第iLayer隐含层的分类准确率gold_point{iLayer}, acc_avg{iLayer}, OA_detail{iLayer}在列维度上调整顺序
+						% 利用sort()函数对gold_point{iLayer}中的数按从小到大排序，结果保存到gold_point_sorted{iLayer}中，
+						% 同时还得到了排序索引I
+						% 继而利用排序索引I, 在列维度上对acc_avg{iLayer},OA_detail{iLayer}排序
+						% 结果保存到acc_avg_sorted{iLayer}，OA_detail_sorted{iLayer}
 
-                        [B, I] = sort(gold_point{iLayer});
-                        gold_point_sorted{iLayer} = B;
-                        acc_avg_sorted{iLayer} = acc_avg{iLayer}(:, I);
-                        OA_detail_sorted{iLayer} = OA_detail{iLayer}(:, I);
-                        %# 将排序之后的第iLayer隐含层的分类准确率整理成table格式
-                        [size_1, size_2] = size(acc_avg{iLayer});
-                        accData = [gold_point{iLayer}; gold_point_sorted{iLayer}; acc_avg_sorted{iLayer};...
-                            OA_detail_sorted{iLayer}; mean(OA_detail_sorted{iLayer}); std(OA_detail_sorted{iLayer})];
-                        % 为cell的每一列创建列名称 VariableNames
-                        VariableNames = cell(1,size_2);
-                        for i = 1:size_2
-                            VariableNames{i}= ['goldPoint_',num2str(i)];
-                        end
-                        %# 创建行的名称 RowNames，必须是字符元胞数组 即1×(2+size_1+size_3+2) cell；
-                        [size_3, size_4] = size(OA_detail{iLayer});
-                        RowNames = cell(1, 2+size_1+size_3+2); 
-                        RowNames{1} = ['goldPoint{iLayer=',num2str(iLayer),'}'];
-                        RowNames{2} = 'goldPoint_sorted';
-                        for i = 1+2 : size_1-3+2              % acc_avg最后3行分别是OA、AA、kappa
-                            RowNames{i} = ['class_',num2str(i-2)];
-                        end
-                        RowNames(i+1 : i+3) = {'OA', 'AA', 'Kappa'};
-                        i = i+3;
-                        RowNames(i+1: i+size_3) = cellstr("iter_"+string(1:size_3));
-                        i = i+size_3;
-                        RowNames(i+1 : i+2)  = {'average', 'std'};
-                        % path，filename都已经有了
-                        accTable = array2table(accData, 'VariableNames', VariableNames);
-                        accTable.Properties.RowNames = RowNames;
-                        % Sheet 1保存优化之前的分类结果，Sheet 2保存优化之后的分类结果。
-                        % Sheet 3保存执行分类任务的网络相关信息，Sheet 4保存训练性能信息。
-                        % Sheet iLayer+4可以保存第iLayer隐含层的分类准确率信息，
-                        writetable(accTable,filename,'Sheet',iLayer + iset+2,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);                
+						[B, I] = sort(gold_point{iLayer});
+						gold_point_sorted{iLayer} = B;
+						acc_avg_sorted{iLayer} = acc_avg{iLayer}(:, I);
+						OA_detail_sorted{iLayer} = OA_detail{iLayer}(:, I);
+						%# 将排序之后的第iLayer隐含层的分类准确率整理成table格式
+						[size_1, size_2] = size(acc_avg{iLayer});
+						accData = [gold_point{iLayer}; gold_point_sorted{iLayer}; acc_avg_sorted{iLayer};...
+							OA_detail_sorted{iLayer}; mean(OA_detail_sorted{iLayer},1); std(OA_detail_sorted{iLayer},0,1)];
+						% 为cell的每一列创建列名称 VariableNames
+						VariableNames = cell(1,size_2);
+						for i = 1:size_2
+							VariableNames{i}= ['goldPoint_',num2str(i)];
+						end
+						%# 创建行的名称 RowNames，必须是字符元胞数组 即1×(2+size_1+size_3+2) cell；
+						[size_3, size_4] = size(OA_detail{iLayer});
+						RowNames = cell(1, 2+size_1+size_3+2); 
+						RowNames{1} = ['goldPoint{iLayer=',num2str(iLayer),'}'];
+						RowNames{2} = 'goldPoint_sorted';
+						for i = 1+2 : size_1-3+2              % acc_avg最后3行分别是OA、AA、kappa
+							RowNames{i} = ['class_',num2str(i-2)];
+						end
+						RowNames(i+1 : i+3) = {'OA', 'AA', 'Kappa'};
+						i = i+3;
+						RowNames(i+1: i+size_3) = cellstr("iter_"+string(1:size_3));
+						i = i+size_3;
+						RowNames(i+1 : i+2)  = {'average', 'std'};
+						% path，filename都已经有了
+						accTable = array2table(accData, 'VariableNames', VariableNames);
+						accTable.Properties.RowNames = RowNames;
+						% Sheet 1保存优化之前的分类结果，Sheet 2保存优化之后的分类结果。
+						% Sheet 3保存执行分类任务的网络相关信息，Sheet 4保存训练性能信息。
+						% Sheet iLayer+4可以保存第iLayer隐含层的分类准确率信息，
+						writetable(accTable,filename,'Sheet',iLayer + iset+2,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);                
 
-                    end
-                end
+					end
+				end
 
-                %% 保存各种图像结果                
-                %## 保存view(net)图像，详细参看C:\Matlab练习\Project20191002\save_view(net).m
-                jframe = view(net_best{1,1});
-                jframe_properties = get(jframe);
-                jpanel = get(jframe,'ContentPane');
-                jpanel_properties = get(jpanel);
-                hFig = figure('Menubar','none', 'Position',[100, 100, jpanel_properties.Width, jpanel_properties.Height]);
-                [~,h] = javacomponent(jpanel);
-                h_properties = get(h);
-                set(h, 'units','normalized', 'position',[0 0 1 1]);
-                %# close java window
-                jframe.setVisible(false);
-                jframe.dispose();
-                %# print to file
-                filename_2 = fullfile(path,"net_best{2,2}");%拼接路径
-                set(hFig, 'PaperPositionMode', 'auto');
-                saveas(hFig, filename_2);        % 保存为fig
-                saveas(hFig, filename_2,'jpg'); %保存为jpg
-                %# close figure
-                close(hFig);
+				%% 保存各种图像结果                
+				%## 保存view(net)图像，详细参看C:\Matlab练习\Project20191002\save_view(net).m
+				jframe = view(net_best{1,1});
+				jframe_properties = get(jframe);
+				jpanel = get(jframe,'ContentPane');
+				jpanel_properties = get(jpanel);
+				hFig = figure('Menubar','none', 'Position',[100, 100, jpanel_properties.Width, jpanel_properties.Height]);
+				[~,h] = javacomponent(jpanel);
+				h_properties = get(h);
+				set(h, 'units','normalized', 'position',[0 0 1 1]);
+				%# close java window
+				jframe.setVisible(false);
+				jframe.dispose();
+				%# print to file
+				filename_2 = fullfile(path,"net_best{2,2}");%拼接路径
+				set(hFig, 'PaperPositionMode', 'auto');
+				saveas(hFig, filename_2);        % 保存为fig
+				saveas(hFig, filename_2,'jpg'); %保存为jpg
+				%# close figure
+				close(hFig);
 
-                %# 保存net_best{}为"net_best.mat"
-                % net_best{1,1}保存优化前具有最高acc值的网络; net_best{2, 2}保存优化后具有最高acc值的网络
-                % net_best{1,2}保存优化前具有最高acc值的网络在优化后的网络
-                % net_best{2,1}保存优化后具有最高acc值的网络在优化前的网络
-                filename_2 = fullfile(path,"net_best.mat");%拼接路径
-                save(filename_2, 'net_best');
+				%# 保存net_best{}为"net_best.mat"
+				% net_best{1,1}保存优化前具有最高acc值的网络; net_best{2, 2}保存优化后具有最高acc值的网络
+				% net_best{1,2}保存优化前具有最高acc值的网络在优化后的网络
+				% net_best{2,1}保存优化后具有最高acc值的网络在优化前的网络
+				filename_2 = fullfile(path,"net_best.mat");%拼接路径
+				save(filename_2, 'net_best');
 
-                %% 绘制net_best{2,2}的混淆矩阵图及ROC图
-                % load("C:\Matlab练习\Project20191002\工程测试\2022-06-02 16-46-57\Botswana\PCA\GA_TANSIG\net_best.mat");
-                % load("C:\Matlab练习\Project20191002\工程测试\2022-06-04 02-35-46\Botswana\PCA\PSO_RBF\net_best.mat");
-                netBest = net_best{2,2};
-                YTest = netBest(mappedA'); 
-                % mappedA是每一行为一个样本，而输入到train()，net()，sim()函数的XTest XTrain必须保证每一列为一个样本，
-                % net()的返回值类型为one-hot-vector，每一列代表一个输入样本所属的类           
-                TTest = ind2vec(lbs');
-                figure()
-                f = plotconfusion(TTest, YTest); %输入参数与confusion()的相同
-                f.Units = 'normalized';
-                f.Position = [0.2375, 0.000926, 0.5562, 0.9315];  % 具有14个类别的混淆矩阵图的最佳尺寸
-                f.Children(1).FontName = 'MS Sans Serif';
+				%% 绘制net_best{2,2}的混淆矩阵图及ROC图
+				% load("C:\Matlab练习\Project20191002\工程测试\2022-06-02 16-46-57\Botswana\PCA\GA_TANSIG\net_best.mat");
+				% load("C:\Matlab练习\Project20191002\工程测试\2022-06-04 02-35-46\Botswana\PCA\PSO_RBF\net_best.mat");
+				netBest = net_best{2,2};
+				YTest = netBest(mappedA'); 
+				% mappedA是每一行为一个样本，而输入到train()，net()，sim()函数的XTest XTrain必须保证每一列为一个样本，
+				% net()的返回值类型为one-hot-vector，每一列代表一个输入样本所属的类           
+				TTest = ind2vec(lbs');
+				figure()
+				f = plotconfusion(TTest, YTest); %输入参数与confusion()的相同
+				f.Units = 'normalized';
+				f.Position = [0.2375, 0.000926, 0.5562, 0.9315];  % 具有14个类别的混淆矩阵图的最佳尺寸
+				f.Children(1).FontName = 'MS Sans Serif';
 
-                f.Children(2).Title.String = '混淆矩阵';
-                f.Children(2).XLabel.String = '真实类别';
-                f.Children(2).YLabel.String = '预测类别';
-                f.Children(2).XTickLabelRotation = 0;
-                % f.Children(2).Children
-                % ans = 
-                %     677×1 graphics 数组:
-                % 
-                %   Line
-                %   Line
-                %   Text     (5.2%)
-                %   Text     (94.8%)
-                %   Patch
-                %   Text     (4.0%)
-                %   Text     (96.0%)
-                %   Patch
-                %   ……
-                %   Text     (8.3%)
-                %   Text     (270)
-                %   Patch
-                % path = "C:\Matlab练习\Project20191002\工程测试\2022-06-02 16-46-57\Botswana\PCA\GA_TANSIG";
-                filename_2 = fullfile(path,"net_best{2,2}_"+"originConfusion");%拼接路径
-                saveas(gcf, filename_2);        % 原始混淆矩阵保存为fig
+				f.Children(2).Title.String = '混淆矩阵';
+				f.Children(2).XLabel.String = '真实类别';
+				f.Children(2).YLabel.String = '预测类别';
+				f.Children(2).XTickLabelRotation = 0;
+				% f.Children(2).Children
+				% ans = 
+				%     677×1 graphics 数组:
+				% 
+				%   Line
+				%   Line
+				%   Text     (5.2%)
+				%   Text     (94.8%)
+				%   Patch
+				%   Text     (4.0%)
+				%   Text     (96.0%)
+				%   Patch
+				%   ……
+				%   Text     (8.3%)
+				%   Text     (270)
+				%   Patch
+				% path = "C:\Matlab练习\Project20191002\工程测试\2022-06-02 16-46-57\Botswana\PCA\GA_TANSIG";
+				filename_2 = fullfile(path,"net_best{2,2}_"+"originConfusion");%拼接路径
+				saveas(gcf, filename_2);        % 原始混淆矩阵保存为fig
 
-                %# 这里，我们需要处理的范围是i=1:14,j=1:14，将每一个格子中的百分数去掉
-                M = hmenu4_1.UserData.M;
-                N = hmenu4_1.UserData.M-1;     % 类别总数   
-                for i = 1:N
-                    for j = 1:N
-                        %for k = 1:2
-                        idx_1 = 2+(M-j)*M*3+(M-i) *3+1;
-                        % 将每一个格子中的百分数去掉
-                        f.Children(2).Children(idx_1).String='';
-                        % 将每一个格子中的整数位置调整到格子正中间 
-                        idx_2 = 2+(M-j)*M*3+(M-i) *3+2;
-                        f.Children(2).Children(idx_2).VerticalAlignment = 'middle';
-                        % 将每一个格子的颜色修改为其他颜色,比如品红色[0.8529 0.4686  0.6765 ]
-                        % confusion matrix默认的格子底色1 浅红色 [0.9765 0.7686 0.7529]; 
-                        % confusion matrix默认的格子底色2 浅绿色 [0.7373 0.9020 0.7686];  
-                        idx_3 = 2+(M-j)*M*3+(M-i) *3+3;
-                        f.Children(2).Children(idx_3).FaceColor = [0.8529 0.4686  0.6765];
-                    end
-                end
-                % 将混淆矩阵对角线上的每个格子的颜色设置为浅蓝色[0.6686 0.8529 0.9765 ]
-                for i = 1:N
-                    idx_3 = 2+(M-i)*M*3+(M-i) *3+3;
-                    f.Children(2).Children(idx_3).FaceColor = [0.6686 0.8529 0.9765];
-                end
-                % 修改最右边一列和最下面一行的字体的颜色
-                % confusion matrix默认的字体颜色1 红色Color: [0.8863 0.2392 0.1765]
-                % confusion matrix默认的字体颜色2 绿色Color: [0.1333 0.6745 0.2353]
-                for i=1:N
-                    %for j = N+1
-                    idx_1 = 2+(M-i) *3+1;
-                    f.Children(2).Children(idx_1).Color = [0.75 0.01  0.01];
-                    idx_2 = 2+(M-i) *3+2;
-                    f.Children(2).Children(idx_2).Color = [0 0 1];            
-                end
-                for j=1:N   %for i = N+1
-                    idx_1 = 2+(M-j)*M*3+1;
-                    f.Children(2).Children(idx_1).Color = [0.75 0.01  0.01];
-                    idx_2 = 2+(M-j)*M*3+2;
-                    f.Children(2).Children(idx_2).Color = [0 0 1];            
-                end
-                % i=M,j=M
-                f.Children(2).Children(2+1).Color = [0.75 0.01  0.01];
-                f.Children(2).Children(2+2).Color = [0 0  0];
+				%# 这里，我们需要处理的范围是i=1:14,j=1:14，将每一个格子中的百分数去掉
+				M = hmenu4_1.UserData.M;
+				N = hmenu4_1.UserData.M-1;     % 类别总数   
+				for i = 1:N
+					for j = 1:N
+						%for k = 1:2
+						idx_1 = 2+(M-j)*M*3+(M-i) *3+1;
+						% 将每一个格子中的百分数去掉
+						f.Children(2).Children(idx_1).String='';
+						% 将每一个格子中的整数位置调整到格子正中间 
+						idx_2 = 2+(M-j)*M*3+(M-i) *3+2;
+						f.Children(2).Children(idx_2).VerticalAlignment = 'middle';
+						% 将每一个格子的颜色修改为其他颜色,比如品红色[0.8529 0.4686  0.6765 ]
+						% confusion matrix默认的格子底色1 浅红色 [0.9765 0.7686 0.7529]; 
+						% confusion matrix默认的格子底色2 浅绿色 [0.7373 0.9020 0.7686];  
+						idx_3 = 2+(M-j)*M*3+(M-i) *3+3;
+						f.Children(2).Children(idx_3).FaceColor = [0.8529 0.4686  0.6765];
+					end
+				end
+				% 将混淆矩阵对角线上的每个格子的颜色设置为浅蓝色[0.6686 0.8529 0.9765 ]
+				for i = 1:N
+					idx_3 = 2+(M-i)*M*3+(M-i) *3+3;
+					f.Children(2).Children(idx_3).FaceColor = [0.6686 0.8529 0.9765];
+				end
+				% 修改最右边一列和最下面一行的字体的颜色
+				% confusion matrix默认的字体颜色1 红色Color: [0.8863 0.2392 0.1765]
+				% confusion matrix默认的字体颜色2 绿色Color: [0.1333 0.6745 0.2353]
+				for i=1:N
+					%for j = N+1
+					idx_1 = 2+(M-i) *3+1;
+					f.Children(2).Children(idx_1).Color = [0.75 0.01  0.01];
+					idx_2 = 2+(M-i) *3+2;
+					f.Children(2).Children(idx_2).Color = [0 0 1];            
+				end
+				for j=1:N   %for i = N+1
+					idx_1 = 2+(M-j)*M*3+1;
+					f.Children(2).Children(idx_1).Color = [0.75 0.01  0.01];
+					idx_2 = 2+(M-j)*M*3+2;
+					f.Children(2).Children(idx_2).Color = [0 0 1];            
+				end
+				% i=M,j=M
+				f.Children(2).Children(2+1).Color = [0.75 0.01  0.01];
+				f.Children(2).Children(2+2).Color = [0 0  0];
 
-                %# 混淆矩阵格式修改完毕，可以保存
-                filename_2 = fullfile(path,"net_best{2,2}_"+"simpleConfusion");%拼接路径
-                saveas(gcf, filename_2);        % 简化后的混淆矩阵保存为fig
-                saveas(gcf, filename_2,'jpg'); % 简化后的混淆矩阵保存为jpg
+				%# 混淆矩阵格式修改完毕，可以保存
+				filename_2 = fullfile(path,"net_best{2,2}_"+"simpleConfusion");%拼接路径
+				saveas(gcf, filename_2);        % 简化后的混淆矩阵保存为fig
+				saveas(gcf, filename_2,'jpg'); % 简化后的混淆矩阵保存为jpg
 
-                %## 绘制ROC曲线
-                %#ROC原始曲线
-                figure()
-                f = plotroc(TTest, YTest);
-                % f.Children
-                % ans = 
-                % 3×1 graphics 数组:
-                % UIControl
-                % Legend       (Class 1, Class 2, Class 3, Class 4, Class 5, Class 6, Clas…)
-                % Axes         (ROC)       filename_2 = fullfile(path,"net_best{2,2}_"+"originROC");%拼接路径
-                filename_2 = fullfile(path,"net_best{2,2}_"+"originROC");
-                saveas(gcf, filename_2);        % 保存为fig
-                %# 对ROC图进行格式化
-                f.Children(3).Title.String = '接收者操作特征曲线'; % (receiver operating characteristic curve
-                f.Children(3).XLabel.String = '假阳性率'; %False Positive Rate
-                f.Children(3).YLabel.String = '真阳性率'; %True Positive Rate
-                filename_2 = fullfile(path,"net_best{2,2}_"+"接收者操作特征曲线");
-                saveas(gcf, filename_2);        % 保存为fig
-                saveas(gcf, filename_2,'jpg'); %保存为jpg
+				%## 绘制ROC曲线
+				%#ROC原始曲线
+				figure()
+				f = plotroc(TTest, YTest);
+				% f.Children
+				% ans = 
+				% 3×1 graphics 数组:
+				% UIControl
+				% Legend       (Class 1, Class 2, Class 3, Class 4, Class 5, Class 6, Clas…)
+				% Axes         (ROC)       filename_2 = fullfile(path,"net_best{2,2}_"+"originROC");%拼接路径
+				filename_2 = fullfile(path,"net_best{2,2}_"+"originROC");
+				saveas(gcf, filename_2);        % 保存为fig
+				%# 对ROC图进行格式化
+				f.Children(3).Title.String = '接收者操作特征曲线'; % (receiver operating characteristic curve
+				f.Children(3).XLabel.String = '假阳性率'; %False Positive Rate
+				f.Children(3).YLabel.String = '真阳性率'; %True Positive Rate
+				filename_2 = fullfile(path,"net_best{2,2}_"+"接收者操作特征曲线");
+				saveas(gcf, filename_2);        % 保存为fig
+				saveas(gcf, filename_2,'jpg'); %保存为jpg
 
-                %#ROC局部放大曲线 [0, 0.5] [0.5, 1]
-                %filename_2 = fullfile(path,"net_best{2,2}_"+"zoomROC");%拼接路径
-                filename_2 = fullfile(path,"net_best{2,2}_"+"接收者操作特征曲线局部放大");%拼接路径
-                f.Children(3).XLim = [0, 0.5];
-                f.Children(3).YLim = [0.5, 1];
-                %saveas(gcf, filename_2);        % 保存为fig
-                saveas(gcf, filename_2,'jpg'); %保存为jpg
-                %#ROC局部放大曲线 [0, 0.25] [0.75, 1]
-                %filename_2 = fullfile(path,"net_best{2,2}_"+"zoomROC2");%拼接路径
-                filename_2 = fullfile(path,"net_best{2,2}_"+"接收者操作特征曲线局部放大2");%拼接路径
-                f.Children(3).XLim = [0, 0.25];
-                f.Children(3).YLim = [0.75, 1];
-                %saveas(gcf, filename_2);        % 保存为fig
-                saveas(gcf, filename_2,'jpg'); %保存为jpg        
-                % % 测试到此，一切正常       
+				%#ROC局部放大曲线 [0, 0.5] [0.5, 1]
+				%filename_2 = fullfile(path,"net_best{2,2}_"+"zoomROC");%拼接路径
+				filename_2 = fullfile(path,"net_best{2,2}_"+"接收者操作特征曲线局部放大");%拼接路径
+				f.Children(3).XLim = [0, 0.5];
+				f.Children(3).YLim = [0.5, 1];
+				%saveas(gcf, filename_2);        % 保存为fig
+				saveas(gcf, filename_2,'jpg'); %保存为jpg
+				%#ROC局部放大曲线 [0, 0.25] [0.75, 1]
+				%filename_2 = fullfile(path,"net_best{2,2}_"+"zoomROC2");%拼接路径
+				filename_2 = fullfile(path,"net_best{2,2}_"+"接收者操作特征曲线局部放大2");%拼接路径
+				f.Children(3).XLim = [0, 0.25];
+				f.Children(3).YLim = [0.75, 1];
+				%saveas(gcf, filename_2);        % 保存为fig
+				saveas(gcf, filename_2,'jpg'); %保存为jpg        
+				% % 测试到此，一切正常       
 
-                %% 绘制预测的GT图和真实的GT图
-                %YTest是net()的返回值，类型为one-hot-vector，每一列代表一个输入样本所属的类
-                Ylbs = vec2ind(YTest)';  %vec2ind()函数的输入数据，要求是由one-hot-vector列向量组成的矩阵
-                %Ylbs表示预测的lbs，为一个列向量
-                % 不能通过将Ylbs通过reshape()的方式重排为二维矩阵，因为Ylbs仅仅是样本集中点的类别编号，
-                % 而非整张图片上的所有像素点的类别编号
-                % 正确的做法是：将全部样本数据输入netBest，获取Ylbs（列向量），
-                % 再将列向量Ylbs嵌入二维矩阵gtdata，获取新的二维矩阵Ygtdata
+				%% 绘制预测的GT图和真实的GT图
+				%YTest是net()的返回值，类型为one-hot-vector，每一列代表一个输入样本所属的类
+				Ylbs = vec2ind(YTest)';  %vec2ind()函数的输入数据，要求是由one-hot-vector列向量组成的矩阵
+				%Ylbs表示预测的lbs，为一个列向量
+				% 不能通过将Ylbs通过reshape()的方式重排为二维矩阵，因为Ylbs仅仅是样本集中点的类别编号，
+				% 而非整张图片上的所有像素点的类别编号
+				% 正确的做法是：将全部样本数据输入netBest，获取Ylbs（列向量），
+				% 再将列向量Ylbs嵌入二维矩阵gtdata，获取新的二维矩阵Ygtdata
 
-                gtdata = handles.UserData.gtdata;
-                gtdata(gtdata~=0)=Ylbs;    %将标签向量排列成GT图
-                Ygtdata = gtdata; %Ygtdata表示预测的gtdata
-                % 此时的hObject是hmenu4_4_2，Text: 'ClassDemo'，Type: 'uimenu'
-                % 此时的 handles.UserData.gtdata: [1476×256 double]
+				gtdata = handles.UserData.gtdata;
+				gtdata(gtdata~=0)=Ylbs;    %将标签向量排列成GT图
+				Ygtdata = gtdata; %Ygtdata表示预测的gtdata
+				% 此时的hObject是hmenu4_4_2，Text: 'ClassDemo'，Type: 'uimenu'
+				% 此时的 handles.UserData.gtdata: [1476×256 double]
 
-                filename_2 = fullfile(path,"net_best{2,2}_"+"预测图");%拼接路径
-                SeparatePlot3_Callback(Ygtdata, handles.UserData.cmap, handles.UserData.M);
-                saveas(gcf, filename_2);        % 保存为fig
-                saveas(gcf, filename_2,'jpg'); %保存为jpg
-                filename_2 = fullfile(path, [hmenu4_1.UserData.datasetName, 'GT图']);%拼接路径
-                SeparatePlot3_Callback(handles.UserData.gtdata,    handles.UserData.cmap, handles.UserData.M);
-                saveas(gcf, filename_2);        % 保存为fig
-                saveas(gcf, filename_2,'jpg'); %保存为jpg
+				filename_2 = fullfile(path,"net_best{2,2}_"+"预测图");%拼接路径
+				SeparatePlot3_Callback(Ygtdata, handles.UserData.cmap, handles.UserData.M);
+				saveas(gcf, filename_2);        % 保存为fig
+				saveas(gcf, filename_2,'jpg'); %保存为jpg
+				filename_2 = fullfile(path, [hmenu4_1.UserData.datasetName, 'GT图']);%拼接路径
+				SeparatePlot3_Callback(handles.UserData.gtdata,    handles.UserData.cmap, handles.UserData.M);
+				saveas(gcf, filename_2);        % 保存为fig
+				saveas(gcf, filename_2,'jpg'); %保存为jpg
 
-                %# SeparatePlot4_Callback()将会绘制多张双图模式的GT图vs预测图，请手动保存满意的图片
-                SeparatePlot4_Callback(handles.UserData.gtdata, Ygtdata, handles.UserData.cmap, handles.UserData.M);      
-                filename_2 = fullfile(path,"net_best{2,2}_"+"GT图与预测图");%拼接路径
-                % 手动执行以下两句，可保存当前figure
-                % saveas(gcf, filename_2);        % 保存为fig
-                % saveas(gcf, filename_2,'jpg'); %保存为jpg
+				%# SeparatePlot4_Callback()将会绘制多张双图模式的GT图vs预测图，请手动保存满意的图片
+				SeparatePlot4_Callback(handles.UserData.gtdata, Ygtdata, handles.UserData.cmap, handles.UserData.M);      
+				filename_2 = fullfile(path,"net_best{2,2}_"+"GT图与预测图");%拼接路径
+				% 手动执行以下两句，可保存当前figure
+				% saveas(gcf, filename_2);        % 保存为fig
+				% saveas(gcf, filename_2,'jpg'); %保存为jpg
 
-                %% 绘制性能曲线       
-                %# 绘制错误率曲线
-                figure()
-                plotErr(err_perf, err_vperf, err_tperf, racc, 4);
-                    %racc 误分率，错误率
-                    %err_perf 训练集最佳性能（蓝色曲线）
-                    %err_vperf 验证集最佳性能（绿色曲线）
-                    %err_tperf 测试集最佳性能（红色曲线）
-                    %tTest 为预测的类别标签列向量        
-                filename_2 = fullfile(path, [num2str(n), '次网络训练性能曲线_误差率']); %拼接路径
-                saveas(gcf, filename_2);        % 保存为fig
-                saveas(gcf, filename_2,'jpg'); %保存为jpg
-                %# 绘制准确率曲线       
-                % load("C:\Matlab练习\Project20191002\工程测试\2022-06-04 19-45-16\Botswana\LDA\GA_TANSIG\racc,err_perf,err_vperf,err_tperf.mat")
-                figure()
-                plotAcc(1-err_perf, 1-err_vperf, 1-err_tperf, acc, 4);
-                filename_2 = fullfile(path, [num2str(n), '次网络训练性能曲线_准确率']); %拼接路径
-                saveas(gcf, filename_2);        % 保存为fig
-                saveas(gcf, filename_2,'jpg'); %保存为jpg
-                %% 显示分类用时
-                time2 = toc(timerVal_1);
-                % filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
-                % filename = fullfile(path, filename);
-                disp({[hmenu4_1.UserData.matPath, ' 分类完毕! 历时',num2str(time2-time1),'秒.']});
-                disp(['分类结果详细数据保存于',filename]); 
-                if exist('MyPar', 'var')
-                    delete(MyPar) %计算完成后关闭并行处理池
-                end
-                %% 网络隐含层层数的优化 询问是否要执行隐含层层数（即网络深度）优化
-                [mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
-                XTrain = table2array(mA1(:, 1:end-1))';  %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
+				%% 绘制性能曲线       
+				%# 绘制错误率曲线
+				figure()
+				plotErr(err_perf, err_vperf, err_tperf, racc, 4);
+					%racc 误分率，错误率
+					%err_perf 训练集最佳性能（蓝色曲线）
+					%err_vperf 验证集最佳性能（绿色曲线）
+					%err_tperf 测试集最佳性能（红色曲线）
+					%tTest 为预测的类别标签列向量        
+				filename_2 = fullfile(path, [num2str(n), '次网络训练性能曲线_误差率']); %拼接路径
+				saveas(gcf, filename_2);        % 保存为fig
+				saveas(gcf, filename_2,'jpg'); %保存为jpg
+				%# 绘制准确率曲线       
+				% load("C:\Matlab练习\Project20191002\工程测试\2022-06-04 19-45-16\Botswana\LDA\GA_TANSIG\racc,err_perf,err_vperf,err_tperf.mat")
+				figure()
+				plotAcc(1-err_perf, 1-err_vperf, 1-err_tperf, acc, 4);
+				filename_2 = fullfile(path, [num2str(n), '次网络训练性能曲线_准确率']); %拼接路径
+				saveas(gcf, filename_2);        % 保存为fig
+				saveas(gcf, filename_2,'jpg'); %保存为jpg
+				%% 显示分类用时
+				time2 = toc(timerVal_1);
+				% filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'.xlsx'];
+				% filename = fullfile(path, filename);
+				disp({[hmenu4_1.UserData.matPath, ' 分类完毕! 历时',num2str(time2-time1),'秒.']});
+				disp(['分类结果详细数据保存于',filename]); 
+				if exist('MyPar', 'var')
+					delete(MyPar) %计算完成后关闭并行处理池
+				end
+				%% 网络隐含层层数的优化 询问是否要执行隐含层层数（即网络深度）优化
+				[mA1, mA2, ind1, ind2] = createTwoTable(mappedA, lbs, rate);  % rate: 所使用的训练集占比
+				XTrain = table2array(mA1(:, 1:end-1))';  %mappedA和mA都是每一行为一个样本，而XTrain是每一列为一个样本，
 				if paraTable_c.hLayerNumOptimization
-                    % 询问是否要进行神经网络隐含层层数的最优值搜索
-                    quest = {'\fontsize{10} 是否要执行网络隐含层层数优化来寻找隐含层层数的最优值？'};
-                             % \fontsize{10}：字体大小修饰符，作用是使其后面的字符大小都为10磅；
-                    dlgtitle = '网络隐含层层数（即网络深度）优化';
-                    btn1 = '是';
-                    btn2 = '否';
-                    opts.Default = btn2;
-                    opts.Interpreter = 'tex';
-                    % answer = questdlg(quest,dlgtitle,btn1,btn2,defbtn);
-                    answer_hLayerNumOptimization = questdlg(quest, dlgtitle, btn1, btn2, opts);
+					% 询问是否要进行神经网络隐含层层数的最优值搜索
+					quest = {'\fontsize{10} 是否要执行网络隐含层层数优化来寻找隐含层层数的最优值？'};
+							 % \fontsize{10}：字体大小修饰符，作用是使其后面的字符大小都为10磅；
+					dlgtitle = '网络隐含层层数（即网络深度）优化';
+					btn1 = '是';
+					btn2 = '否';
+					opts.Default = btn2;
+					opts.Interpreter = 'tex';
+					% answer = questdlg(quest,dlgtitle,btn1,btn2,defbtn);
+					answer_hLayerNumOptimization = questdlg(quest, dlgtitle, btn1, btn2, opts);
 
-                    % Handle response
+					% Handle response
 					switch answer_hLayerNumOptimization
 						case '是'
 							% %## 首先确定隐含层神经元数量，可以采用公式来计算，也可以手动指定
@@ -2179,16 +2179,6 @@ end
 							RowNames2(size_3+2) = "std";
 
 							%# 生成Excel文件保存地址
-							% 生成文件夹名称
-							path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
-							try
-								path = fullfile(path, hmenu4_1.UserData.datasetName, hmenu4_1.UserData.drAlgorithm, hmenu4_1.UserData.cAlgorithm);
-							catch
-							end
-							% 如果生成的文件夹名称不存在，则先创建文件夹
-							if ~exist(path, 'dir')
-								[status,msg,msgID] = mkdir(path);
-							end
 							% path已经有了，filename重新生成
 							filename = [hmenu4_1.UserData.datasetName,'_',hmenu4_1.UserData.drAlgorithm,'_',hmenu4_1.UserData.cAlgorithm,'_hLayerOptimization','.xlsx'];
 							filename = fullfile(path, filename);
@@ -2199,7 +2189,7 @@ end
 							writetable(accTable,filename,'Sheet',1,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);
 							% Sheet 2保存优化30列（6个隐含层节点与5个隐含层）分类结果OA_detail。   
 							% 每一列是20次重复计算获得的20个OA值
-							OATable = array2table([OA_detail; OA_avg; std(OA_detail)], 'VariableNames', VariableNames);
+							OATable = array2table([OA_detail; OA_avg; std(OA_detail,0,1)], 'VariableNames', VariableNames);
 							OATable.Properties.RowNames = RowNames2;
 							writetable(OATable,filename,'Sheet',2,'Range','A1', 'WriteRowNames',true, 'WriteVariableNames', true);  
 
@@ -2249,10 +2239,9 @@ end
 						case '否'
 					end
 				end
-            case 'exit'
-                disp('ClassDemo已经退出.')
-                %dessert = 0;
-        end
+			case 'exit'
+				disp('ClassDemo已经退出.')
+		end
     end
     %     path = ['C:\Matlab练习\Project20191002\工程测试\', datestr(datetime('now'), 'yyyy-mm-dd HH-MM-SS')];
     %     saveAllFigure(path,handles,'.fig');
